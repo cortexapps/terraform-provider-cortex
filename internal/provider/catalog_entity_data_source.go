@@ -3,10 +3,10 @@ package provider
 import (
 	"context"
 	"fmt"
-	"net/http"
-
+	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -20,16 +20,19 @@ func NewCatalogEntityDataSource() datasource.DataSource {
 
 // CatalogEntityDataSource defines the data source implementation.
 type CatalogEntityDataSource struct {
-	client *http.Client
+	client *cortex.Client
 }
 
 // CatalogEntityDataSourceModel describes the data source data model.
 type CatalogEntityDataSourceModel struct {
-	Tag types.String `tfsdk:"tag"`
+	Id          types.String `tfsdk:"id"`
+	Tag         types.String `tfsdk:"tag"`
+	Name        types.String `tfsdk:"name"`
+	Description types.String `tfsdk:"description"`
 }
 
 func (d *CatalogEntityDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_example"
+	resp.TypeName = req.ProviderTypeName + "_catalog_entity"
 }
 
 func (d *CatalogEntityDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -38,9 +41,15 @@ func (d *CatalogEntityDataSource) Schema(ctx context.Context, req datasource.Sch
 		MarkdownDescription: "Catalog Entity data source",
 
 		Attributes: map[string]schema.Attribute{
+			// Required
 			"tag": schema.StringAttribute{
 				MarkdownDescription: "Tag of the catalog entity",
-				Computed:            true,
+				Required:            true,
+			},
+
+			// Computed
+			"id": schema.StringAttribute{
+				Computed: true,
 			},
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Human-readable name for the entity",
@@ -60,7 +69,7 @@ func (d *CatalogEntityDataSource) Configure(ctx context.Context, req datasource.
 		return
 	}
 
-	client, ok := req.ProviderData.(*http.Client)
+	client, ok := req.ProviderData.(*cortex.Client)
 
 	if !ok {
 		resp.Diagnostics.AddError(
@@ -94,12 +103,19 @@ func (d *CatalogEntityDataSource) Read(ctx context.Context, req datasource.ReadR
 
 	// For the purposes of this example code, hardcoding a response value to
 	// save into the Terraform state.
-	data.Tag = types.StringValue("tag")
+	data.Tag = types.StringValue("test")
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
 	tflog.Trace(ctx, "read a data source")
 
+	// Set the ID in state based on the tag
+	//data.Id = data.Tag
+	resp.State.SetAttribute(ctx, path.Root("id"), data.Tag)
+	resp.State.SetAttribute(ctx, path.Root("tag"), data.Tag)
+	resp.State.SetAttribute(ctx, path.Root("name"), data.Name)
+	resp.State.SetAttribute(ctx, path.Root("description"), data.Description)
+
 	// Save data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	//resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

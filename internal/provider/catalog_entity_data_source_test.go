@@ -15,7 +15,7 @@ func TestAccCatalogEntityDataSource(t *testing.T) {
 			{
 				Config: testAccCatalogEntityDataSourceConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.catalog_entity.test", "tag", "test"),
+					resource.TestCheckResourceAttr("data.cortex_catalog_entity.test", "tag", "test"),
 				),
 			},
 		},
@@ -23,7 +23,7 @@ func TestAccCatalogEntityDataSource(t *testing.T) {
 }
 
 const testAccCatalogEntityDataSourceConfig = `
-data "catalog_entity" "test" {
+data "cortex_catalog_entity" "test" {
   tag = "test"
 }
 `

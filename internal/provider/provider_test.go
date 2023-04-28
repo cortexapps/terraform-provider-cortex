@@ -1,10 +1,9 @@
 package provider
 
 import (
-	"testing"
-
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"testing"
 )
 
 // testAccProtoV6ProviderFactories are used to instantiate a provider during
@@ -12,7 +11,7 @@ import (
 // CLI command executed to create a provider server to which the CLI can
 // reattach.
 var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
-	"cortex": providerserver.NewProtocol6WithError(New("test")()),
+	"cortex": providerserver.NewProtocol6WithError(New("acctest")()),
 }
 
 func testAccPreCheck(t *testing.T) {

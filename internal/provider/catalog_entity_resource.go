@@ -3,13 +3,10 @@ package provider
 import (
 	"context"
 	"fmt"
-	"net/http"
-
+	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -24,11 +21,12 @@ func NewCatalogEntityResource() resource.Resource {
 
 // CatalogEntityResource defines the resource implementation.
 type CatalogEntityResource struct {
-	client *http.Client
+	client *cortex.Client
 }
 
 // CatalogEntityResourceModel describes the resource data model.
 type CatalogEntityResourceModel struct {
+	Id          types.String `tfsdk:"id"`
 	Tag         types.String `tfsdk:"tag"`
 	Name        types.String `tfsdk:"name"`
 	Description types.String `tfsdk:"description"`
@@ -53,11 +51,16 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 				Optional:            true,
 			},
 			"tag": schema.StringAttribute{
-				Computed:            true,
 				MarkdownDescription: "Unique identifier for the entity. Corresponds to the x-cortex-tag field in the entity descriptor.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				Required:            true,
+				//PlanModifiers: []planmodifier.String{
+				//	stringplanmodifier.UseStateForUnknown(),
+				//},
+			},
+
+			//Computed
+			"id": schema.StringAttribute{
+				Computed: true,
 			},
 		},
 	}
@@ -69,7 +72,7 @@ func (r *CatalogEntityResource) Configure(ctx context.Context, req resource.Conf
 		return
 	}
 
-	client, ok := req.ProviderData.(*http.Client)
+	client, ok := req.ProviderData.(*cortex.Client)
 
 	if !ok {
 		resp.Diagnostics.AddError(
@@ -101,14 +104,25 @@ func (r *CatalogEntityResource) Create(ctx context.Context, req resource.CreateR
 	//     return
 	// }
 
-	data.Tag = types.StringValue("tag")
+	// Sample data for now
+	data.Tag = types.StringValue("test")
+	data.Name = types.StringValue("A Test Service")
+	data.Description = types.StringValue("A test service for the Terraform provider")
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
 	tflog.Trace(ctx, "created a catalog entity")
 
+	// Set the ID in state based on the tag
+	//data.Id = data.Tag
+
 	// Save data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	//resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
+	resp.State.SetAttribute(ctx, path.Root("id"), data.Tag)
+	resp.State.SetAttribute(ctx, path.Root("tag"), data.Tag)
+	resp.State.SetAttribute(ctx, path.Root("name"), data.Name)
+	resp.State.SetAttribute(ctx, path.Root("description"), data.Description)
 }
 
 func (r *CatalogEntityResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -130,14 +144,19 @@ func (r *CatalogEntityResource) Read(ctx context.Context, req resource.ReadReque
 	// }
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	//resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
+	resp.State.SetAttribute(ctx, path.Root("id"), data.Tag)
+	resp.State.SetAttribute(ctx, path.Root("tag"), data.Tag)
+	resp.State.SetAttribute(ctx, path.Root("name"), data.Name)
+	resp.State.SetAttribute(ctx, path.Root("description"), data.Description)
 }
 
 func (r *CatalogEntityResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data *CatalogEntityResourceModel
 
 	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	//resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -152,14 +171,19 @@ func (r *CatalogEntityResource) Update(ctx context.Context, req resource.UpdateR
 	// }
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	//resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
+	resp.State.SetAttribute(ctx, path.Root("id"), data.Tag)
+	resp.State.SetAttribute(ctx, path.Root("tag"), data.Tag)
+	resp.State.SetAttribute(ctx, path.Root("name"), data.Name)
+	resp.State.SetAttribute(ctx, path.Root("description"), data.Description)
 }
 
 func (r *CatalogEntityResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *CatalogEntityResourceModel
+	//var data *CatalogEntityResourceModel
 
 	// Read Terraform prior state data into the model
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	//resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -175,5 +199,7 @@ func (r *CatalogEntityResource) Delete(ctx context.Context, req resource.DeleteR
 }
 
 func (r *CatalogEntityResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	resource.ImportStatePassthroughID(ctx, path.Root("tag"), req, resp)
+	resp.State.SetAttribute(ctx, path.Root("name"), "A Test Service")
+	resp.State.SetAttribute(ctx, path.Root("description"), "A test service for the Terraform provider")
 }

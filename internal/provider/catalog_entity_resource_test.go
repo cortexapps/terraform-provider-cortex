@@ -14,29 +14,29 @@ func TestAccCatalogEntityResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccCatalogEntityResourceConfig("one"),
+				Config: testAccCatalogEntityResourceConfig("test", "A Test Service", "A test service for the Terraform provider"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("catalog_entity.test", "name", "one"),
-					resource.TestCheckResourceAttr("catalog_entity.test", "description", "example value when not configured"),
-					resource.TestCheckResourceAttr("catalog_entity.test", "tag", "test"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "tag", "test"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "name", "A Test Service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "description", "A test service for the Terraform provider"),
 				),
 			},
 			// ImportState testing
 			{
-				ResourceName:      "catalog_entity.test",
+				ResourceName:      "cortex_catalog_entity.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				// This is not normally necessary, but is here because this
 				// example code does not have an actual upstream service.
 				// Once the Read method is able to refresh information from
 				// the upstream service, this can be removed.
-				ImportStateVerifyIgnore: []string{"name", "defaulted"},
+				ImportStateVerifyIgnore: []string{"tag", "defaulted"},
 			},
 			// Update and Read testing
 			{
-				Config: testAccCatalogEntityResourceConfig("two"),
+				Config: testAccCatalogEntityResourceConfig("test", "A Test Service", "A test service for the Terraform provider"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("catalog_entity.test", "name", "two"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "tag", "test"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -44,10 +44,12 @@ func TestAccCatalogEntityResource(t *testing.T) {
 	})
 }
 
-func testAccCatalogEntityResourceConfig(name string) string {
+func testAccCatalogEntityResourceConfig(tag string, name string, description string) string {
 	return fmt.Sprintf(`
-resource "catalog_entity" "test" {
-  name = %[1]q
+resource "cortex_catalog_entity" "test" {
+  tag = %[1]q
+  name = %[2]q
+  description = %[3]q
 }
-`, name)
+`, tag, name, description)
 }

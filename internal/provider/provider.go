@@ -2,7 +2,10 @@ package provider
 
 import (
 	"context"
-	"net/http"
+	"fmt"
+	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -42,7 +45,7 @@ func (p *CortexProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 			},
 			"token": schema.StringAttribute{
 				MarkdownDescription: "The API token used to authenticate with Cortex",
-				Optional:            false,
+				Optional:            true,
 				Sensitive:           true,
 			},
 		},
@@ -60,15 +63,29 @@ func (p *CortexProvider) Configure(ctx context.Context, req provider.ConfigureRe
 
 	// Configuration values are now available.
 	if data.BaseApiUrl.IsNull() {
-		data.BaseApiUrl = types.StringValue("https://api.getcortexapp.com/api/v1/")
+		data.BaseApiUrl = types.StringValue("api.getcortexapp.com/api/v1/")
 	}
-	if data.Token.IsNull() {
-		resp.Diagnostics.AddError("token is required", "Please specify an API token for the Cortex API")
+	if data.Token.IsUnknown() {
+		token := os.Getenv("CORTEX_API_TOKEN")
+		if token == "" {
+			resp.Diagnostics.AddAttributeError(path.Root("token"), "token is required", "Please specify an API token for the Cortex API")
+			return
+		}
+	}
+
+	// Creating a new GitLab Client from the provider configuration
+	client, err := cortex.NewClient(
+		cortex.WithContext(ctx),
+		cortex.WithURL(data.BaseApiUrl.String()),
+		cortex.WithToken(data.Token.String()),
+		cortex.WithVersion(p.version),
+	)
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to create Cortex API Client from provider configuration", fmt.Sprintf("The provider failed to create a new Cortex API Client from the given configuration: %+v", err))
 		return
 	}
 
 	// Example client configuration for data sources and resources
-	client := http.DefaultClient
 	resp.DataSourceData = client
 	resp.ResourceData = client
 }
