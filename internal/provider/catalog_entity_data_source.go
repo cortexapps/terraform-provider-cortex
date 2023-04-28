@@ -12,46 +12,49 @@ import (
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
-var _ datasource.DataSource = &ExampleDataSource{}
+var _ datasource.DataSource = &CatalogEntityDataSource{}
 
-func NewExampleDataSource() datasource.DataSource {
-	return &ExampleDataSource{}
+func NewCatalogEntityDataSource() datasource.DataSource {
+	return &CatalogEntityDataSource{}
 }
 
-// ExampleDataSource defines the data source implementation.
-type ExampleDataSource struct {
+// CatalogEntityDataSource defines the data source implementation.
+type CatalogEntityDataSource struct {
 	client *http.Client
 }
 
-// ExampleDataSourceModel describes the data source data model.
-type ExampleDataSourceModel struct {
-	ConfigurableAttribute types.String `tfsdk:"configurable_attribute"`
-	Id                    types.String `tfsdk:"id"`
+// CatalogEntityDataSourceModel describes the data source data model.
+type CatalogEntityDataSourceModel struct {
+	Tag types.String `tfsdk:"tag"`
 }
 
-func (d *ExampleDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *CatalogEntityDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_example"
 }
 
-func (d *ExampleDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *CatalogEntityDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Example data source",
+		MarkdownDescription: "Catalog Entity data source",
 
 		Attributes: map[string]schema.Attribute{
-			"configurable_attribute": schema.StringAttribute{
-				MarkdownDescription: "Example configurable attribute",
-				Optional:            true,
+			"tag": schema.StringAttribute{
+				MarkdownDescription: "Tag of the catalog entity",
+				Computed:            true,
 			},
-			"id": schema.StringAttribute{
-				MarkdownDescription: "Example identifier",
+			"name": schema.StringAttribute{
+				MarkdownDescription: "Human-readable name for the entity",
+				Computed:            true,
+			},
+			"description": schema.StringAttribute{
+				MarkdownDescription: "Description of the entity visible in the Service or Resource Catalog. Markdown is supported.",
 				Computed:            true,
 			},
 		},
 	}
 }
 
-func (d *ExampleDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *CatalogEntityDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
@@ -71,8 +74,8 @@ func (d *ExampleDataSource) Configure(ctx context.Context, req datasource.Config
 	d.client = client
 }
 
-func (d *ExampleDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data ExampleDataSourceModel
+func (d *CatalogEntityDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data CatalogEntityDataSourceModel
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -91,7 +94,7 @@ func (d *ExampleDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 	// For the purposes of this example code, hardcoding a response value to
 	// save into the Terraform state.
-	data.Id = types.StringValue("example-id")
+	data.Tag = types.StringValue("tag")
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
