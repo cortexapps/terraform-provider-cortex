@@ -5,25 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dghubble/sling"
+	"net/http"
 	"net/url"
 )
 
 const (
-	// MajorVersion is the major version
-	MajorVersion = 0
-	// MinorVersion is the minor version
-	MinorVersion = 0
-	// PatchVersion is the patch version
-	PatchVersion = 1
-
 	// UserAgentPrefix is the prefix of the User-Agent header that all terraform REST calls perform
 	UserAgentPrefix = "cortex-terraform-provider"
 )
 
-// Version is the semver of this provider
-var Version = fmt.Sprintf("%d.%d.%d", MajorVersion, MinorVersion, PatchVersion)
-
-type Client struct {
+type HttpClient struct {
 	ctx     context.Context
 	client  *sling.Sling
 	baseUrl string
@@ -31,11 +22,11 @@ type Client struct {
 	version string
 }
 
-type OptionDelegator func(c *Client) error
+type OptionDelegator func(c *HttpClient) error
 
 // NewClient initializes a new API client for Cortex
-func NewClient(opts ...OptionDelegator) (*Client, error) {
-	c := &Client{}
+func NewClient(opts ...OptionDelegator) (*HttpClient, error) {
+	c := &HttpClient{}
 	for _, f := range opts {
 		if err := f(c); err != nil {
 			return nil, err
@@ -49,8 +40,8 @@ func NewClient(opts ...OptionDelegator) (*Client, error) {
 	return c, nil
 }
 
-func WithVersion(version string) func(*Client) error {
-	return func(c *Client) error {
+func WithVersion(version string) func(*HttpClient) error {
+	return func(c *HttpClient) error {
 		if version == "" {
 			return errors.New("cannot specify empty version")
 		}
@@ -60,16 +51,16 @@ func WithVersion(version string) func(*Client) error {
 }
 
 // WithContext Specify the context for the cortex client to use.
-func WithContext(ctx context.Context) func(*Client) error {
-	return func(c *Client) error {
+func WithContext(ctx context.Context) func(*HttpClient) error {
+	return func(c *HttpClient) error {
 		c.ctx = ctx
 		return nil
 	}
 }
 
 // WithURL Specify the base URL for the cortex client to connect to.
-func WithURL(baseUrl string) func(*Client) error {
-	return func(c *Client) error {
+func WithURL(baseUrl string) func(*HttpClient) error {
+	return func(c *HttpClient) error {
 		if baseUrl == "" {
 			return errors.New("cannot specify empty API Base URL")
 		}
@@ -82,12 +73,29 @@ func WithURL(baseUrl string) func(*Client) error {
 }
 
 // WithToken Specify the API token for the cortex client to use.
-func WithToken(token string) func(*Client) error {
-	return func(c *Client) error {
+func WithToken(token string) func(*HttpClient) error {
+	return func(c *HttpClient) error {
 		if token == "" {
 			return errors.New("cannot specify empty token")
 		}
 		c.token = token
 		return nil
+	}
+}
+
+func (c *HttpClient) Teams() TeamsClient {
+	return TeamsClient{client: c}
+}
+
+func (c *HttpClient) handleResponseStatus(response *http.Response, apiError *ApiError) error {
+	switch code := response.StatusCode; {
+	case code >= 200 && code <= 299:
+		return nil
+	case code == 404:
+		return ApiErrorNotFound
+	case code == 401:
+		return fmt.Errorf("%s\n%s", ApiErrorUnauthorized, apiError)
+	default:
+		return fmt.Errorf("%d request failed with error\n%s", code, apiError)
 	}
 }

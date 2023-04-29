@@ -63,7 +63,7 @@ func (p *CortexProvider) Configure(ctx context.Context, req provider.ConfigureRe
 
 	// Configuration values are now available.
 	if data.BaseApiUrl.IsNull() {
-		data.BaseApiUrl = types.StringValue("api.getcortexapp.com/api/v1/")
+		data.BaseApiUrl = types.StringValue("api.getcortexapp.com/api/")
 	}
 	if data.Token.IsUnknown() {
 		token := os.Getenv("CORTEX_API_TOKEN")
