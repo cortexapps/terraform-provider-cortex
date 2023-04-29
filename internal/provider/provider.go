@@ -93,12 +93,14 @@ func (p *CortexProvider) Configure(ctx context.Context, req provider.ConfigureRe
 func (p *CortexProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewCatalogEntityResource,
+		NewTeamResource,
 	}
 }
 
 func (p *CortexProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewCatalogEntityDataSource,
+		NewTeamDataSource,
 	}
 }
 
