@@ -8,6 +8,7 @@ import (
 
 type TeamsClientInterface interface {
 	Get(ctx context.Context, teamTag string) (*TeamResponse, error)
+	List(ctx context.Context, params *TeamListParams) (*TeamsResponse, error)
 }
 
 type TeamsClient struct {
@@ -59,11 +60,11 @@ type TeamsResponse struct {
 }
 
 // List retrieves a list of teams based on a team query
-func (c *TeamsClient) List(ctx context.Context, req *TeamListParams) (*TeamsResponse, error) {
+func (c *TeamsClient) List(ctx context.Context, params *TeamListParams) (*TeamsResponse, error) {
 	teamsResponse := &TeamsResponse{}
 	apiError := &ApiError{}
 
-	response, err := c.Client().Get("/v1/teams").QueryStruct(req).Receive(teamsResponse, apiError)
+	response, err := c.Client().Get("/v1/teams").QueryStruct(params).Receive(teamsResponse, apiError)
 	if err != nil {
 		return nil, errors.New("could not get teams: " + err.Error())
 	}
