@@ -20,7 +20,7 @@ func NewCatalogEntityDataSource() datasource.DataSource {
 
 // CatalogEntityDataSource defines the data source implementation.
 type CatalogEntityDataSource struct {
-	client *cortex.Client
+	client *cortex.HttpClient
 }
 
 // CatalogEntityDataSourceModel describes the data source data model.
@@ -69,7 +69,7 @@ func (d *CatalogEntityDataSource) Configure(ctx context.Context, req datasource.
 		return
 	}
 
-	client, ok := req.ProviderData.(*cortex.Client)
+	client, ok := req.ProviderData.(*cortex.HttpClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(

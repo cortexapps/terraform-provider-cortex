@@ -21,7 +21,7 @@ func NewCatalogEntityResource() resource.Resource {
 
 // CatalogEntityResource defines the resource implementation.
 type CatalogEntityResource struct {
-	client *cortex.Client
+	client *cortex.HttpClient
 }
 
 // CatalogEntityResourceModel describes the resource data model.
@@ -72,7 +72,7 @@ func (r *CatalogEntityResource) Configure(ctx context.Context, req resource.Conf
 		return
 	}
 
-	client, ok := req.ProviderData.(*cortex.Client)
+	client, ok := req.ProviderData.(*cortex.HttpClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(

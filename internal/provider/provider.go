@@ -17,6 +17,8 @@ import (
 // Ensure CortexProvider satisfies various provider interfaces.
 var _ provider.Provider = &CortexProvider{}
 
+const DefaultBaseApiUrl = "https://api.getcortexapp.com/"
+
 // CortexProvider defines the provider implementation.
 type CortexProvider struct {
 	// version is set to the provider version on release, "dev" when the
@@ -63,21 +65,25 @@ func (p *CortexProvider) Configure(ctx context.Context, req provider.ConfigureRe
 
 	// Configuration values are now available.
 	if data.BaseApiUrl.IsNull() {
-		data.BaseApiUrl = types.StringValue("api.getcortexapp.com/api/")
+		baseApiUrl := os.Getenv("CORTEX_API_URL")
+		if baseApiUrl == "" {
+			data.BaseApiUrl = types.StringValue(DefaultBaseApiUrl)
+		}
 	}
-	if data.Token.IsUnknown() {
+	if data.Token.IsUnknown() || data.Token.ValueString() == "" {
 		token := os.Getenv("CORTEX_API_TOKEN")
 		if token == "" {
 			resp.Diagnostics.AddAttributeError(path.Root("token"), "token is required", "Please specify an API token for the Cortex API")
 			return
 		}
+		data.Token = types.StringValue(token)
 	}
 
 	// Creating a new GitLab Client from the provider configuration
 	client, err := cortex.NewClient(
 		cortex.WithContext(ctx),
-		cortex.WithURL(data.BaseApiUrl.String()),
-		cortex.WithToken(data.Token.String()),
+		cortex.WithURL(data.BaseApiUrl.ValueString()),
+		cortex.WithToken(data.Token.ValueString()),
 		cortex.WithVersion(p.version),
 	)
 	if err != nil {

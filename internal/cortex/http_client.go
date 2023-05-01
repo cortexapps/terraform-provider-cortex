@@ -14,6 +14,10 @@ const (
 	UserAgentPrefix = "cortex-terraform-provider"
 )
 
+var BaseUris = map[string]string{
+	"teams": "/api/v1/teams/",
+}
+
 type HttpClient struct {
 	ctx     context.Context
 	client  *sling.Sling
@@ -83,10 +87,6 @@ func WithToken(token string) func(*HttpClient) error {
 	}
 }
 
-func (c *HttpClient) Teams() TeamsClient {
-	return TeamsClient{client: c}
-}
-
 func (c *HttpClient) handleResponseStatus(response *http.Response, apiError *ApiError) error {
 	switch code := response.StatusCode; {
 	case code >= 200 && code <= 299:
@@ -98,4 +98,17 @@ func (c *HttpClient) handleResponseStatus(response *http.Response, apiError *Api
 	default:
 		return fmt.Errorf("%d request failed with error\n%s", code, apiError)
 	}
+}
+
+func (c *HttpClient) Ping(ctx context.Context) error {
+	apiError := new(ApiError)
+	response, err := c.client.Get("/").Receive(nil, apiError)
+	if err != nil {
+		return err
+	}
+	return c.handleResponseStatus(response, apiError)
+}
+
+func (c *HttpClient) Teams() TeamsClientInterface {
+	return &TeamsClient{client: c}
 }

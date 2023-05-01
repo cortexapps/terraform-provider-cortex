@@ -3,6 +3,7 @@ package provider
 import (
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"os"
 	"testing"
 )
 
@@ -18,4 +19,7 @@ func testAccPreCheck(t *testing.T) {
 	// You can add code here to run prior to any test case execution, for example assertions
 	// about the appropriate environment variables being set are common to see in a pre-check
 	// function.
+	if v := os.Getenv("CORTEX_API_TOKEN"); v == "" {
+		t.Fatalf("Missing required environment variable: %s", "CORTEX_API_TOKEN")
+	}
 }

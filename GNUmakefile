@@ -9,11 +9,12 @@ GOARCH?=$(shell go tool dist env | grep GOARCH | grep -o '".*"' | sed 's/"//g')
 OS_ARCH?=$(GOOS)_$(GOARCH)
 
 TF_LOG ?= "WARN"
+CORTEX_API_TOKEN ?= "set-me-in-env"
 
-default: testacc
+default: test
 
-# Run acceptance tests
-.PHONY: testacc
+# Run tests
+.PHONY: test
 
 build:
 	go build -o ./bin/${BINARY} -ldflags="-X 'main.version=${VERSION}'"
@@ -27,10 +28,12 @@ install: build
 	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 	mv ./bin/${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 
+# unit tests
 test:
 	go clean -testcache
-	go test ./...
+	go test -v -cover ./...
 
+# acceptance tests
 testacc:
 	go clean -testcache
-	TF_LOG=$(TF_LOG) TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m
+	CORTEX_API_TOKEN=$(CORTEX_API_TOKEN) TF_LOG=$(TF_LOG) TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m

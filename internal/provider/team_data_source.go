@@ -6,9 +6,7 @@ import (
 	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -20,7 +18,7 @@ func NewTeamDataSource() datasource.DataSource {
 
 // TeamDataSource defines the data source implementation.
 type TeamDataSource struct {
-	client *cortex.Client
+	client *cortex.HttpClient
 }
 
 // TeamDataSourceModel describes the data source data model.
@@ -59,7 +57,7 @@ func (d *TeamDataSource) Configure(ctx context.Context, req datasource.Configure
 		return
 	}
 
-	client, ok := req.ProviderData.(*cortex.Client)
+	client, ok := req.ProviderData.(*cortex.HttpClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(
@@ -83,26 +81,14 @@ func (d *TeamDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := d.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read example, got error: %s", err))
-	//     return
-	// }
+	teamResponse, err := d.client.Teams().Get(ctx, data.TeamTag.String())
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read team, got error: %s", err))
+		return
+	}
+	data.Id = types.StringValue(teamResponse.TeamTag)
+	data.TeamTag = types.StringValue(teamResponse.TeamTag)
 
-	// For the purposes of this example code, hardcoding a response value to
-	// save into the Terraform state.
-	data.TeamTag = types.StringValue("engineering")
-
-	// Write logs using the tflog package
-	// Documentation: https://terraform.io/plugin/log
-	tflog.Trace(ctx, "read a team data source")
-
-	// Set the ID in state based on the teamTag
-	resp.State.SetAttribute(ctx, path.Root("id"), data.TeamTag)
-	resp.State.SetAttribute(ctx, path.Root("team_tag"), data.TeamTag)
-
-	// Save data into Terraform state
-	//resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	// Write to TF state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
