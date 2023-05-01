@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v3"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -83,6 +84,22 @@ func AssertRequestBody(t *testing.T, src interface{}) RequestTest {
 			assert.Nil(t, err, "could not read request body")
 
 			assert.True(t, bytes.Equal(buf.Bytes(), b), "expected request body to be %s, got %s", buf.String(), string(b))
+		})
+	}
+}
+
+func AssertRequestBodyYaml(t *testing.T, src interface{}) RequestTest {
+	return func(req *http.Request) {
+		t.Run("AssertRequestBodyRaw", func(t *testing.T) {
+			bodyIo := io.NopCloser(req.Body)
+
+			buf := new(bytes.Buffer)
+			err := yaml.NewEncoder(buf).Encode(src)
+			assert.Nil(t, err, "could not encode YAML")
+
+			b, err := io.ReadAll(bodyIo)
+			assert.Nil(t, err, "could not read request body")
+			assert.Equal(t, buf.String(), string(b), "expected request body to be %s, got %s", buf.String(), string(b))
 		})
 	}
 }

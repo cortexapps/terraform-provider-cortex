@@ -89,7 +89,7 @@ func (c *TeamsClient) Get(ctx context.Context, teamTag string) (*Team, error) {
 
 	err = c.client.handleResponseStatus(response, apiError)
 	if err != nil {
-		return teamResponse, errors.Join(errors.New("Failed creating team: "), err)
+		return teamResponse, errors.Join(errors.New("Failed getting team: "), err)
 	}
 
 	return teamResponse, nil
