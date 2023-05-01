@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -51,7 +52,8 @@ func TestClientInitialization(t *testing.T) {
 
 	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		token = req.Header.Get("Authorization")
-		w.Write([]byte(pingResponseJSON))
+		length, _ := w.Write([]byte(pingResponseJSON))
+		assert.Greater(t, length, 0)
 	})
 	ts := httptest.NewServer(h)
 	defer ts.Close()
@@ -59,19 +61,13 @@ func TestClientInitialization(t *testing.T) {
 	testToken := "testing-123"
 	c, err := NewClient(WithURL(ts.URL), WithToken(testToken))
 
-	if err != nil {
-		t.Fatalf("Received error initializing API client: %s", err.Error())
-		return
-	}
+	assert.Nil(t, err, "received error initializing API client")
 
 	err = c.Ping(context.Background())
-	if err != nil {
-		t.Fatalf("Received error hitting Ping endpoint: %s", err.Error())
-	}
+	assert.Nil(t, err, "Received error hitting Ping endpoint")
 
-	if expected := "Bearer " + testToken; expected != token {
-		t.Fatalf("Expected %s, Got: %s for bearer token", expected, token)
-	}
+	expectedAuthString := fmt.Sprintf("Bearer %s", testToken)
+	assert.Equal(t, expectedAuthString, token, "Expected auth string to be %s, got %s", expectedAuthString, token)
 }
 
 func AssertRequestBody(t *testing.T, src interface{}) RequestTest {
@@ -81,18 +77,12 @@ func AssertRequestBody(t *testing.T, src interface{}) RequestTest {
 
 			buf := new(bytes.Buffer)
 			err := json.NewEncoder(buf).Encode(src)
-			if err != nil {
-				t.Fatalf("could not encode JSON: %s", err)
-			}
+			assert.Nil(t, err, "could not encode JSON")
 
 			b, err := io.ReadAll(body)
-			if err != nil {
-				t.Fatalf("could not read request body: %s", err)
-			}
+			assert.Nil(t, err, "could not read request body")
 
-			if !bytes.Equal(buf.Bytes(), b) {
-				t.Fatalf("expected request body to be %s, got %s", buf.String(), string(b))
-			}
+			assert.True(t, bytes.Equal(buf.Bytes(), b), "expected request body to be %s, got %s", buf.String(), string(b))
 		})
 	}
 }
@@ -100,9 +90,7 @@ func AssertRequestBody(t *testing.T, src interface{}) RequestTest {
 func AssertRequestMethod(t *testing.T, method string) RequestTest {
 	return func(req *http.Request) {
 		t.Run("AssertRequestMethod", func(t *testing.T) {
-			if method != req.Method {
-				t.Fatalf("expected request method to be %s, got %s", method, req.Method)
-			}
+			assert.Equal(t, method, req.Method, "expected request method to be %s, got %s", method, req.Method)
 		})
 	}
 }

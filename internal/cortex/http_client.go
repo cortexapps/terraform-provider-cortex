@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	// UserAgentPrefix is the prefix of the User-Agent header that all terraform REST calls perform
+	// UserAgentPrefix is the prefix of the User-Agent header that all terraform REST calls perform.
 	UserAgentPrefix = "cortex-terraform-provider"
 )
 
@@ -28,7 +28,7 @@ type HttpClient struct {
 
 type OptionDelegator func(c *HttpClient) error
 
-// NewClient initializes a new API client for Cortex
+// NewClient initializes a new API client for Cortex.
 func NewClient(opts ...OptionDelegator) (*HttpClient, error) {
 	c := &HttpClient{}
 	for _, f := range opts {

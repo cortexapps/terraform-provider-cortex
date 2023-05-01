@@ -2,123 +2,186 @@ package cortex
 
 import (
 	"context"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
+var testTeamResponse = &Team{
+	TeamTag:    "test-team",
+	IsArchived: false,
+	Metadata: TeamMetadata{
+		Name:        "Test Team",
+		Description: "A test team",
+		Summary:     "A short summary about the team",
+	},
+	SlackChannels: []TeamSlackChannel{
+		{
+			Name:                 "#test-dev",
+			NotificationsEnabled: false,
+		},
+		{
+			Name:                 "#test-alerts",
+			NotificationsEnabled: true,
+		},
+	},
+	Links: []TeamLink{
+		{
+			Name: "Test Link",
+			Url:  "https://cortexapp.com",
+		},
+	},
+}
+
 func TestGetTeam(t *testing.T) {
-	resp := &TeamResponse{}
-	testTeamTag := "test-team-id"
+	testTeamTag := "test-team"
+	resp := testTeamResponse
 	c, teardown, err := setupClient(BaseUris["teams"]+testTeamTag, resp, AssertRequestMethod(t, "GET"))
-	if err != nil {
-		t.Fatalf("could not setup client: %v", err)
-	}
+	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
 	res, err := c.Teams().Get(context.Background(), testTeamTag)
-	if err != nil {
-		t.Fatalf("error retrieving a team: %v", err)
-	}
-	if resp.TeamTag != res.TeamTag {
-		t.Fatalf("returned TeamTag did not match")
-	}
+	assert.Nil(t, err, "error retrieving a team")
+	assert.Equal(t, resp, res)
 }
 
 func TestListTeams(t *testing.T) {
+	firstTeamTag := "test-team"
 	resp := &TeamsResponse{
-		Teams: []TeamResponse{
-			{
-				TeamTag: "test-team",
-			},
+		Teams: []Team{
+			*testTeamResponse,
 		},
 	}
 	c, teardown, err := setupClient(BaseUris["teams"], resp, AssertRequestMethod(t, "GET"))
-	if err != nil {
-		t.Fatalf("could not setup client: %v", err)
-	}
+	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
 	var queryParams TeamListParams
 	res, err := c.Teams().List(context.Background(), &queryParams)
-	if err != nil {
-		t.Fatalf("error retrieving a team: %v", err)
-	}
-	if len(res.Teams) <= 0 {
-		t.Fatalf("returned no teams: %s", res)
-	}
-	if res.Teams[0].TeamTag != "test-team" {
-		t.Fatalf("returned TeamTag did not match: %s", res.Teams[0].TeamTag)
-	}
+	assert.Nil(t, err, "error retrieving a team")
+	assert.NotEmpty(t, res.Teams, "returned no teams")
+	assert.Equal(t, res.Teams[0].TeamTag, firstTeamTag)
 }
 
 func TestCreateTeam(t *testing.T) {
+	teamTag := "test-team"
 	req := CreateTeamRequest{
-		TeamTag: "fake-team",
+		TeamTag: teamTag,
+		AdditionalMembers: []TeamMember{
+			{
+				Name:        "Test Member",
+				Description: "A test member",
+				Email:       "test@cortex.io",
+			},
+		},
+		Metadata: TeamMetadata{
+			Name:        "Test Team",
+			Description: "A test team",
+			Summary:     "A short summary about the team",
+		},
+		SlackChannels: []TeamSlackChannel{
+			{
+				Name:                 "#test-dev",
+				NotificationsEnabled: false,
+			},
+			{
+				Name:                 "#test-alerts",
+				NotificationsEnabled: true,
+			},
+		},
+		Links: []TeamLink{
+			{
+				Name: "Test Link",
+				Url:  "https://cortexapp.com",
+			},
+		},
 	}
 	c, teardown, err := setupClient(
 		BaseUris["teams"],
-		TeamResponse{
-			TeamTag: "fake-team",
-		},
+		testTeamResponse,
 		AssertRequestMethod(t, "POST"),
 		AssertRequestBody(t, req),
 	)
-	if err != nil {
-		t.Fatalf("could not setup client: %v", err)
-	}
+	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
 	res, err := c.Teams().Create(context.Background(), req)
-	if err != nil {
-		t.Fatalf("error creating a team: %v", err)
-	}
-
-	if res.TeamTag != req.TeamTag {
-		t.Fatalf("returned TeamTag did not match: %s != %s", res, req.TeamTag)
-	}
+	assert.Nil(t, err, "error creating a team")
+	assert.Equal(t, res.TeamTag, teamTag)
 }
 
 func TestUpdateTeam(t *testing.T) {
-	req := UpdateTeamRequest{}
+	req := UpdateTeamRequest{
+		AdditionalMembers: []TeamMember{
+			{
+				Name:        "Test Member",
+				Description: "A test member",
+				Email:       "test@cortex.io",
+			},
+		},
+		Metadata: TeamMetadata{
+			Name:        "Test Team",
+			Description: "A test team",
+			Summary:     "A short summary about the team",
+		},
+		SlackChannels: []TeamSlackChannel{
+			{
+				Name:                 "#test-dev",
+				NotificationsEnabled: false,
+			},
+			{
+				Name:                 "#test-alerts",
+				NotificationsEnabled: true,
+			},
+		},
+		Links: []TeamLink{
+			{
+				Name: "Test Link",
+				Url:  "https://cortexapp.com",
+			},
+		},
+	}
 	teamTag := "test-team"
 
 	c, teardown, err := setupClient(
 		BaseUris["teams"],
-		TeamResponse{
-			TeamTag: teamTag,
-		},
+		testTeamResponse,
 		AssertRequestMethod(t, "PUT"),
 		AssertRequestBody(t, req),
 	)
-	if err != nil {
-		t.Fatalf("could not setup client: %v", err)
-	}
+	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
 	res, err := c.Teams().Update(context.Background(), teamTag, req)
-	if err != nil {
-		t.Fatalf("error updating a team: %v", err)
-	}
-
-	if res.TeamTag != teamTag {
-		t.Fatalf("returned TeamTag did not match: %s != %s", res.TeamTag, teamTag)
-	}
+	assert.Nil(t, err, "error updating a team")
+	assert.Equal(t, res.TeamTag, teamTag)
 }
 
-func TestDeleteTeam(t *testing.T) {
+func TestArchiveTeam(t *testing.T) {
 	teamTag := "test-team"
 
 	c, teardown, err := setupClient(
 		BaseUris["teams"],
-		DeleteTeamResponse{},
+		ArchiveTeamResponse{},
 		AssertRequestMethod(t, "DELETE"),
 	)
-	if err != nil {
-		t.Fatalf("could not setup client: %v", err)
-	}
+	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
-	err = c.Teams().Delete(context.Background(), teamTag)
-	if err != nil {
-		t.Fatalf("error deleting a team: %v", err)
-	}
+	err = c.Teams().Archive(context.Background(), teamTag)
+	assert.Nil(t, err, "error archiving a team")
+}
+
+func TestUnarchiveTeam(t *testing.T) {
+	teamTag := "test-team"
+
+	c, teardown, err := setupClient(
+		BaseUris["teams"]+teamTag+"/unarchive",
+		UnarchiveTeamResponse{},
+		AssertRequestMethod(t, "PUT"),
+	)
+	assert.Nil(t, err, "could not setup client")
+	defer teardown()
+
+	err = c.Teams().Unarchive(context.Background(), teamTag)
+	assert.Nil(t, err, "error unarchiving a team")
 }
