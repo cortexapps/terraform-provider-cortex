@@ -74,5 +74,6 @@ jobs:
       - run: go mod download
       - env:
           TF_ACC: "0" # for now, leave off
+          CORTEX_API_TOKEN: "changeme"
         run: go test -v -cover ./... # later, change to: ./internal/provider/
         timeout-minutes: 10
