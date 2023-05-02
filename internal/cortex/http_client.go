@@ -18,6 +18,7 @@ var BaseUris = map[string]string{
 	"teams":            "/api/v1/teams/",
 	"scorecards":       "/api/v1/scorecards/",
 	"catalog_entities": "/api/v1/catalog/",
+	"open_api":         "/api/v1/open-api",
 }
 
 type HttpClient struct {
@@ -115,6 +116,10 @@ func (c *HttpClient) Ping(ctx context.Context) error {
 
 func (c *HttpClient) CatalogEntities() CatalogEntitiesClientInterface {
 	return &CatalogEntitiesClient{client: c}
+}
+
+func (c *HttpClient) CatalogEntityCustomData() CatalogEntityCustomDataClientInterface {
+	return &CatalogEntityCustomDataClient{client: c}
 }
 
 func (c *HttpClient) Teams() TeamsClientInterface {

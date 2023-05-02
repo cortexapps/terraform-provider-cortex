@@ -3,6 +3,7 @@ package cortex
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/dghubble/sling"
 )
 
@@ -64,6 +65,27 @@ type CatalogEntityLink struct {
 	Url  string `json:"url" yaml:"url"`
 }
 
+// CatalogEntityDefinition Required for non-service catalog entities
+type CatalogEntityDefinition struct {
+	Version      string `json:"version" yaml:"version"`
+	Distribution string `json:"distribution" yaml:"distribution"`
+}
+
+type CatalogEntityViolation struct {
+	Description   string   `json:"description"`
+	ViolationType string   `json:"violationType"`
+	StartLine     int      `json:"startLine"`
+	EndLine       int      `json:"endLine"`
+	Paths         []string `json:"paths"`
+	Pointer       string   `json:"pointer"`
+	RuleLink      string   `json:"ruleLink"`
+	Title         string   `json:"title"`
+}
+
+func (v *CatalogEntityViolation) String() string {
+	return fmt.Sprintf("%s (%s): %s (L%d:L%d) - %s", v.Title, v.ViolationType, v.Description, v.StartLine, v.EndLine, v.Pointer)
+}
+
 /***********************************************************************************************************************
  * GET /api/v1/catalog/:tag
  **********************************************************************************************************************/
@@ -116,6 +138,68 @@ func (c *CatalogEntitiesClient) List(ctx context.Context, params *CatalogEntityL
 	}
 
 	return entitiesResponse, nil
+}
+
+/***********************************************************************************************************************
+ * POST /api/v1/open-api
+ **********************************************************************************************************************/
+
+type UpsertCatalogEntityRequest struct {
+	Info    CatalogEntityData `json:"info"`
+	OpenApi string            `json:"openapi"`
+}
+
+type UpsertCatalogEntityResponse struct {
+	Ok         bool                     `json:"ok"`
+	Violations []CatalogEntityViolation `json:"violations"`
+}
+
+// CatalogEntityData is a struct used in upsert requests in the `info` parameter, since its structure does not
+// match the structure of the CatalogEntity struct in responses.
+type CatalogEntityData struct {
+	Title       string                  `json:"title"`
+	Description string                  `json:"description,omitempty"`
+	Tag         string                  `json:"x-cortex-tag"`
+	Ownership   CatalogEntityOwnership  `json:"x-cortex-owners,omitempty"`
+	Groups      []string                `json:"x-cortex-groups,omitempty"` // TODO: is this -groups or -service-groups? docs unclear
+	Links       []CatalogEntityLink     `json:"x-cortex-link,omitempty"`
+	Metadata    map[string]interface{}  `json:"x-cortex-custom-metadata,omitempty"`
+	Type        string                  `json:"x-cortex-type,omitempty"`
+	Definition  CatalogEntityDefinition `json:"x-cortex-definition,omitempty"`
+	Git         CatalogEntityGit        `json:"x-cortex-git,omitempty"`
+	OnCall      CatalogEntityOnCall     `json:"x-cortex-oncall,omitempty"`
+}
+
+func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEntityRequest) (*CatalogEntity, error) {
+	entity := &CatalogEntity{}
+	upsertResponse := &UpsertCatalogEntityResponse{
+		Ok:         false,
+		Violations: []CatalogEntityViolation{},
+	}
+	apiError := &ApiError{}
+
+	response, err := c.Client().Post(BaseUris["open_api"]).BodyJSON(req).Receive(upsertResponse, apiError)
+	if err != nil {
+		return entity, errors.New("could not upsert catalog entity: " + err.Error())
+	}
+
+	err = c.client.handleResponseStatus(response, apiError)
+	if err != nil {
+		return entity, err
+	}
+
+	// coerce violations into an error
+	if len(upsertResponse.Violations) > 0 {
+		o := ""
+		for _, v := range upsertResponse.Violations {
+			o += v.String() + "\n"
+		}
+		return entity, errors.New(o)
+	}
+
+	// re-fetch the catalog entity, since it's not returned here
+	entity, err = c.Get(ctx, req.Info.Tag)
+	return entity, err
 }
 
 /***********************************************************************************************************************
