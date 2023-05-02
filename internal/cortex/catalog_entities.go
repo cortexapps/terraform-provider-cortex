@@ -160,14 +160,29 @@ type CatalogEntityData struct {
 	Title       string                  `json:"title"`
 	Description string                  `json:"description,omitempty"`
 	Tag         string                  `json:"x-cortex-tag"`
-	Ownership   CatalogEntityOwnership  `json:"x-cortex-owners,omitempty"`
+	Ownership   []CatalogEntityOwner    `json:"x-cortex-owners,omitempty"`
 	Groups      []string                `json:"x-cortex-groups,omitempty"` // TODO: is this -groups or -service-groups? docs unclear
 	Links       []CatalogEntityLink     `json:"x-cortex-link,omitempty"`
 	Metadata    map[string]interface{}  `json:"x-cortex-custom-metadata,omitempty"`
 	Type        string                  `json:"x-cortex-type,omitempty"`
 	Definition  CatalogEntityDefinition `json:"x-cortex-definition,omitempty"`
-	Git         CatalogEntityGit        `json:"x-cortex-git,omitempty"`
-	OnCall      CatalogEntityOnCall     `json:"x-cortex-oncall,omitempty"`
+
+	// Various generic integration attributes
+	Alerts         []CatalogEntityAlert        `json:"x-cortex-alerts,omitempty"`
+	Apm            CatalogEntityApm            `json:"x-cortex-apm,omitempty"`
+	Dashboards     CatalogEntityDashboards     `json:"x-cortex-dashboards,omitempty"`
+	Git            CatalogEntityGit            `json:"x-cortex-git,omitempty"`
+	Issues         CatalogEntityIssues         `json:"x-cortex-issues,omitempty"`
+	OnCall         CatalogEntityOnCall         `json:"x-cortex-oncall,omitempty"`
+	SLOs           CatalogEntitySLOs           `json:"x-cortex-slos,omitempty"`
+	StaticAnalysis CatalogEntityStaticAnalysis `json:"x-cortex-static-analysis,omitempty"`
+
+	// Integration-specific things
+	BugSnag   CatalogEntityBugSnag   `json:"x-cortex-bugsnag,omitempty"`
+	Checkmarx CatalogEntityCheckmarx `json:"x-cortex-checkmarx,omitempty"`
+	Rollbar   CatalogEntityRollbar   `json:"x-cortex-rollbar,omitempty"`
+	Sentry    CatalogEntitySentry    `json:"x-cortex-sentry,omitempty"`
+	Snyk      CatalogEntitySnyk      `json:"x-cortex-snyk,omitempty"`
 }
 
 func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEntityRequest) (*CatalogEntity, error) {
