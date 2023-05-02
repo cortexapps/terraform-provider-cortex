@@ -65,7 +65,7 @@ type CatalogEntityLink struct {
 	Url  string `json:"url" yaml:"url"`
 }
 
-// CatalogEntityDefinition Required for non-service catalog entities
+// CatalogEntityDefinition Required for non-service catalog entities.
 type CatalogEntityDefinition struct {
 	Version      string `json:"version" yaml:"version"`
 	Distribution string `json:"distribution" yaml:"distribution"`
