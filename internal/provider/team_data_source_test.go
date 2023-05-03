@@ -15,7 +15,7 @@ func TestAccTeamDataSource(t *testing.T) {
 			{
 				Config: testAccTeamDataSourceConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.cortex_team.engineering", "team_tag", "engineering"),
+					resource.TestCheckResourceAttr("data.cortex_team.engineering", "tag", "engineering"),
 				),
 			},
 		},
@@ -24,6 +24,6 @@ func TestAccTeamDataSource(t *testing.T) {
 
 const testAccTeamDataSourceConfig = `
 data "cortex_team" "engineering" {
-  team_tag = "engineering"
+  tag = "engineering"
 }
 `

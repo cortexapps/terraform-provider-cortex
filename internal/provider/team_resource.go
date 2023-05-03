@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -19,20 +18,49 @@ func NewTeamResource() resource.Resource {
 	return &TeamResource{}
 }
 
+/***********************************************************************************************************************
+ * Types
+ **********************************************************************************************************************/
+
 // TeamResource defines the resource implementation.
 type TeamResource struct {
 	client *cortex.HttpClient
 }
 
-// TeamResourceModel describes the resource data model.
+// TeamResourceModel describes the team data model within Terraform.
 type TeamResourceModel struct {
-	Id      types.String `tfsdk:"id"`
-	TeamTag types.String `tfsdk:"team_tag"`
+	Id                types.String                        `tfsdk:"id"`
+	Tag               types.String                        `tfsdk:"tag"`
+	Name              types.String                        `tfsdk:"name"`
+	Description       types.String                        `tfsdk:"description"`
+	Summary           types.String                        `tfsdk:"summary"`
+	Archived          types.Bool                          `tfsdk:"archived"`
+	Links             []TeamLinkResourceModel             `tfsdk:"links"`
+	SlackChannels     []TeamSlackChannelResourceModel     `tfsdk:"slack_channels"`
+	AdditionalMembers []TeamAdditionalMemberResourceModel `tfsdk:"additional_members"`
 }
 
-func (r *TeamResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_team"
+type TeamLinkResourceModel struct {
+	Name        types.String `tfsdk:"name"`
+	Type        types.String `tfsdk:"type"`
+	Url         types.String `tfsdk:"url"`
+	Description types.String `tfsdk:"description,omitempty"`
 }
+
+type TeamSlackChannelResourceModel struct {
+	Name                 types.String `tfsdk:"name"`
+	NotificationsEnabled types.Bool   `tfsdk:"notifications_enabled"`
+}
+
+type TeamAdditionalMemberResourceModel struct {
+	Name        types.String `tfsdk:"name"`
+	Email       types.String `tfsdk:"email"`
+	Description types.String `tfsdk:"description,omitempty"`
+}
+
+/***********************************************************************************************************************
+ * Schema
+ **********************************************************************************************************************/
 
 func (r *TeamResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
@@ -40,20 +68,97 @@ func (r *TeamResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		MarkdownDescription: "Team Entity",
 
 		Attributes: map[string]schema.Attribute{
-			"team_tag": schema.StringAttribute{
+			// Required attributes
+			"tag": schema.StringAttribute{
 				MarkdownDescription: "Unique identifier for the team.",
 				Required:            true,
 				//PlanModifiers: []planmodifier.String{
 				//	stringplanmodifier.UseStateForUnknown(),
 				//},
 			},
+			"name": schema.StringAttribute{
+				MarkdownDescription: "Name of the team.",
+				Required:            true,
+			},
 
-			//Computed
+			// Optional attributes
+			"description": schema.StringAttribute{
+				MarkdownDescription: "Description of the team.",
+				Optional:            true,
+			},
+			"summary": schema.StringAttribute{
+				MarkdownDescription: "Summary of the team.",
+				Optional:            true,
+			},
+
+			// Computed attributes
 			"id": schema.StringAttribute{
 				Computed: true,
 			},
 		},
+		Blocks: map[string]schema.Block{
+			"link": schema.ListNestedBlock{
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							MarkdownDescription: "Name of the link.",
+							Required:            true,
+						},
+						"type": schema.StringAttribute{
+							MarkdownDescription: "Type of link.",
+							Required:            true,
+						},
+						"url": schema.StringAttribute{
+							MarkdownDescription: "URL of the link.",
+							Required:            true,
+						},
+						"description": schema.StringAttribute{
+							MarkdownDescription: "A short description of the link.",
+							Optional:            true,
+						},
+					},
+				},
+			},
+			"slack_channel": schema.ListNestedBlock{
+				MarkdownDescription: "A list of Slack channels related to the team.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							MarkdownDescription: "Name of the Slack channel.",
+							Required:            true,
+						},
+						"notifications_enabled": schema.BoolAttribute{
+							MarkdownDescription: "Whether notifications are enabled for the Slack channel.",
+							Optional:            true,
+						},
+					},
+				},
+			},
+			"additional_member": schema.ListNestedBlock{
+				MarkdownDescription: "A list of additional members, outside of the IdP group. Use this field to add members like managers, PMs, etc.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							MarkdownDescription: "Name of the member.",
+							Required:            true,
+						},
+						"notifications_enabled": schema.BoolAttribute{
+							MarkdownDescription: "Whether notifications are enabled for the Slack channel.",
+							Optional:            true,
+						},
+					},
+				},
+			},
+		},
 	}
+}
+
+/***********************************************************************************************************************
+ * Methods
+ **********************************************************************************************************************/
+
+func (r *TeamResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_team"
 }
 
 func (r *TeamResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -76,41 +181,6 @@ func (r *TeamResource) Configure(ctx context.Context, req resource.ConfigureRequ
 	r.client = client
 }
 
-func (r *TeamResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data *TeamResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create example, got error: %s", err))
-	//     return
-	// }
-
-	// Sample data for now
-	data.TeamTag = types.StringValue("engineering")
-
-	// Write logs using the tflog package
-	// Documentation: https://terraform.io/plugin/log
-	tflog.Trace(ctx, "created a team")
-
-	// Set the ID in state based on the tag
-	//data.Id = data.Tag
-
-	// Save data into Terraform state
-	//resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-
-	resp.State.SetAttribute(ctx, path.Root("id"), data.TeamTag)
-	resp.State.SetAttribute(ctx, path.Root("team_tag"), data.TeamTag)
-}
-
 func (r *TeamResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *TeamResourceModel
 
@@ -122,7 +192,7 @@ func (r *TeamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Issue API request
-	teamResponse, err := r.client.Teams().Get(ctx, data.TeamTag.String())
+	teamResponse, err := r.client.Teams().Get(ctx, data.Tag.String())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read team, got error: %s", err))
 		return
@@ -130,10 +200,78 @@ func (r *TeamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	// Map data from the API response to the model
 	data.Id = types.StringValue(teamResponse.TeamTag)
-	data.TeamTag = types.StringValue(teamResponse.TeamTag)
+	data.Tag = types.StringValue(teamResponse.TeamTag)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// Create Creates a new team.
+func (r *TeamResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data *TeamResourceModel
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var links []cortex.TeamLink
+	for _, link := range data.Links {
+		links = append(links, cortex.TeamLink{
+			Name:        link.Name.String(),
+			Type:        link.Type.String(),
+			Url:         link.Url.String(),
+			Description: link.Description.String(),
+		})
+	}
+
+	var slackChannels []cortex.TeamSlackChannel
+	for _, channel := range data.SlackChannels {
+		slackChannels = append(slackChannels, cortex.TeamSlackChannel{
+			Name:                 channel.Name.String(),
+			NotificationsEnabled: channel.NotificationsEnabled.ValueBool(),
+		})
+	}
+
+	var additionalMembers []cortex.TeamMember
+	for _, member := range data.AdditionalMembers {
+		additionalMembers = append(additionalMembers, cortex.TeamMember{
+			Name:        member.Name.String(),
+			Email:       member.Email.String(),
+			Description: member.Description.String(),
+		})
+	}
+
+	clientRequest := cortex.CreateTeamRequest{
+		TeamTag:    data.Tag.String(),
+		IsArchived: data.Archived.ValueBool(),
+		Metadata: cortex.TeamMetadata{
+			Name:        data.Name.String(),
+			Description: data.Description.String(),
+			Summary:     data.Summary.String(),
+		},
+		SlackChannels:     slackChannels,
+		AdditionalMembers: additionalMembers,
+		Links:             links,
+		IdpGroup:          cortex.TeamIdpGroup{}, // TODO: unsure what to do with this yet, since it isn't present in the response
+	}
+	team, err := r.client.Teams().Create(ctx, clientRequest)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create team, got error: %s", err))
+		return
+	}
+
+	// Set the ID in state based on the tag
+	data.Id = data.Tag
+	data.Tag = types.StringValue(team.TeamTag)
+
+	// Save data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
+	//resp.State.SetAttribute(ctx, path.Root("id"), data.TeamTag)
+	//resp.State.SetAttribute(ctx, path.Root("team_tag"), data.TeamTag)
 }
 
 func (r *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -146,38 +284,72 @@ func (r *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update example, got error: %s", err))
-	//     return
-	// }
+	var links []cortex.TeamLink
+	for _, link := range data.Links {
+		links = append(links, cortex.TeamLink{
+			Name:        link.Name.String(),
+			Type:        link.Type.String(),
+			Url:         link.Url.String(),
+			Description: link.Description.String(),
+		})
+	}
 
-	// Save updated data into Terraform state
-	//resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	var slackChannels []cortex.TeamSlackChannel
+	for _, channel := range data.SlackChannels {
+		slackChannels = append(slackChannels, cortex.TeamSlackChannel{
+			Name:                 channel.Name.String(),
+			NotificationsEnabled: channel.NotificationsEnabled.ValueBool(),
+		})
+	}
 
-	resp.State.SetAttribute(ctx, path.Root("id"), data.TeamTag)
-	resp.State.SetAttribute(ctx, path.Root("team_tag"), data.TeamTag)
+	var additionalMembers []cortex.TeamMember
+	for _, member := range data.AdditionalMembers {
+		additionalMembers = append(additionalMembers, cortex.TeamMember{
+			Name:        member.Name.String(),
+			Email:       member.Email.String(),
+			Description: member.Description.String(),
+		})
+	}
+
+	clientRequest := cortex.UpdateTeamRequest{
+		Metadata: cortex.TeamMetadata{
+			Name:        data.Name.String(),
+			Description: data.Description.String(),
+			Summary:     data.Summary.String(),
+		},
+		SlackChannels:     slackChannels,
+		AdditionalMembers: additionalMembers,
+		Links:             links,
+	}
+	team, err := r.client.Teams().Update(ctx, data.Tag.String(), clientRequest)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update team, got error: %s", err))
+		return
+	}
+
+	// Set the ID in state based on the tag
+	data.Id = data.Tag
+	data.Tag = types.StringValue(team.TeamTag)
+
+	// Save data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *TeamResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	//var data *TeamResourceModel
+	var data *TeamResourceModel
 
 	// Read Terraform prior state data into the model
-	//resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete example, got error: %s", err))
-	//     return
-	// }
+	err := r.client.Teams().Archive(ctx, data.Tag.String())
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete team, got error: %s", err))
+		return
+	}
 }
 
 func (r *TeamResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

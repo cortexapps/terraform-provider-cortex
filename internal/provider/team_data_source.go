@@ -23,8 +23,8 @@ type TeamDataSource struct {
 
 // TeamDataSourceModel describes the data source data model.
 type TeamDataSourceModel struct {
-	Id      types.String `tfsdk:"id"`
-	TeamTag types.String `tfsdk:"team_tag"`
+	Id  types.String `tfsdk:"id"`
+	Tag types.String `tfsdk:"tag"`
 }
 
 func (d *TeamDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -38,7 +38,7 @@ func (d *TeamDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 
 		Attributes: map[string]schema.Attribute{
 			// Required
-			"team_tag": schema.StringAttribute{
+			"tag": schema.StringAttribute{
 				MarkdownDescription: "Tag of the team",
 				Required:            true,
 			},
@@ -81,13 +81,13 @@ func (d *TeamDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	teamResponse, err := d.client.Teams().Get(ctx, data.TeamTag.String())
+	teamResponse, err := d.client.Teams().Get(ctx, data.Tag.String())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read team, got error: %s", err))
 		return
 	}
 	data.Id = types.StringValue(teamResponse.TeamTag)
-	data.TeamTag = types.StringValue(teamResponse.TeamTag)
+	data.Tag = types.StringValue(teamResponse.TeamTag)
 
 	// Write to TF state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

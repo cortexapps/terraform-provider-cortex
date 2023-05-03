@@ -16,7 +16,7 @@ func TestAccTeamResource(t *testing.T) {
 			{
 				Config: testAccTeamResourceConfig("engineering"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("cortex_team.engineering", "team_tag", "engineering"),
+					resource.TestCheckResourceAttr("cortex_team.engineering", "tag", "engineering"),
 				),
 			},
 			// ImportState testing
@@ -28,13 +28,13 @@ func TestAccTeamResource(t *testing.T) {
 				// example code does not have an actual upstream service.
 				// Once the Read method is able to refresh information from
 				// the upstream service, this can be removed.
-				ImportStateVerifyIgnore: []string{"team_tag", "defaulted"},
+				ImportStateVerifyIgnore: []string{"tag", "defaulted"},
 			},
 			// Update and Read testing
 			{
 				Config: testAccTeamResourceConfig("engineering"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("cortex_team.engineering", "team_tag", "engineering"),
+					resource.TestCheckResourceAttr("cortex_team.engineering", "tag", "engineering"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -45,7 +45,7 @@ func TestAccTeamResource(t *testing.T) {
 func testAccTeamResourceConfig(teamTag string) string {
 	return fmt.Sprintf(`
 resource "cortex_team" "engineering" {
-  team_tag = %[1]q
+  tag = %[1]q
 }
 `, teamTag)
 }
