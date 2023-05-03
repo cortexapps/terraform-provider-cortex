@@ -17,7 +17,7 @@ Team data source
 
 ### Required
 
-- `team_tag` (String) Tag of the team
+- `tag` (String) Tag of the team
 
 ### Read-Only
 
