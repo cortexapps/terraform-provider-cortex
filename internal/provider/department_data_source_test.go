@@ -6,24 +6,24 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAccTeamDataSource(t *testing.T) {
+func TestAccDepartmentDataSource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Read testing
 			{
-				Config: testAccTeamDataSourceConfig,
+				Config: testAccDepartmentDataSourceConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.cortex_team.platform_engineering", "tag", "platform_engineering"),
+					resource.TestCheckResourceAttr("data.cortex_team.engineering", "tag", "engineering"),
 				),
 			},
 		},
 	})
 }
 
-const testAccTeamDataSourceConfig = `
-data "cortex_team" "engineering" {
-  tag = "platform_engineering"
+const testAccDepartmentDataSourceConfig = `
+data "cortex_department" "engineering" {
+  tag = "engineering"
 }
 `

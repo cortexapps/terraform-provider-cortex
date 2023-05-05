@@ -100,6 +100,7 @@ func (p *CortexProvider) Resources(ctx context.Context) []func() resource.Resour
 	return []func() resource.Resource{
 		NewCatalogEntityResource,
 		NewTeamResource,
+		NewDepartmentResource,
 	}
 }
 
@@ -107,6 +108,7 @@ func (p *CortexProvider) DataSources(ctx context.Context) []func() datasource.Da
 	return []func() datasource.DataSource{
 		NewCatalogEntityDataSource,
 		NewTeamDataSource,
+		NewDepartmentDataSource,
 	}
 }
 
