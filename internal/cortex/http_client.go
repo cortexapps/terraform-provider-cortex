@@ -16,6 +16,7 @@ const (
 
 var BaseUris = map[string]string{
 	"teams":            "/api/v1/teams/",
+	"departments":      "/api/v1/teams/departments/",
 	"scorecards":       "/api/v1/scorecards/",
 	"catalog_entities": "/api/v1/catalog/",
 	"open_api":         "/api/v1/open-api",
@@ -124,6 +125,10 @@ func (c *HttpClient) CatalogEntityCustomData() CatalogEntityCustomDataClientInte
 
 func (c *HttpClient) Teams() TeamsClientInterface {
 	return &TeamsClient{client: c}
+}
+
+func (c *HttpClient) Departments() DepartmentsClientInterface {
+	return &DepartmentsClient{client: c}
 }
 
 func (c *HttpClient) Scorecards() ScorecardsClientInterface {

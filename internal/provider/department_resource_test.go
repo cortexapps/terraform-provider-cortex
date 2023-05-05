@@ -7,21 +7,21 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAccTeamResource(t *testing.T) {
+func TestAccDepartmentResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccTeamResourceConfig("platform_engineering"),
+				Config: testAccDepartmentResourceConfig("engineering"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "tag", "engineering"),
+					resource.TestCheckResourceAttr("cortex_department.engineering", "tag", "engineering"),
 				),
 			},
 			// ImportState testing
 			{
-				ResourceName:      "cortex_team.platform_engineering",
+				ResourceName:      "cortex_department.engineering",
 				ImportState:       true,
 				ImportStateVerify: true,
 				// This is not normally necessary, but is here because this
@@ -32,9 +32,9 @@ func TestAccTeamResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccTeamResourceConfig("platform_engineering"),
+				Config: testAccDepartmentResourceConfig("engineering"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "tag", "engineering"),
+					resource.TestCheckResourceAttr("cortex_department.engineering", "tag", "engineering"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -42,10 +42,10 @@ func TestAccTeamResource(t *testing.T) {
 	})
 }
 
-func testAccTeamResourceConfig(teamTag string) string {
+func testAccDepartmentResourceConfig(tag string) string {
 	return fmt.Sprintf(`
-resource "cortex_team" "platform_engineering" {
+resource "cortex_department" "engineering" {
   tag = %[1]q
 }
-`, teamTag)
+`, tag)
 }

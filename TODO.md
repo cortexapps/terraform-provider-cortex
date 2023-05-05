@@ -25,7 +25,6 @@ Connect client to TF provider. Undo YAML approach (work with Cortex to figure ou
 Connect client to TF provider.
 
 Also:
-- Departments
 - Team Hierarchies
 
 ### Other

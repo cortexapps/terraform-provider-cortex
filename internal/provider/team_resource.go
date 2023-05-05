@@ -142,9 +142,13 @@ func (r *TeamResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 							MarkdownDescription: "Name of the member.",
 							Required:            true,
 						},
-						"notifications_enabled": schema.BoolAttribute{
-							MarkdownDescription: "Whether notifications are enabled for the Slack channel.",
+						"description": schema.StringAttribute{
+							MarkdownDescription: "A short description of the member.",
 							Optional:            true,
+						},
+						"email": schema.StringAttribute{
+							MarkdownDescription: "Email of the member.",
+							Required:            true,
 						},
 					},
 				},
