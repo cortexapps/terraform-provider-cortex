@@ -31,6 +31,9 @@ install: build
 lint:
 	golangci-lint run
 
+docs:
+	go generate ./...
+
 # unit tests
 test:
 	go clean -testcache

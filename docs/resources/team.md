@@ -37,11 +37,12 @@ Team Entity
 
 Required:
 
+- `email` (String) Email of the member.
 - `name` (String) Name of the member.
 
 Optional:
 
-- `notifications_enabled` (Boolean) Whether notifications are enabled for the Slack channel.
+- `description` (String) A short description of the member.
 
 
 <a id="nestedblock--link"></a>
