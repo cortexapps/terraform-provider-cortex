@@ -4,9 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -72,9 +76,9 @@ func (r *TeamResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			"tag": schema.StringAttribute{
 				MarkdownDescription: "Unique identifier for the team.",
 				Required:            true,
-				//PlanModifiers: []planmodifier.String{
-				//	stringplanmodifier.UseStateForUnknown(),
-				//},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Name of the team.",
@@ -94,6 +98,9 @@ func (r *TeamResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			// Computed attributes
 			"id": schema.StringAttribute{
 				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 		Blocks: map[string]schema.Block{
@@ -107,6 +114,9 @@ func (r *TeamResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 						"type": schema.StringAttribute{
 							MarkdownDescription: "Type of link.",
 							Required:            true,
+							Validators: []validator.String{
+								stringvalidator.OneOfCaseInsensitive("runbook", "documentation", "logs", "dashboard", "metrics", "healthcheck"),
+							},
 						},
 						"url": schema.StringAttribute{
 							MarkdownDescription: "URL of the link.",

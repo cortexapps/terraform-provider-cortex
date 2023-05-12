@@ -7,6 +7,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -18,6 +20,10 @@ var _ resource.ResourceWithImportState = &CatalogEntityResource{}
 func NewCatalogEntityResource() resource.Resource {
 	return &CatalogEntityResource{}
 }
+
+/***********************************************************************************************************************
+ * Types
+ **********************************************************************************************************************/
 
 // CatalogEntityResource defines the resource implementation.
 type CatalogEntityResource struct {
@@ -31,6 +37,10 @@ type CatalogEntityResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Description types.String `tfsdk:"description"`
 }
+
+/***********************************************************************************************************************
+ * Methods
+ **********************************************************************************************************************/
 
 func (r *CatalogEntityResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_catalog_entity"
@@ -53,14 +63,17 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 			"tag": schema.StringAttribute{
 				MarkdownDescription: "Unique identifier for the entity. Corresponds to the x-cortex-tag field in the entity descriptor.",
 				Required:            true,
-				//PlanModifiers: []planmodifier.String{
-				//	stringplanmodifier.UseStateForUnknown(),
-				//},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 
 			//Computed
 			"id": schema.StringAttribute{
 				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}

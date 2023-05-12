@@ -7,6 +7,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -56,9 +58,9 @@ func (r *DepartmentResource) Schema(ctx context.Context, req resource.SchemaRequ
 			"tag": schema.StringAttribute{
 				MarkdownDescription: "Unique identifier for the department.",
 				Required:            true,
-				//PlanModifiers: []planmodifier.String{
-				//	stringplanmodifier.UseStateForUnknown(),
-				//},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Name of the team.",
@@ -74,6 +76,9 @@ func (r *DepartmentResource) Schema(ctx context.Context, req resource.SchemaRequ
 			// Computed attributes
 			"id": schema.StringAttribute{
 				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 		Blocks: map[string]schema.Block{
