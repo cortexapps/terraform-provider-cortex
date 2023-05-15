@@ -1,16 +1,17 @@
-package cortex
+package cortex_test
 
 import (
 	"context"
+	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-var testDepartmentResponse = &Department{
+var testDepartmentResponse = &cortex.Department{
 	Tag:         "test-department",
 	Name:        "Test Department",
 	Description: "A test department",
-	Members: []DepartmentMember{
+	Members: []cortex.DepartmentMember{
 		{
 			Name:        "Test User",
 			Email:       "test-department-user@cortex.io",
@@ -19,15 +20,15 @@ var testDepartmentResponse = &Department{
 	},
 }
 
-var testGetDepartmentResponse = &DepartmentsResponse{
-	Departments: []Department{
+var testGetDepartmentResponse = &cortex.DepartmentsResponse{
+	Departments: []cortex.Department{
 		*testDepartmentResponse,
 	},
 }
 
 func TestGetDepartment(t *testing.T) {
 	testDepartmentTag := "test-department"
-	c, teardown, err := setupClient(BaseUris["departments"], testGetDepartmentResponse, AssertRequestMethod(t, "GET"))
+	c, teardown, err := setupClient(cortex.BaseUris["departments"], testGetDepartmentResponse, AssertRequestMethod(t, "GET"))
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
@@ -38,11 +39,11 @@ func TestGetDepartment(t *testing.T) {
 
 func TestCreateDepartment(t *testing.T) {
 	tag := "test-department"
-	req := CreateDepartmentRequest{
+	req := cortex.CreateDepartmentRequest{
 		Tag:         tag,
 		Name:        "Test Department",
 		Description: "A test department",
-		Members: []DepartmentMember{
+		Members: []cortex.DepartmentMember{
 			{
 				Name:        "Test User",
 				Email:       "test-department-user@cortex.io",
@@ -51,7 +52,7 @@ func TestCreateDepartment(t *testing.T) {
 		},
 	}
 	c, teardown, err := setupClient(
-		BaseUris["departments"],
+		cortex.BaseUris["departments"],
 		testDepartmentResponse,
 		AssertRequestMethod(t, "POST"),
 		AssertRequestBody(t, req),
@@ -65,10 +66,10 @@ func TestCreateDepartment(t *testing.T) {
 }
 
 func TestUpdateDepartment(t *testing.T) {
-	req := UpdateDepartmentRequest{
+	req := cortex.UpdateDepartmentRequest{
 		Name:        "Test Department",
 		Description: "A test department",
-		Members: []DepartmentMember{
+		Members: []cortex.DepartmentMember{
 			{
 				Name:        "Test User",
 				Email:       "test-department-user@cortex.io",
@@ -79,7 +80,7 @@ func TestUpdateDepartment(t *testing.T) {
 	tag := "test-department"
 
 	c, teardown, err := setupClient(
-		BaseUris["departments"],
+		cortex.BaseUris["departments"],
 		testDepartmentResponse,
 		AssertRequestMethod(t, "PUT"),
 		AssertRequestBody(t, req),
@@ -96,8 +97,8 @@ func TestDeleteDepartment(t *testing.T) {
 	tag := "test-department"
 
 	c, teardown, err := setupClient(
-		BaseUris["departments"],
-		DeleteDepartmentResponse{},
+		cortex.BaseUris["departments"],
+		cortex.DeleteDepartmentResponse{},
 		AssertRequestMethod(t, "DELETE"),
 	)
 	assert.Nil(t, err, "could not setup client")

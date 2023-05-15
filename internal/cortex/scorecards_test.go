@@ -1,21 +1,22 @@
-package cortex
+package cortex_test
 
 import (
 	"context"
+	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-var testScorecard = &Scorecard{
+var testScorecard = &cortex.Scorecard{
 	Tag: "test-scorecard",
 }
 
 func TestGetScorecard(t *testing.T) {
 	testTag := "test-scorecard"
-	resp := GetScorecardResponse{
+	resp := cortex.GetScorecardResponse{
 		Scorecard: testScorecard,
 	}
-	c, teardown, err := setupClient(BaseUris["scorecards"]+testTag, resp, AssertRequestMethod(t, "GET"))
+	c, teardown, err := setupClient(cortex.BaseUris["scorecards"]+testTag, resp, AssertRequestMethod(t, "GET"))
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
@@ -26,16 +27,16 @@ func TestGetScorecard(t *testing.T) {
 
 func TestListScorecards(t *testing.T) {
 	firstTag := "test-scorecard"
-	resp := &ScorecardsResponse{
-		Scorecards: []Scorecard{
+	resp := &cortex.ScorecardsResponse{
+		Scorecards: []cortex.Scorecard{
 			*testScorecard,
 		},
 	}
-	c, teardown, err := setupClient(BaseUris["scorecards"], resp, AssertRequestMethod(t, "GET"))
+	c, teardown, err := setupClient(cortex.BaseUris["scorecards"], resp, AssertRequestMethod(t, "GET"))
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
-	var queryParams ScorecardListParams
+	var queryParams cortex.ScorecardListParams
 	res, err := c.Scorecards().List(context.Background(), &queryParams)
 	assert.Nil(t, err, "error retrieving scorecards")
 	assert.NotEmpty(t, res.Scorecards, "returned no scorecards")
@@ -44,14 +45,14 @@ func TestListScorecards(t *testing.T) {
 
 func TestUpsertScorecard(t *testing.T) {
 	tag := "test-scorecard"
-	req := UpsertScorecardRequest{
+	req := cortex.UpsertScorecardRequest{
 		Tag: tag,
 	}
-	upsertScorecardResponse := UpsertScorecardResponse{
+	upsertScorecardResponse := cortex.UpsertScorecardResponse{
 		Scorecard: testScorecard,
 	}
 	c, teardown, err := setupClient(
-		BaseUris["scorecards"],
+		cortex.BaseUris["scorecards"],
 		upsertScorecardResponse,
 		AssertRequestMethod(t, "POST"),
 		AssertRequestBodyYaml(t, req),
@@ -68,8 +69,8 @@ func TestDeleteScorecard(t *testing.T) {
 	tag := "test-scorecard"
 
 	c, teardown, err := setupClient(
-		BaseUris["scorecards"],
-		ArchiveTeamResponse{},
+		cortex.BaseUris["scorecards"],
+		cortex.ArchiveTeamResponse{},
 		AssertRequestMethod(t, "DELETE"),
 	)
 	assert.Nil(t, err, "could not setup client")

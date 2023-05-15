@@ -1,6 +1,7 @@
-package provider
+package provider_test
 
 import (
+	"github.com/bigcommerce/terraform-provider-cortex/internal/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"os"
@@ -12,7 +13,7 @@ import (
 // CLI command executed to create a provider server to which the CLI can
 // reattach.
 var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
-	"cortex": providerserver.NewProtocol6WithError(New("acctest")()),
+	"cortex": providerserver.NewProtocol6WithError(provider.New("acctest")()),
 }
 
 func testAccPreCheck(t *testing.T) {

@@ -1,20 +1,21 @@
-package cortex
+package cortex_test
 
 import (
 	"context"
+	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-var testTeamResponse = &Team{
+var testTeamResponse = &cortex.Team{
 	TeamTag:    "test-team",
 	IsArchived: false,
-	Metadata: TeamMetadata{
+	Metadata: cortex.TeamMetadata{
 		Name:        "Test Team",
 		Description: "A test team",
 		Summary:     "A short summary about the team",
 	},
-	SlackChannels: []TeamSlackChannel{
+	SlackChannels: []cortex.TeamSlackChannel{
 		{
 			Name:                 "#test-dev",
 			NotificationsEnabled: false,
@@ -24,7 +25,7 @@ var testTeamResponse = &Team{
 			NotificationsEnabled: true,
 		},
 	},
-	Links: []TeamLink{
+	Links: []cortex.TeamLink{
 		{
 			Name: "Test Link",
 			Url:  "https://cortexapp.com",
@@ -35,7 +36,7 @@ var testTeamResponse = &Team{
 func TestGetTeam(t *testing.T) {
 	testTeamTag := "test-team"
 	resp := testTeamResponse
-	c, teardown, err := setupClient(BaseUris["teams"]+testTeamTag, resp, AssertRequestMethod(t, "GET"))
+	c, teardown, err := setupClient(cortex.BaseUris["teams"]+testTeamTag, resp, AssertRequestMethod(t, "GET"))
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
@@ -46,16 +47,16 @@ func TestGetTeam(t *testing.T) {
 
 func TestListTeams(t *testing.T) {
 	firstTeamTag := "test-team"
-	resp := &TeamsResponse{
-		Teams: []Team{
+	resp := &cortex.TeamsResponse{
+		Teams: []cortex.Team{
 			*testTeamResponse,
 		},
 	}
-	c, teardown, err := setupClient(BaseUris["teams"], resp, AssertRequestMethod(t, "GET"))
+	c, teardown, err := setupClient(cortex.BaseUris["teams"], resp, AssertRequestMethod(t, "GET"))
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
-	var queryParams TeamListParams
+	var queryParams cortex.TeamListParams
 	res, err := c.Teams().List(context.Background(), &queryParams)
 	assert.Nil(t, err, "error retrieving a team")
 	assert.NotEmpty(t, res.Teams, "returned no teams")
@@ -64,21 +65,21 @@ func TestListTeams(t *testing.T) {
 
 func TestCreateTeam(t *testing.T) {
 	teamTag := "test-team"
-	req := CreateTeamRequest{
+	req := cortex.CreateTeamRequest{
 		TeamTag: teamTag,
-		AdditionalMembers: []TeamMember{
+		AdditionalMembers: []cortex.TeamMember{
 			{
 				Name:        "Test Member",
 				Description: "A test member",
 				Email:       "test@cortex.io",
 			},
 		},
-		Metadata: TeamMetadata{
+		Metadata: cortex.TeamMetadata{
 			Name:        "Test Team",
 			Description: "A test team",
 			Summary:     "A short summary about the team",
 		},
-		SlackChannels: []TeamSlackChannel{
+		SlackChannels: []cortex.TeamSlackChannel{
 			{
 				Name:                 "#test-dev",
 				NotificationsEnabled: false,
@@ -88,7 +89,7 @@ func TestCreateTeam(t *testing.T) {
 				NotificationsEnabled: true,
 			},
 		},
-		Links: []TeamLink{
+		Links: []cortex.TeamLink{
 			{
 				Name: "Test Link",
 				Url:  "https://cortexapp.com",
@@ -96,7 +97,7 @@ func TestCreateTeam(t *testing.T) {
 		},
 	}
 	c, teardown, err := setupClient(
-		BaseUris["teams"],
+		cortex.BaseUris["teams"],
 		testTeamResponse,
 		AssertRequestMethod(t, "POST"),
 		AssertRequestBody(t, req),
@@ -110,20 +111,20 @@ func TestCreateTeam(t *testing.T) {
 }
 
 func TestUpdateTeam(t *testing.T) {
-	req := UpdateTeamRequest{
-		AdditionalMembers: []TeamMember{
+	req := cortex.UpdateTeamRequest{
+		AdditionalMembers: []cortex.TeamMember{
 			{
 				Name:        "Test Member",
 				Description: "A test member",
 				Email:       "test@cortex.io",
 			},
 		},
-		Metadata: TeamMetadata{
+		Metadata: cortex.TeamMetadata{
 			Name:        "Test Team",
 			Description: "A test team",
 			Summary:     "A short summary about the team",
 		},
-		SlackChannels: []TeamSlackChannel{
+		SlackChannels: []cortex.TeamSlackChannel{
 			{
 				Name:                 "#test-dev",
 				NotificationsEnabled: false,
@@ -133,7 +134,7 @@ func TestUpdateTeam(t *testing.T) {
 				NotificationsEnabled: true,
 			},
 		},
-		Links: []TeamLink{
+		Links: []cortex.TeamLink{
 			{
 				Name: "Test Link",
 				Url:  "https://cortexapp.com",
@@ -143,7 +144,7 @@ func TestUpdateTeam(t *testing.T) {
 	teamTag := "test-team"
 
 	c, teardown, err := setupClient(
-		BaseUris["teams"],
+		cortex.BaseUris["teams"],
 		testTeamResponse,
 		AssertRequestMethod(t, "PUT"),
 		AssertRequestBody(t, req),
@@ -160,8 +161,8 @@ func TestArchiveTeam(t *testing.T) {
 	teamTag := "test-team"
 
 	c, teardown, err := setupClient(
-		BaseUris["teams"],
-		ArchiveTeamResponse{},
+		cortex.BaseUris["teams"],
+		cortex.ArchiveTeamResponse{},
 		AssertRequestMethod(t, "DELETE"),
 	)
 	assert.Nil(t, err, "could not setup client")
@@ -175,8 +176,8 @@ func TestUnarchiveTeam(t *testing.T) {
 	teamTag := "test-team"
 
 	c, teardown, err := setupClient(
-		BaseUris["teams"]+teamTag+"/unarchive",
-		UnarchiveTeamResponse{},
+		cortex.BaseUris["teams"]+teamTag+"/unarchive",
+		cortex.UnarchiveTeamResponse{},
 		AssertRequestMethod(t, "PUT"),
 	)
 	assert.Nil(t, err, "could not setup client")

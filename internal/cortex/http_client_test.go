@@ -1,10 +1,11 @@
-package cortex
+package cortex_test
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 	"io"
@@ -15,7 +16,7 @@ import (
 
 type RequestTest func(req *http.Request)
 
-func setupClient(requestPath string, mockedResponse interface{}, requestTests ...RequestTest) (*HttpClient, func(), error) {
+func setupClient(requestPath string, mockedResponse interface{}, requestTests ...RequestTest) (*cortex.HttpClient, func(), error) {
 	mux := http.NewServeMux()
 	mux.HandleFunc(requestPath, func(w http.ResponseWriter, req *http.Request) {
 		defer req.Body.Close()
@@ -30,10 +31,10 @@ func setupClient(requestPath string, mockedResponse interface{}, requestTests ..
 
 	ts := httptest.NewServer(mux)
 
-	c, err := NewClient(
-		WithURL(ts.URL),
-		WithToken("test"),
-		WithVersion("test"),
+	c, err := cortex.NewClient(
+		cortex.WithURL(ts.URL),
+		cortex.WithToken("test"),
+		cortex.WithVersion("test"),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not build client: %w", err)
@@ -60,7 +61,10 @@ func TestClientInitialization(t *testing.T) {
 	defer ts.Close()
 
 	testToken := "testing-123"
-	c, err := NewClient(WithURL(ts.URL), WithToken(testToken))
+	c, err := cortex.NewClient(
+		cortex.WithURL(ts.URL),
+		cortex.WithToken(testToken),
+	)
 
 	assert.Nil(t, err, "received error initializing API client")
 
