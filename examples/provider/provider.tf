@@ -1,3 +1,3 @@
 provider "cortex" {
-  # example configuration here
+  token = "my-api-token"
 }

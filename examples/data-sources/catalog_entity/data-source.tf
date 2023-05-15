@@ -1,3 +1,3 @@
-data "catalog_entity" "products-service" {
+data "cortex_catalog_entity" "products-service" {
   tag = "products-service"
 }
