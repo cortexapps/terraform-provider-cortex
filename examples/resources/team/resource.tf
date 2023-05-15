@@ -1,8 +1,8 @@
-resource "cortex_team" "engineering" {
-  tag         = "engineering"
-  name        = "Engineering"
-  description = "The engineering team"
-  summary     = "This represents the Cortex engineering team"
+resource "cortex_team" "platform-engineering" {
+  tag         = "platform-engineering"
+  name        = "Platform Engineering"
+  description = "The platform engineering team"
+  summary     = "This represents the Cortex platform engineering team"
 
   link {
     name        = "Twitter"
