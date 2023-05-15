@@ -2,21 +2,23 @@ package provider
 
 import (
 	"fmt"
-	"testing"
-
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"testing"
 )
 
 func TestAccDepartmentResource(t *testing.T) {
+	stub := tFactoryBuildDepartmentResource()
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccDepartmentResourceConfig("engineering"),
+				Config: testAccDepartmentResourceConfig(stub),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("cortex_department.engineering", "tag", "engineering"),
+					resource.TestCheckResourceAttr("cortex_department.engineering", "tag", stub.Tag),
+					resource.TestCheckResourceAttr("cortex_department.engineering", "name", stub.Name),
+					resource.TestCheckResourceAttr("cortex_department.engineering", "description", stub.Description),
 				),
 			},
 			// ImportState testing
@@ -24,17 +26,14 @@ func TestAccDepartmentResource(t *testing.T) {
 				ResourceName:      "cortex_department.engineering",
 				ImportState:       true,
 				ImportStateVerify: true,
-				// This is not normally necessary, but is here because this
-				// example code does not have an actual upstream service.
-				// Once the Read method is able to refresh information from
-				// the upstream service, this can be removed.
-				ImportStateVerifyIgnore: []string{"tag", "defaulted"},
 			},
 			// Update and Read testing
 			{
-				Config: testAccDepartmentResourceConfig("engineering"),
+				Config: testAccDepartmentResourceConfig(stub),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("cortex_department.engineering", "tag", "engineering"),
+					resource.TestCheckResourceAttr("cortex_department.engineering", "tag", stub.Tag),
+					resource.TestCheckResourceAttr("cortex_department.engineering", "name", stub.Name),
+					resource.TestCheckResourceAttr("cortex_department.engineering", "description", stub.Description),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -42,10 +41,39 @@ func TestAccDepartmentResource(t *testing.T) {
 	})
 }
 
-func testAccDepartmentResourceConfig(tag string) string {
+func testAccDepartmentResourceConfig(stub TestDepartmentResource) string {
 	return fmt.Sprintf(`
 resource "cortex_department" "engineering" {
   tag = %[1]q
+  name = %[2]q
+  description = %[3]q
 }
-`, tag)
+`, stub.Tag, stub.Name, stub.Description)
+}
+
+type TestDepartmentResource struct {
+	Tag         string
+	Name        string
+	Description string
+	Members     []TestDepartmentMemberResource
+}
+type TestDepartmentMemberResource struct {
+	Name        string
+	Email       string
+	Description string
+}
+
+func tFactoryBuildDepartmentResource() TestDepartmentResource {
+	return TestDepartmentResource{
+		Tag:         "engineering",
+		Name:        "Engineering",
+		Description: "The Engineering Department",
+		Members: []TestDepartmentMemberResource{
+			{
+				Name:        "John Doe",
+				Email:       "test+member1@cortex.io",
+				Description: "John Doe is a member of the Engineering Department",
+			},
+		},
+	}
 }
