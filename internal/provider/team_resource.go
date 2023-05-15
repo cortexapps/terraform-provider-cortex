@@ -285,7 +285,7 @@ func (r *TeamResource) Create(ctx context.Context, req resource.CreateRequest, r
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
 	//resp.State.SetAttribute(ctx, path.Root("id"), data.TeamTag)
-	//resp.State.SetAttribute(ctx, path.Root("team_tag"), data.TeamTag)
+	//resp.State.SetAttribute(ctx, path.Root("tag"), data.TeamTag)
 }
 
 func (r *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -367,5 +367,5 @@ func (r *TeamResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 }
 
 func (r *TeamResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("team_tag"), req, resp)
+	resource.ImportStatePassthroughID(ctx, path.Root("tag"), req, resp)
 }
