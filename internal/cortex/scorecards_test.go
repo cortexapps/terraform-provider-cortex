@@ -16,7 +16,7 @@ func TestGetScorecard(t *testing.T) {
 	resp := cortex.GetScorecardResponse{
 		Scorecard: testScorecard,
 	}
-	c, teardown, err := setupClient(cortex.BaseUris["scorecards"]+testTag, resp, AssertRequestMethod(t, "GET"))
+	c, teardown, err := setupClient(cortex.Route("scorecards", testTag), resp, AssertRequestMethod(t, "GET"))
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
@@ -32,7 +32,7 @@ func TestListScorecards(t *testing.T) {
 			*testScorecard,
 		},
 	}
-	c, teardown, err := setupClient(cortex.BaseUris["scorecards"], resp, AssertRequestMethod(t, "GET"))
+	c, teardown, err := setupClient(cortex.Route("scorecards", ""), resp, AssertRequestMethod(t, "GET"))
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
@@ -52,7 +52,7 @@ func TestUpsertScorecard(t *testing.T) {
 		Scorecard: testScorecard,
 	}
 	c, teardown, err := setupClient(
-		cortex.BaseUris["scorecards"],
+		cortex.Route("scorecards", "descriptor"),
 		upsertScorecardResponse,
 		AssertRequestMethod(t, "POST"),
 		AssertRequestBodyYaml(t, req),
@@ -69,7 +69,7 @@ func TestDeleteScorecard(t *testing.T) {
 	tag := "test-scorecard"
 
 	c, teardown, err := setupClient(
-		cortex.BaseUris["scorecards"],
+		cortex.Route("scorecards", tag),
 		cortex.ArchiveTeamResponse{},
 		AssertRequestMethod(t, "DELETE"),
 	)

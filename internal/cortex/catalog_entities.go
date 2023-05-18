@@ -93,7 +93,7 @@ func (v *CatalogEntityViolation) String() string {
 func (c *CatalogEntitiesClient) Get(ctx context.Context, tag string) (*CatalogEntity, error) {
 	catalogEntityResponse := &CatalogEntity{}
 	apiError := &ApiError{}
-	response, err := c.Client().Get(BaseUris["catalog_entities"]+tag).Receive(catalogEntityResponse, apiError)
+	response, err := c.Client().Get(Route("catalog_entities", tag)).Receive(catalogEntityResponse, apiError)
 	if err != nil {
 		return catalogEntityResponse, errors.New("could not get catalog entity: " + err.Error())
 	}
@@ -127,7 +127,7 @@ func (c *CatalogEntitiesClient) List(ctx context.Context, params *CatalogEntityL
 	entitiesResponse := &CatalogEntitiesResponse{}
 	apiError := &ApiError{}
 
-	response, err := c.Client().Get(BaseUris["catalog_entities"]).QueryStruct(params).Receive(entitiesResponse, apiError)
+	response, err := c.Client().Get(Route("catalog_entities", "")).QueryStruct(params).Receive(entitiesResponse, apiError)
 	if err != nil {
 		return nil, errors.New("could not get entities: " + err.Error())
 	}
@@ -193,7 +193,7 @@ func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEnt
 	}
 	apiError := &ApiError{}
 
-	response, err := c.Client().Post(BaseUris["open_api"]).BodyJSON(req).Receive(upsertResponse, apiError)
+	response, err := c.Client().Post(Route("open_api", "")).BodyJSON(req).Receive(upsertResponse, apiError)
 	if err != nil {
 		return entity, errors.New("could not upsert catalog entity: " + err.Error())
 	}
@@ -227,7 +227,7 @@ func (c *CatalogEntitiesClient) Delete(ctx context.Context, tag string) error {
 	entityResponse := &DeleteCatalogEntityResponse{}
 	apiError := &ApiError{}
 
-	response, err := c.Client().Delete(BaseUris["catalog_entities"]+tag).Receive(entityResponse, apiError)
+	response, err := c.Client().Delete(Route("catalog_entities", tag)).Receive(entityResponse, apiError)
 	if err != nil {
 		return errors.New("could not delete catalog entity: " + err.Error())
 	}

@@ -72,7 +72,7 @@ func (c *ScorecardsClient) Get(ctx context.Context, tag string) (*Scorecard, err
 		Scorecard: &Scorecard{},
 	}
 	apiError := &ApiError{}
-	response, err := c.Client().Get(BaseUris["scorecards"]+tag).Receive(scorecardResponse, apiError)
+	response, err := c.Client().Get(Route("scorecards", tag)).Receive(scorecardResponse, apiError)
 	if err != nil {
 		return scorecardResponse.Scorecard, errors.New("could not get scorecard: " + err.Error())
 	}
@@ -103,7 +103,7 @@ func (c *ScorecardsClient) List(ctx context.Context, params *ScorecardListParams
 	scorecardsResponse := &ScorecardsResponse{}
 	apiError := &ApiError{}
 
-	response, err := c.Client().Get(BaseUris["scorecards"]).QueryStruct(params).Receive(scorecardsResponse, apiError)
+	response, err := c.Client().Get(Route("scorecards", "")).QueryStruct(params).Receive(scorecardsResponse, apiError)
 	if err != nil {
 		return nil, errors.New("could not get scorecards: " + err.Error())
 	}
@@ -148,7 +148,7 @@ func (c *ScorecardsClient) Upsert(ctx context.Context, req UpsertScorecardReques
 		return upsertScorecardResponse.Scorecard, errors.New("could not marshal yaml: " + err.Error())
 	}
 	body := strings.NewReader(string(bytes))
-	response, err := c.Client().Post(BaseUris["scorecards"]).Body(body).Receive(upsertScorecardResponse, apiError)
+	response, err := c.Client().Post(Route("scorecards", "descriptor")).Body(body).Receive(upsertScorecardResponse, apiError)
 	if err != nil {
 		return upsertScorecardResponse.Scorecard, errors.New("could not upsert scorecard: " + err.Error())
 	}
@@ -171,7 +171,7 @@ func (c *ScorecardsClient) Delete(ctx context.Context, tag string) error {
 	scorecardResponse := &DeleteScorecardResponse{}
 	apiError := &ApiError{}
 
-	response, err := c.Client().Delete(BaseUris["scorecards"]+tag).Receive(scorecardResponse, apiError)
+	response, err := c.Client().Delete(Route("scorecards", tag)).Receive(scorecardResponse, apiError)
 	if err != nil {
 		return errors.New("could not delete scorecard: " + err.Error())
 	}

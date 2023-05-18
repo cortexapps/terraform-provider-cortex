@@ -8,15 +8,26 @@ import (
 )
 
 func TestAccTeamResource(t *testing.T) {
+	r := tFactoryBuildTeamResource("Platform Engineering")
+	r2 := tFactoryBuildTeamResource("Platform Engineering With Changed Name")
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccTeamResourceConfig("platform_engineering"),
+				Config: r.String(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "tag", "engineering"),
+					// core attributes
+					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "tag", "platform-engineering"),
+					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "name", "Platform Engineering"),
+					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "description", "Platform Engineering Team"),
+					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "summary", "The Cortex Platform Engineering Team"),
+					// links
+					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "link.0.name", "GitHub"),
+					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "link.0.url", "https://github.com/cortexapp/cortex"),
+					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "link.0.type", "documentation"),
+					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "link.0.description", "GitHub repository for Cortex"),
 				),
 			},
 			// ImportState testing
@@ -32,9 +43,18 @@ func TestAccTeamResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccTeamResourceConfig("platform_engineering"),
+				Config: r2.String(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "tag", "engineering"),
+					// core attributes
+					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "tag", "platform-engineering"),
+					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "name", "Platform Engineering"),
+					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "description", "Platform Engineering Team"),
+					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "summary", "The Cortex Platform Engineering Team"),
+					// links
+					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "link.0.name", "GitHub"),
+					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "link.0.url", "https://github.com/cortexapp/cortex"),
+					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "link.0.type", "documentation"),
+					resource.TestCheckResourceAttr("cortex_team.platform_engineering", "link.0.description", "GitHub repository for Cortex"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -42,10 +62,51 @@ func TestAccTeamResource(t *testing.T) {
 	})
 }
 
-func testAccTeamResourceConfig(teamTag string) string {
+type TestTeamResource struct {
+	Tag         string
+	Name        string
+	Description string
+	Summary     string
+	Links       []TestTeamLinkResource
+}
+
+type TestTeamLinkResource struct {
+	Name        string
+	URL         string
+	Type        string
+	Description string
+}
+
+func (r TestTeamResource) String() string {
 	return fmt.Sprintf(`
 resource "cortex_team" "platform_engineering" {
   tag = %[1]q
+  name = %[2]q
+  description = %[3]q
+  summary = %[4]q
+  link {
+	name = %[5]q
+	url = %[6]q
+	type = %[7]q
+	description = %[8]q
+  }
 }
-`, teamTag)
+`, r.Tag, r.Name, r.Description, r.Summary, r.Links[0].Name, r.Links[0].URL, r.Links[0].Type, r.Links[0].Description)
+}
+
+func tFactoryBuildTeamResource(name string) TestTeamResource {
+	return TestTeamResource{
+		Tag:         "platform_engineering",
+		Name:        name,
+		Description: "Platform Engineering Team",
+		Summary:     "Platform Engineering Team",
+		Links: []TestTeamLinkResource{
+			{
+				Name:        "GitHub",
+				URL:         "https://github.com/cortexapp/cortex",
+				Type:        "documentation",
+				Description: "GitHub repository for Cortex",
+			},
+		},
+	}
 }

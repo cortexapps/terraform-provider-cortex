@@ -7,12 +7,13 @@ import (
 )
 
 type TeamsClientInterface interface {
-	Get(ctx context.Context, teamTag string) (*Team, error)
+	Get(ctx context.Context, tag string) (*Team, error)
 	List(ctx context.Context, params *TeamListParams) (*TeamsResponse, error)
 	Create(ctx context.Context, createReq CreateTeamRequest) (*Team, error)
-	Update(ctx context.Context, teamTag string, updateReq UpdateTeamRequest) (*Team, error)
-	Archive(ctx context.Context, teamTag string) error
-	Unarchive(ctx context.Context, teamTag string) error
+	Update(ctx context.Context, tag string, updateReq UpdateTeamRequest) (*Team, error)
+	Delete(ctx context.Context, tag string) error
+	Archive(ctx context.Context, tag string) error
+	Unarchive(ctx context.Context, tag string) error
 }
 
 type TeamsClient struct {
@@ -79,10 +80,10 @@ type TeamIdpGroupMember struct {
  * GET /api/v1/teams/:tag
  **********************************************************************************************************************/
 
-func (c *TeamsClient) Get(ctx context.Context, teamTag string) (*Team, error) {
+func (c *TeamsClient) Get(ctx context.Context, tag string) (*Team, error) {
 	teamResponse := &Team{}
 	apiError := &ApiError{}
-	response, err := c.Client().Get(BaseUris["teams"]+teamTag).Receive(teamResponse, apiError)
+	response, err := c.Client().Get(Route("teams", tag)).Receive(teamResponse, apiError)
 	if err != nil {
 		return teamResponse, errors.New("could not get team: " + err.Error())
 	}
@@ -113,7 +114,7 @@ func (c *TeamsClient) List(ctx context.Context, params *TeamListParams) (*TeamsR
 	teamsResponse := &TeamsResponse{}
 	apiError := &ApiError{}
 
-	response, err := c.Client().Get(BaseUris["teams"]).QueryStruct(params).Receive(teamsResponse, apiError)
+	response, err := c.Client().Get(Route("teams", "")).QueryStruct(params).Receive(teamsResponse, apiError)
 	if err != nil {
 		return nil, errors.New("could not get teams: " + err.Error())
 	}
@@ -144,7 +145,7 @@ func (c *TeamsClient) Create(ctx context.Context, req CreateTeamRequest) (*Team,
 	teamResponse := &Team{}
 	apiError := &ApiError{}
 
-	response, err := c.Client().Post(BaseUris["teams"]).BodyJSON(&req).Receive(teamResponse, apiError)
+	response, err := c.Client().Post(Route("teams", "")).BodyJSON(&req).Receive(teamResponse, apiError)
 	if err != nil {
 		return teamResponse, errors.New("could not create team: " + err.Error())
 	}
@@ -168,11 +169,11 @@ type UpdateTeamRequest struct {
 	Links             []TeamLink         `json:"links,omitempty"`
 }
 
-func (c *TeamsClient) Update(ctx context.Context, teamTag string, req UpdateTeamRequest) (*Team, error) {
+func (c *TeamsClient) Update(ctx context.Context, tag string, req UpdateTeamRequest) (*Team, error) {
 	teamResponse := &Team{}
 	apiError := &ApiError{}
 
-	response, err := c.Client().Put(BaseUris["teams"]+teamTag).BodyJSON(&req).Receive(teamResponse, apiError)
+	response, err := c.Client().Put(Route("teams", tag)).BodyJSON(&req).Receive(teamResponse, apiError)
 	if err != nil {
 		return teamResponse, errors.New("could not update team: " + err.Error())
 	}
@@ -186,16 +187,43 @@ func (c *TeamsClient) Update(ctx context.Context, teamTag string, req UpdateTeam
 }
 
 /***********************************************************************************************************************
- * DELETE /api/v1/teams/:tag - Archive a team
+ * DELETE /api/v1/teams - Delete a team
+ **********************************************************************************************************************/
+
+type DeleteTeamResponse struct{}
+type DeleteTeamRequest struct {
+	Tag string `json:"teamTag"`
+}
+
+func (c *TeamsClient) Delete(ctx context.Context, tag string) error {
+	teamResponse := &ArchiveTeamResponse{}
+	apiError := &ApiError{}
+	req := DeleteTeamRequest{Tag: tag}
+
+	response, err := c.Client().Delete(Route("teams", "")).QueryStruct(req).Receive(teamResponse, apiError)
+	if err != nil {
+		return errors.New("could not delete team: " + err.Error())
+	}
+
+	err = c.client.handleResponseStatus(response, apiError)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/***********************************************************************************************************************
+ * PUT /api/v1/teams/:tag/archive - Archive a team
  **********************************************************************************************************************/
 
 type ArchiveTeamResponse struct{}
 
-func (c *TeamsClient) Archive(ctx context.Context, teamTag string) error {
+func (c *TeamsClient) Archive(ctx context.Context, tag string) error {
 	teamResponse := &ArchiveTeamResponse{}
 	apiError := &ApiError{}
 
-	response, err := c.Client().Delete(BaseUris["teams"]+teamTag).Receive(teamResponse, apiError)
+	response, err := c.Client().Put(Route("teams", tag+"/archive")).Receive(teamResponse, apiError)
 	if err != nil {
 		return errors.New("could not archive team: " + err.Error())
 	}
@@ -214,11 +242,11 @@ func (c *TeamsClient) Archive(ctx context.Context, teamTag string) error {
 
 type UnarchiveTeamResponse struct{}
 
-func (c *TeamsClient) Unarchive(ctx context.Context, teamTag string) error {
+func (c *TeamsClient) Unarchive(ctx context.Context, tag string) error {
 	teamResponse := &UnarchiveTeamResponse{}
 	apiError := &ApiError{}
 
-	response, err := c.Client().Put(BaseUris["teams"]+teamTag+"/unarchive").Receive(teamResponse, apiError)
+	response, err := c.Client().Put(Route("teams", tag+"/unarchive")).Receive(teamResponse, apiError)
 	if err != nil {
 		return errors.New("could not unarchive team: " + err.Error())
 	}

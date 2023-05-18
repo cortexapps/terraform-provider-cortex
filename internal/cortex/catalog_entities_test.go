@@ -13,7 +13,7 @@ var testCatalogEntity = &cortex.CatalogEntity{
 
 func TestGetCatalogEntity(t *testing.T) {
 	testTag := "test-catalog-entity"
-	c, teardown, err := setupClient(cortex.BaseUris["catalog_entities"]+testTag, testCatalogEntity, AssertRequestMethod(t, "GET"))
+	c, teardown, err := setupClient(cortex.Route("catalog_entities", testTag), testCatalogEntity, AssertRequestMethod(t, "GET"))
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
@@ -29,7 +29,7 @@ func TestListCatalogEntities(t *testing.T) {
 			*testCatalogEntity,
 		},
 	}
-	c, teardown, err := setupClient(cortex.BaseUris["catalog_entities"], resp, AssertRequestMethod(t, "GET"))
+	c, teardown, err := setupClient(cortex.Route("catalog_entities", ""), resp, AssertRequestMethod(t, "GET"))
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 

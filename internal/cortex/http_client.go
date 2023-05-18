@@ -22,6 +22,14 @@ var BaseUris = map[string]string{
 	"open_api":         "/api/v1/open-api",
 }
 
+func Route(domain string, path string) string {
+	val, ok := BaseUris[domain]
+	if !ok {
+		return ""
+	}
+	return val + path
+}
+
 type HttpClient struct {
 	ctx     context.Context
 	client  *sling.Sling

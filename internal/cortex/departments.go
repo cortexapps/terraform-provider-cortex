@@ -62,7 +62,7 @@ func (c *DepartmentsClient) Get(ctx context.Context, tag string) (*Department, e
 	params := &DepartmentGetParams{
 		DepartmentTag: tag,
 	}
-	body, err := c.Client().Get(BaseUris["departments"]).QueryStruct(params).Receive(response, apiError)
+	body, err := c.Client().Get(Route("departments", "")).QueryStruct(params).Receive(response, apiError)
 	if err != nil {
 		return department, errors.New("could not get department: " + err.Error())
 	}
@@ -89,7 +89,7 @@ func (c *DepartmentsClient) Create(ctx context.Context, req CreateDepartmentRequ
 	department := &Department{}
 	apiError := &ApiError{}
 
-	body, err := c.Client().Post(BaseUris["departments"]).BodyJSON(&req).Receive(department, apiError)
+	body, err := c.Client().Post(Route("departments", "")).BodyJSON(&req).Receive(department, apiError)
 	if err != nil {
 		return department, errors.New("could not create department: " + err.Error())
 	}
@@ -116,7 +116,7 @@ func (c *DepartmentsClient) Update(ctx context.Context, tag string, req UpdateDe
 	department := &Department{}
 	apiError := &ApiError{}
 
-	body, err := c.Client().Put(BaseUris["departments"]+tag).BodyJSON(&req).Receive(department, apiError)
+	body, err := c.Client().Put(Route("departments", tag)).BodyJSON(&req).Receive(department, apiError)
 	if err != nil {
 		return department, errors.New("could not update department: " + err.Error())
 	}
@@ -145,7 +145,7 @@ func (c *DepartmentsClient) Delete(ctx context.Context, tag string) error {
 		Tag: tag,
 	}
 
-	body, err := c.Client().Delete(BaseUris["departments"]).QueryStruct(params).Receive(response, apiError)
+	body, err := c.Client().Delete(Route("departments", "")).QueryStruct(params).Receive(response, apiError)
 	if err != nil {
 		return errors.New("could not delete department: " + err.Error())
 	}

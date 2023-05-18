@@ -28,7 +28,7 @@ var testGetDepartmentResponse = &cortex.DepartmentsResponse{
 
 func TestGetDepartment(t *testing.T) {
 	testDepartmentTag := "test-department"
-	c, teardown, err := setupClient(cortex.BaseUris["departments"], testGetDepartmentResponse, AssertRequestMethod(t, "GET"))
+	c, teardown, err := setupClient(cortex.Route("departments", ""), testGetDepartmentResponse, AssertRequestMethod(t, "GET"))
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
@@ -52,7 +52,7 @@ func TestCreateDepartment(t *testing.T) {
 		},
 	}
 	c, teardown, err := setupClient(
-		cortex.BaseUris["departments"],
+		cortex.Route("departments", ""),
 		testDepartmentResponse,
 		AssertRequestMethod(t, "POST"),
 		AssertRequestBody(t, req),
@@ -80,7 +80,7 @@ func TestUpdateDepartment(t *testing.T) {
 	tag := "test-department"
 
 	c, teardown, err := setupClient(
-		cortex.BaseUris["departments"],
+		cortex.Route("departments", tag),
 		testDepartmentResponse,
 		AssertRequestMethod(t, "PUT"),
 		AssertRequestBody(t, req),
@@ -97,7 +97,7 @@ func TestDeleteDepartment(t *testing.T) {
 	tag := "test-department"
 
 	c, teardown, err := setupClient(
-		cortex.BaseUris["departments"],
+		cortex.Route("departments", ""),
 		cortex.DeleteDepartmentResponse{},
 		AssertRequestMethod(t, "DELETE"),
 	)

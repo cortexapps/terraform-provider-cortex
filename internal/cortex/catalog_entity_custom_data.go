@@ -41,7 +41,7 @@ type CatalogEntityCustomData struct {
 func (c *CatalogEntityCustomDataClient) Get(ctx context.Context, entityTag string, key string) (*CatalogEntityCustomData, error) {
 	entityResponse := &CatalogEntityCustomData{}
 	apiError := &ApiError{}
-	response, err := c.Client().Get(BaseUris["catalog_entities"]+entityTag+"/custom-data/"+key).Receive(entityResponse, apiError)
+	response, err := c.Client().Get(Route("catalog_entities", entityTag+"/custom-data/"+key)).Receive(entityResponse, apiError)
 	if err != nil {
 		return entityResponse, errors.New("could not get catalog entity custom data: " + err.Error())
 	}
@@ -66,7 +66,7 @@ func (c *CatalogEntityCustomDataClient) List(ctx context.Context, entityTag stri
 	var entitiesResponse []CatalogEntityCustomData
 	apiError := &ApiError{}
 
-	response, err := c.Client().Get(BaseUris["catalog_entities"]+entityTag+"/custom-data").QueryStruct(params).Receive(entitiesResponse, apiError)
+	response, err := c.Client().Get(Route("catalog_entities", entityTag+"/custom-data")).QueryStruct(params).Receive(entitiesResponse, apiError)
 	if err != nil {
 		return nil, errors.New("could not get catalog entity custom data: " + err.Error())
 	}

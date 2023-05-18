@@ -36,7 +36,7 @@ var testTeamResponse = &cortex.Team{
 func TestGetTeam(t *testing.T) {
 	testTeamTag := "test-team"
 	resp := testTeamResponse
-	c, teardown, err := setupClient(cortex.BaseUris["teams"]+testTeamTag, resp, AssertRequestMethod(t, "GET"))
+	c, teardown, err := setupClient(cortex.Route("teams", testTeamTag), resp, AssertRequestMethod(t, "GET"))
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
@@ -52,7 +52,7 @@ func TestListTeams(t *testing.T) {
 			*testTeamResponse,
 		},
 	}
-	c, teardown, err := setupClient(cortex.BaseUris["teams"], resp, AssertRequestMethod(t, "GET"))
+	c, teardown, err := setupClient(cortex.Route("teams", ""), resp, AssertRequestMethod(t, "GET"))
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
@@ -97,7 +97,7 @@ func TestCreateTeam(t *testing.T) {
 		},
 	}
 	c, teardown, err := setupClient(
-		cortex.BaseUris["teams"],
+		cortex.Route("teams", ""),
 		testTeamResponse,
 		AssertRequestMethod(t, "POST"),
 		AssertRequestBody(t, req),
@@ -144,7 +144,7 @@ func TestUpdateTeam(t *testing.T) {
 	teamTag := "test-team"
 
 	c, teardown, err := setupClient(
-		cortex.BaseUris["teams"],
+		cortex.Route("teams", teamTag),
 		testTeamResponse,
 		AssertRequestMethod(t, "PUT"),
 		AssertRequestBody(t, req),
@@ -157,13 +157,28 @@ func TestUpdateTeam(t *testing.T) {
 	assert.Equal(t, res.TeamTag, teamTag)
 }
 
+func TestDeleteTeam(t *testing.T) {
+	tag := "test-team"
+
+	c, teardown, err := setupClient(
+		cortex.Route("teams", ""),
+		cortex.DeleteTeamResponse{},
+		AssertRequestMethod(t, "DELETE"),
+	)
+	assert.Nil(t, err, "could not setup client")
+	defer teardown()
+
+	err = c.Teams().Delete(context.Background(), tag)
+	assert.Nil(t, err, "error deleting a team")
+}
+
 func TestArchiveTeam(t *testing.T) {
 	teamTag := "test-team"
 
 	c, teardown, err := setupClient(
-		cortex.BaseUris["teams"],
+		cortex.Route("teams", teamTag+"/archive"),
 		cortex.ArchiveTeamResponse{},
-		AssertRequestMethod(t, "DELETE"),
+		AssertRequestMethod(t, "PUT"),
 	)
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
@@ -176,7 +191,7 @@ func TestUnarchiveTeam(t *testing.T) {
 	teamTag := "test-team"
 
 	c, teardown, err := setupClient(
-		cortex.BaseUris["teams"]+teamTag+"/unarchive",
+		cortex.Route("teams", teamTag+"/unarchive"),
 		cortex.UnarchiveTeamResponse{},
 		AssertRequestMethod(t, "PUT"),
 	)
