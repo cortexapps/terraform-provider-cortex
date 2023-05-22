@@ -15,11 +15,12 @@ const (
 )
 
 var BaseUris = map[string]string{
-	"teams":            "/api/v1/teams/",
-	"departments":      "/api/v1/teams/departments/",
-	"scorecards":       "/api/v1/scorecards/",
-	"catalog_entities": "/api/v1/catalog/",
-	"open_api":         "/api/v1/open-api",
+	"teams":                "/api/v1/teams/",
+	"departments":          "/api/v1/teams/departments/",
+	"scorecards":           "/api/v1/scorecards/",
+	"catalog_entities":     "/api/v1/catalog/",
+	"open_api":             "/api/v1/open-api",
+	"resource_definitions": "/api/v1/catalog/definitions/",
 }
 
 func Route(domain string, path string) string {
@@ -141,4 +142,8 @@ func (c *HttpClient) Departments() DepartmentsClientInterface {
 
 func (c *HttpClient) Scorecards() ScorecardsClientInterface {
 	return &ScorecardsClient{client: c}
+}
+
+func (c *HttpClient) ResourceDefinitions() ResourceDefinitionsClientInterface {
+	return &ResourceDefinitionsClient{client: c}
 }
