@@ -12,10 +12,6 @@ Entities:
 - OpenAPI docs?
 - Packages?
 
-### Resource Definitions
-
-Everything.
-
 ### Scorecards
 
 Connect client to TF provider. Undo YAML approach (work with Cortex to figure out spec.)
