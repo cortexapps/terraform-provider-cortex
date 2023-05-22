@@ -112,6 +112,7 @@ func (p *CortexProvider) DataSources(ctx context.Context) []func() datasource.Da
 		NewTeamDataSource,
 		NewDepartmentDataSource,
 		NewScorecardDataSource,
+		NewResourceDefinitionDataSource,
 	}
 }
 

@@ -72,6 +72,7 @@ func (r *ResourceDefinitionResource) Schema(ctx context.Context, req resource.Sc
 			},
 			"schema": schema.MapAttribute{
 				MarkdownDescription: "Schema for the resource definition.",
+				ElementType:         types.StringType,
 				Required:            true,
 			},
 
