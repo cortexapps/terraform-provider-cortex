@@ -31,11 +31,12 @@ func (c *ScorecardsClient) Client() *sling.Sling {
 
 // Scorecard is the nested response object that is typically returned from the scorecards endpoints.
 type Scorecard struct {
-	Tag         string          `json:"tag" yaml:"tag"`
-	Name        string          `json:"name,omitempty" yaml:"name,omitempty"`
-	Description string          `json:"description,omitempty" yaml:"description,omitempty"`
-	IsDraft     bool            `json:"is_draft" yaml:"is_draft"`
-	Rules       []ScorecardRule `json:"rules" yaml:"rules"`
+	Tag         string                  `json:"tag" yaml:"tag"`
+	Name        string                  `json:"name,omitempty" yaml:"name,omitempty"`
+	Description string                  `json:"description,omitempty" yaml:"description,omitempty"`
+	IsDraft     bool                    `json:"is_draft" yaml:"is_draft"`
+	Rules       []ScorecardRule         `json:"rules" yaml:"rules"`
+	Levels      []ScorecardLevelSummary `json:"levels" yaml:"levels"`
 }
 
 type ScorecardRule struct {
@@ -49,6 +50,11 @@ type ScorecardRule struct {
 
 type ScorecardLadder struct {
 	Levels []ScorecardLevel `json:"levels" yaml:"levels"`
+}
+
+type ScorecardLevelSummary struct {
+	Name string `json:"name" yaml:"name"`
+	Rank int64  `json:"rank" yaml:"rank"`
 }
 
 type ScorecardLevel struct {

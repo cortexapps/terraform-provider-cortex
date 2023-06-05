@@ -153,6 +153,18 @@ func (r *DepartmentResource) Read(ctx context.Context, req resource.ReadRequest,
 	// Map data from the API response to the model
 	data.Id = types.StringValue(departmentResponse.Tag)
 	data.Tag = types.StringValue(departmentResponse.Tag)
+	data.Name = types.StringValue(departmentResponse.Name)
+	data.Description = types.StringValue(departmentResponse.Description)
+
+	var members []DepartmentMemberResourceModel
+	for _, member := range departmentResponse.Members {
+		members = append(members, DepartmentMemberResourceModel{
+			Name:        types.StringValue(member.Name),
+			Email:       types.StringValue(member.Email),
+			Description: types.StringValue(member.Description),
+		})
+	}
+	data.Members = members
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -205,7 +217,7 @@ func (r *DepartmentResource) Update(ctx context.Context, req resource.UpdateRequ
 	var data *DepartmentResourceModel
 
 	// Read Terraform plan data into the model
-	//resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return

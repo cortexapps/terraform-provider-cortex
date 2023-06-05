@@ -326,7 +326,7 @@ func (r *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	var data *TeamResourceModel
 
 	// Read Terraform plan data into the model
-	//resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return

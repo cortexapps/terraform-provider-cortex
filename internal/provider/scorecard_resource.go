@@ -31,11 +31,28 @@ type ScorecardResource struct {
 
 // ScorecardResourceModel describes the scorecard data model within Terraform.
 type ScorecardResourceModel struct {
-	Id          types.String `tfsdk:"id"`
-	Tag         types.String `tfsdk:"tag"`
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
-	IsDraft     types.Bool   `tfsdk:"is_draft"`
+	Id          types.String                  `tfsdk:"id"`
+	Tag         types.String                  `tfsdk:"tag"`
+	Name        types.String                  `tfsdk:"name"`
+	Description types.String                  `tfsdk:"description"`
+	IsDraft     types.Bool                    `tfsdk:"is_draft"`
+	Levels      []ScorecardLevelResourceModel `tfsdk:"levels"`
+	Rules       []ScorecardRuleResourceModel  `tfsdk:"rules"`
+}
+
+type ScorecardLevelResourceModel struct {
+	Name   types.String `tfsdk:"name"`
+	Number types.Int64  `tfsdk:"number"`
+}
+
+type ScorecardRuleResourceModel struct {
+	Title          types.String `tfsdk:"title"`
+	Description    types.String `tfsdk:"description"`
+	Expression     types.String `tfsdk:"expression"`
+	Number         types.Int64  `tfsdk:"number"`
+	Weight         types.Int64  `tfsdk:"weight"`
+	LevelName      types.String `tfsdk:"level_name"`
+	FailureMessage types.String `tfsdk:"failure_message"`
 }
 
 /***********************************************************************************************************************
@@ -182,6 +199,18 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 	// Map data from the API response to the model
 	data.Id = types.StringValue(scorecardResponse.Tag)
 	data.Tag = types.StringValue(scorecardResponse.Tag)
+	data.Name = types.StringValue(scorecardResponse.Name)
+	data.Description = types.StringValue(scorecardResponse.Description)
+	data.IsDraft = types.BoolValue(scorecardResponse.IsDraft)
+
+	var levels []ScorecardLevelResourceModel
+	for _, level := range scorecardResponse.Levels {
+		levels = append(levels, ScorecardLevelResourceModel{
+			Name:   types.StringValue(level.Name),
+			Number: types.Int64Value(level.Rank),
+		})
+	}
+	data.Levels = levels
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
