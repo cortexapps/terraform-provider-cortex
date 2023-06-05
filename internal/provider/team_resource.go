@@ -215,6 +215,40 @@ func (r *TeamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	// Map data from the API response to the model
 	data.Id = types.StringValue(teamResponse.TeamTag)
 	data.Tag = types.StringValue(teamResponse.TeamTag)
+	data.Name = types.StringValue(teamResponse.Metadata.Name)
+	data.Description = types.StringValue(teamResponse.Metadata.Description)
+	data.Summary = types.StringValue(teamResponse.Metadata.Summary)
+	data.Archived = types.BoolValue(teamResponse.IsArchived)
+
+	var slackChannels []TeamSlackChannelResourceModel
+	for _, channel := range teamResponse.SlackChannels {
+		slackChannels = append(slackChannels, TeamSlackChannelResourceModel{
+			Name:                 types.StringValue(channel.Name),
+			NotificationsEnabled: types.BoolValue(channel.NotificationsEnabled),
+		})
+	}
+	data.SlackChannels = slackChannels
+
+	var additionalMembers []TeamAdditionalMemberResourceModel
+	for _, channel := range teamResponse.AdditionalMembers {
+		additionalMembers = append(additionalMembers, TeamAdditionalMemberResourceModel{
+			Name:        types.StringValue(channel.Name),
+			Email:       types.StringValue(channel.Email),
+			Description: types.StringValue(channel.Description),
+		})
+	}
+	data.AdditionalMembers = additionalMembers
+
+	var links []TeamLinkResourceModel
+	for _, link := range teamResponse.Links {
+		links = append(links, TeamLinkResourceModel{
+			Name:        types.StringValue(link.Name),
+			Type:        types.StringValue(link.Type),
+			Url:         types.StringValue(link.Url),
+			Description: types.StringValue(link.Description),
+		})
+	}
+	data.Links = links
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
