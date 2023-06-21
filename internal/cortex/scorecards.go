@@ -91,6 +91,65 @@ func (c *ScorecardsClient) Get(ctx context.Context, tag string) (*Scorecard, err
 	return scorecardResponse.Scorecard, nil
 }
 
+func (c *ScorecardsClient) GetFromDescriptor(ctx context.Context, tag string) (*Scorecard, error) {
+	scorecard := &Scorecard{}
+	scorecardDescriptorResponse := ""
+
+	apiError := &ApiError{}
+	response, err := c.Client().Get(Route("scorecards", tag+"/descriptor")).Receive(scorecardDescriptorResponse, apiError)
+
+	err = c.client.handleResponseStatus(response, apiError)
+	if err != nil {
+		return scorecard, errors.Join(errors.New("Failed getting scorecard descriptor: "), err)
+	}
+	yamlScorecard := map[string]interface{}{}
+	err = yaml.Unmarshal([]byte(scorecardDescriptorResponse), yamlScorecard)
+	if err != nil {
+		return scorecard, errors.Join(errors.New("Failed decoding scorecard descriptor into YAML: "), err)
+	}
+
+	scorecard.Tag = yamlScorecard["tag"].(string)
+	scorecard.Name = yamlScorecard["name"].(string)
+	scorecard.Description = yamlScorecard["description"].(string)
+	scorecard.IsDraft = yamlScorecard["draft"].(bool)
+
+	var rules []ScorecardRule
+	for _, rule := range yamlScorecard["rules"].([]interface{}) {
+		ruleMap := rule.(map[string]interface{})
+		rules = append(rules, ScorecardRule{
+			Title:          ruleMap["title"].(string),
+			Description:    ruleMap["description"].(string),
+			Expression:     ruleMap["expression"].(string),
+			FailureMessage: ruleMap["failureMessage"].(string),
+			LevelName:      ruleMap["levelName"].(string),
+			Weight:         int(ruleMap["weight"].(int64)),
+		})
+	}
+	scorecard.Rules = rules
+
+	ladder := yamlScorecard["ladder"].(map[string]interface{})
+
+	var levels []ScorecardLevel
+	for _, level := range ladder["levels"].([]interface{}) {
+		levelMap := level.(map[string]interface{})
+		levels = append(levels, ScorecardLevel{
+			Name:        levelMap["name"].(string),
+			Rank:        int(levelMap["rank"].(int64)),
+			Color:       levelMap["color"].(string),
+			Description: levelMap["description"].(string),
+		})
+	}
+
+	// TODO: filter:, evaluation:
+	// filter:
+	//   category: SERVICE
+	//   query: has_group("production")
+	// evaluation:
+	//   window: 4
+
+	return scorecard, nil
+}
+
 /***********************************************************************************************************************
  * GET /api/v1/scorecards
  **********************************************************************************************************************/
