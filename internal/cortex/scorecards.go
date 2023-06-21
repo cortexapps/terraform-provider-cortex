@@ -37,6 +37,8 @@ type Scorecard struct {
 	IsDraft     bool                    `json:"is_draft" yaml:"is_draft"`
 	Rules       []ScorecardRule         `json:"rules" yaml:"rules"`
 	Levels      []ScorecardLevelSummary `json:"levels" yaml:"levels"`
+	Filter      ScorecardFilter         `json:"filter" yaml:"filter"`
+	Evaluation  ScorecardEvaluation     `json:"evaluation" yaml:"evaluation"`
 }
 
 type ScorecardRule struct {
@@ -62,6 +64,15 @@ type ScorecardLevel struct {
 	Rank        int    `json:"rank" yaml:"rank"`
 	Color       string `json:"color" yaml:"color"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+}
+
+type ScorecardFilter struct {
+	Category string `json:"category" yaml:"category"`
+	Query    string `json:"query" yaml:"query"`
+}
+
+type ScorecardEvaluation struct {
+	Window int `json:"window" yaml:"window"`
 }
 
 /***********************************************************************************************************************
@@ -140,12 +151,13 @@ func (c *ScorecardsClient) GetFromDescriptor(ctx context.Context, tag string) (*
 		})
 	}
 
-	// TODO: filter:, evaluation:
-	// filter:
-	//   category: SERVICE
-	//   query: has_group("production")
-	// evaluation:
-	//   window: 4
+	scorecard.Filter = ScorecardFilter{
+		Category: yamlScorecard["filter"].(map[string]interface{})["category"].(string),
+		Query:    yamlScorecard["filter"].(map[string]interface{})["query"].(string),
+	}
+	scorecard.Evaluation = ScorecardEvaluation{
+		Window: yamlScorecard["evaluation"].(map[string]interface{})["window"].(int),
+	}
 
 	return scorecard, nil
 }
