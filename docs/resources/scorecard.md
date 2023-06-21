@@ -55,5 +55,3 @@ Optional:
 - `description` (String) Description of the rule.
 - `failure_message` (String) Message to display when the rule fails.
 - `level_name` (String) Name of the level this rule is associated with, if applicable.
-
-

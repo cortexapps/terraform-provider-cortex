@@ -24,5 +24,3 @@ Department data source
 - `description` (String)
 - `id` (String) The ID of this resource.
 - `name` (String)
-
-

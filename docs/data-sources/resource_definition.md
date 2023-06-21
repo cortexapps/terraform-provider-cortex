@@ -26,5 +26,3 @@ ResourceDefinition data source
 - `name` (String)
 - `schema` (Map of String)
 - `source` (String)
-
-

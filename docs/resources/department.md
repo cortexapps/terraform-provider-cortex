@@ -40,5 +40,3 @@ Required:
 Optional:
 
 - `description` (String) A short description of the member.
-
-

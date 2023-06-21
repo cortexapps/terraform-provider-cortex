@@ -69,5 +69,3 @@ Required:
 Optional:
 
 - `notifications_enabled` (Boolean) Whether notifications are enabled for the Slack channel.
-
-

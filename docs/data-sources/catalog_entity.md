@@ -24,5 +24,3 @@ Catalog Entity data source
 - `description` (String) Description of the entity visible in the Service or Resource Catalog. Markdown is supported.
 - `id` (String) The ID of this resource.
 - `name` (String) Human-readable name for the entity
-
-

@@ -22,5 +22,3 @@ Team data source
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-
-
