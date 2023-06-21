@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dghubble/sling"
+	"gopkg.in/yaml.v3"
 )
 
 type CatalogEntitiesClientInterface interface {
@@ -28,18 +29,21 @@ func (c *CatalogEntitiesClient) Client() *sling.Sling {
  **********************************************************************************************************************/
 
 type CatalogEntity struct {
-	Tag         string                 `json:"tag" yaml:"x-cortex-tag"`
-	Description string                 `json:"description" yaml:"description"`
-	Groups      []string               `json:"groups" yaml:"x-cortex-groups"`
-	Links       []CatalogEntityLink    `json:"links" yaml:"x-cortex-link"`
-	Metadata    map[string]interface{} `json:"metadata" yaml:"x-cortex-custom-metadata"`
-	Ownership   CatalogEntityOwnership `json:"ownership" yaml:"x-cortex-owners"`
+	Tag          string                 `json:"tag" yaml:"x-cortex-tag"`
+	Title        string                 `json:"title" yaml:"title"`
+	Description  string                 `json:"description" yaml:"description"`
+	Type         string                 `json:"type" yaml:"x-cortex-type"`
+	Groups       []string               `json:"groups" yaml:"x-cortex-groups"`
+	Links        []CatalogEntityLink    `json:"links" yaml:"x-cortex-link"`
+	Metadata     map[string]interface{} `json:"metadata" yaml:"x-cortex-custom-metadata"`
+	Dependencies []string               `json:"dependencies" yaml:"x-cortex-dependency"`
+	Ownership    CatalogEntityOwnership `json:"ownership" yaml:"x-cortex-owners"`
 }
 
 type CatalogEntityOwnership struct {
-	Emails        []CatalogEntityEmail      `json:"emails"`
-	Groups        []CatalogEntityGroup      `json:"groups"`
-	SlackChannels CatalogEntitySlackChannel `json:"slackChannels"`
+	Emails        []CatalogEntityEmail        `json:"emails"`
+	Groups        []CatalogEntityGroup        `json:"groups"`
+	SlackChannels []CatalogEntitySlackChannel `json:"slackChannels"`
 }
 
 type CatalogEntityEmail struct {
@@ -104,6 +108,168 @@ func (c *CatalogEntitiesClient) Get(ctx context.Context, tag string) (*CatalogEn
 	}
 
 	return catalogEntityResponse, nil
+}
+
+func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag string) (*CatalogEntity, error) {
+	entity := &CatalogEntity{}
+	entityDescriptorResponse := ""
+
+	apiError := &ApiError{}
+	response, err := c.Client().Get(Route("catalog", tag+"/openapi")).Receive(entityDescriptorResponse, apiError)
+
+	err = c.client.handleResponseStatus(response, apiError)
+	if err != nil {
+		return entity, errors.Join(errors.New("Failed getting catalog entity descriptor: "), err)
+	}
+	yamlEntity := map[string]interface{}{}
+	err = yaml.Unmarshal([]byte(entityDescriptorResponse), yamlEntity)
+	if err != nil {
+		return entity, errors.Join(errors.New("Failed decoding catalog entity descriptor into YAML: "), err)
+	}
+
+	return c.YamlToEntity(ctx, entity, yamlEntity)
+}
+
+// YamlToEntity converts YAML into a CatalogEntity, from the following specification example:
+/*
+openapi: 3.0.0
+info:
+  title: Chat Service
+  description: Chat service is responsible for handling chat feature.
+  x-cortex-tag: chat-service
+  x-cortex-type: service
+  x-cortex-link:
+    - name: Chat ServiceAPI Spec
+      type: OPENAPI
+      url: ./docs/chat-service-openapi-spec.yaml
+  x-cortex-groups:
+    - python-services
+  x-cortex-owners:
+    - type: group
+      name: Delta
+      provider: OKTA
+      description: Delta Team
+    - type: slack
+      channel: delta-team
+      notificationsEnabled: true
+  x-cortex-custom-metadata:
+    core-service: true
+  x-cortex-dependency:
+    tag: authentication-service
+    tag: chat-database
+  x-cortex-git:
+    github:
+      repository: org/chat-service
+  x-cortex-oncall:
+    pagerduty:
+      id: ASDF1234
+      type: SCHEDULE
+  x-cortex-apm:
+    datadog:
+      monitors:
+        - 12345
+  x-cortex-issues:
+    jira:
+      projects:
+        - CS
+*/
+func (c *CatalogEntitiesClient) YamlToEntity(ctx context.Context, entity *CatalogEntity, yamlEntity map[string]interface{}) (*CatalogEntity, error) {
+	info := yamlEntity["info"].(map[string]interface{})
+
+	entity.Title = info["title"].(string)
+	entity.Description = info["description"].(string)
+	entity.Tag = info["x-cortex-tag"].(string)
+	entity.Type = info["x-cortex-type"].(string)
+
+	entity.Links = []CatalogEntityLink{}
+	if info["x-cortex-link"] != nil {
+		for _, link := range info["x-cortex-link"].([]interface{}) {
+			linkMap := link.(map[string]interface{})
+			entity.Links = append(entity.Links, CatalogEntityLink{
+				Name: linkMap["name"].(string),
+				Type: linkMap["type"].(string),
+				Url:  linkMap["url"].(string),
+			})
+		}
+	}
+
+	entity.Groups = []string{}
+	if info["x-cortex-groups"] != nil {
+		for _, group := range info["x-cortex-groups"].([]interface{}) {
+			entity.Groups = append(entity.Groups, group.(string))
+		}
+	}
+
+	entity.Ownership = CatalogEntityOwnership{
+		Groups:        []CatalogEntityGroup{},
+		SlackChannels: []CatalogEntitySlackChannel{},
+		Emails:        []CatalogEntityEmail{},
+	}
+	if info["x-cortex-owners"] != nil {
+		for _, owner := range info["x-cortex-owners"].([]interface{}) {
+			ownerMap := owner.(map[string]interface{})
+			if ownerMap["type"] == "group" {
+				entity.Ownership.Groups = append(entity.Ownership.Groups, CatalogEntityGroup{
+					GroupName:   ownerMap["name"].(string),
+					Provider:    ownerMap["provider"].(string),
+					Description: ownerMap["description"].(string),
+				})
+			} else if ownerMap["type"] == "slack" {
+				entity.Ownership.SlackChannels = append(entity.Ownership.SlackChannels, CatalogEntitySlackChannel{
+					Channel:              ownerMap["channel"].(string),
+					Description:          ownerMap["description"].(string),
+					NotificationsEnabled: ownerMap["notificationsEnabled"].(bool),
+				})
+			} else if ownerMap["type"] == "email" {
+				entity.Ownership.Emails = append(entity.Ownership.Emails, CatalogEntityEmail{
+					Email: ownerMap["email"].(string),
+				})
+			}
+		}
+	}
+
+	entity.Metadata = map[string]interface{}{}
+	if info["x-cortex-custom-metadata"] != nil {
+		for key, value := range info["x-cortex-custom-metadata"].(map[string]interface{}) {
+			entity.Metadata[key] = value
+		}
+	}
+
+	entity.Dependencies = []string{}
+	if info["x-cortex-dependency"] != nil {
+		for _, dependency := range info["x-cortex-dependency"].([]interface{}) {
+			entity.Dependencies = append(entity.Dependencies, dependency.(string))
+		}
+	}
+
+	/*
+		TODO: handle these
+		  x-cortex-children:
+			# children can be of type service, resource, or domain
+			- tag: chat-service
+			- tag: chat-database
+		  x-cortex-domain-parents:
+			# parents can be of type domain only
+			- tag: payments-domain
+			- tag: web-domain
+		  x-cortex-git:
+		    github:
+		      repository: org/chat-service
+		  x-cortex-oncall:
+		    pagerduty:
+		      id: ASDF1234
+		      type: SCHEDULE
+		  x-cortex-apm:
+		    datadog:
+		      monitors:
+		        - 12345
+		  x-cortex-issues:
+		    jira:
+		      projects:
+		        - CS
+	*/
+
+	return entity, nil
 }
 
 /***********************************************************************************************************************
