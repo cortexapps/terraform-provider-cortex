@@ -5,8 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dghubble/sling"
+	"github.com/motemen/go-loghttp"
+	_ "github.com/motemen/go-loghttp/global" // Just this line!
 	"net/http"
 	"net/url"
+	"os"
 )
 
 const (
@@ -50,7 +53,11 @@ func NewClient(opts ...OptionDelegator) (*HttpClient, error) {
 		}
 	}
 
-	c.client = sling.New().Base(c.baseUrl).
+	hc := &http.Client{}
+	if os.Getenv("HTTP_DEBUG") == "1" {
+		hc.Transport = &loghttp.Transport{}
+	}
+	c.client = sling.New().Doer(hc).Base(c.baseUrl).
 		Set("User-Agent", fmt.Sprintf("%s (%s)", UserAgentPrefix, c.version)).
 		Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
 
@@ -109,7 +116,9 @@ func (c *HttpClient) handleResponseStatus(response *http.Response, apiError *Api
 	case code == 401:
 		return fmt.Errorf("%s\n%s", ApiErrorUnauthorized, apiError)
 	default:
-		return fmt.Errorf("%d request failed with error\n%s", code, apiError)
+		//b, _ := io.ReadAll(response.Body)
+		//b = string(b)
+		return fmt.Errorf("%d request failed with error: %+v", code, apiError.String())
 	}
 }
 

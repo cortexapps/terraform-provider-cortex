@@ -8,8 +8,9 @@ GOOS?=$(shell go tool dist env | grep GOOS | grep -o '".*"' | sed 's/"//g')
 GOARCH?=$(shell go tool dist env | grep GOARCH | grep -o '".*"' | sed 's/"//g')
 OS_ARCH?=$(GOOS)_$(GOARCH)
 
-TF_LOG ?= "WARN"
-CORTEX_API_TOKEN ?= "set-me-in-env"
+TF_LOG ?= WARN
+include .env
+export
 
 default: test
 
@@ -42,4 +43,4 @@ test:
 # acceptance tests
 testacc:
 	go clean -testcache
-	CORTEX_API_TOKEN=$(CORTEX_API_TOKEN) TF_LOG=$(TF_LOG) TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m
+	TF_LOG=$(TF_LOG) TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m

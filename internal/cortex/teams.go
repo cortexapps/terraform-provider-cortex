@@ -2,8 +2,11 @@ package cortex
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/dghubble/sling"
+	"log"
 )
 
 type TeamsClientInterface interface {
@@ -43,7 +46,7 @@ type Team struct {
 type TeamMetadata struct {
 	Description string `json:"description,omitempty"`
 	Name        string `json:"name"`
-	Summary     string `json:"summary"`
+	Summary     string `json:"summary,omitempty"`
 }
 
 type TeamMember struct {
@@ -68,6 +71,10 @@ type TeamIdpGroup struct {
 	Group    string               `json:"group"`
 	Members  []TeamIdpGroupMember `json:"members"`
 	Provider string               `json:"provider"`
+}
+
+type TeamCortexManaged struct {
+	Members []TeamMember `json:"members"`
 }
 
 type TeamIdpGroupMember struct {
@@ -132,13 +139,15 @@ func (c *TeamsClient) List(ctx context.Context, params *TeamListParams) (*TeamsR
  **********************************************************************************************************************/
 
 type CreateTeamRequest struct {
-	AdditionalMembers []TeamMember       `json:"additionalMembers,omitempty"`
-	IsArchived        bool               `json:"isArchived,omitempty"`
-	Metadata          TeamMetadata       `json:"metadata"`
-	SlackChannels     []TeamSlackChannel `json:"slackChannels,omitempty"`
-	Links             []TeamLink         `json:"links,omitempty"`
 	TeamTag           string             `json:"teamTag"`
-	IdpGroup          TeamIdpGroup       `json:"idpGroup"`
+	Type              string             `json:"type"`
+	Metadata          TeamMetadata       `json:"metadata"`
+	IsArchived        bool               `json:"isArchived,omitempty"`
+	AdditionalMembers []TeamMember       `json:"additionalMembers"`
+	SlackChannels     []TeamSlackChannel `json:"slackChannels"`
+	Links             []TeamLink         `json:"links"`
+	CortexTeam        TeamCortexManaged  `json:"cortexTeam,omitempty"`
+	IdpGroup          TeamIdpGroup       `json:"idpGroup,omitempty"`
 }
 
 func (c *TeamsClient) Create(ctx context.Context, req CreateTeamRequest) (*Team, error) {
@@ -152,6 +161,8 @@ func (c *TeamsClient) Create(ctx context.Context, req CreateTeamRequest) (*Team,
 
 	err = c.client.handleResponseStatus(response, apiError)
 	if err != nil {
+		reqJson, _ := json.Marshal(req)
+		log.Println(fmt.Sprintf("Failed creating team: %+v\n\nRequest:\n%+v", err, string(reqJson)))
 		return teamResponse, err
 	}
 
@@ -163,10 +174,10 @@ func (c *TeamsClient) Create(ctx context.Context, req CreateTeamRequest) (*Team,
  **********************************************************************************************************************/
 
 type UpdateTeamRequest struct {
-	AdditionalMembers []TeamMember       `json:"additionalMembers,omitempty"`
 	Metadata          TeamMetadata       `json:"metadata"`
-	SlackChannels     []TeamSlackChannel `json:"slackChannels,omitempty"`
-	Links             []TeamLink         `json:"links,omitempty"`
+	Links             []TeamLink         `json:"links"`
+	SlackChannels     []TeamSlackChannel `json:"slackChannels"`
+	AdditionalMembers []TeamMember       `json:"additionalMembers"`
 }
 
 func (c *TeamsClient) Update(ctx context.Context, tag string, req UpdateTeamRequest) (*Team, error) {
@@ -180,6 +191,8 @@ func (c *TeamsClient) Update(ctx context.Context, tag string, req UpdateTeamRequ
 
 	err = c.client.handleResponseStatus(response, apiError)
 	if err != nil {
+		reqJson, _ := json.Marshal(req)
+		log.Println(fmt.Sprintf("Failed updating team: %+v\n\nRequest:\n%+v\n%+v", err, string(reqJson), apiError.String()))
 		return teamResponse, err
 	}
 
@@ -192,7 +205,7 @@ func (c *TeamsClient) Update(ctx context.Context, tag string, req UpdateTeamRequ
 
 type DeleteTeamResponse struct{}
 type DeleteTeamRequest struct {
-	Tag string `json:"teamTag"`
+	Tag string `json:"teamTag" url:"teamTag"`
 }
 
 func (c *TeamsClient) Delete(ctx context.Context, tag string) error {
@@ -202,11 +215,12 @@ func (c *TeamsClient) Delete(ctx context.Context, tag string) error {
 
 	response, err := c.Client().Delete(Route("teams", "")).QueryStruct(req).Receive(teamResponse, apiError)
 	if err != nil {
-		return errors.New("could not delete team: " + err.Error())
+		return errors.New(fmt.Sprintf("could not delete team %v:\n\n%+v", tag, err.Error()))
 	}
 
 	err = c.client.handleResponseStatus(response, apiError)
 	if err != nil {
+		log.Println(fmt.Sprintf("Could not delete team %v:\n\n%+v", tag, err.Error()))
 		return err
 	}
 

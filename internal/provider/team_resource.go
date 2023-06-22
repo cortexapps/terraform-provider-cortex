@@ -39,8 +39,8 @@ type TeamResourceModel struct {
 	Description       types.String                        `tfsdk:"description"`
 	Summary           types.String                        `tfsdk:"summary"`
 	Archived          types.Bool                          `tfsdk:"archived"`
-	Links             []TeamLinkResourceModel             `tfsdk:"links"`
 	SlackChannels     []TeamSlackChannelResourceModel     `tfsdk:"slack_channels"`
+	Links             []TeamLinkResourceModel             `tfsdk:"links"`
 	AdditionalMembers []TeamAdditionalMemberResourceModel `tfsdk:"additional_members"`
 }
 
@@ -48,7 +48,7 @@ type TeamLinkResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Type        types.String `tfsdk:"type"`
 	Url         types.String `tfsdk:"url"`
-	Description types.String `tfsdk:"description,omitempty"`
+	Description types.String `tfsdk:"description"`
 }
 
 type TeamSlackChannelResourceModel struct {
@@ -59,7 +59,7 @@ type TeamSlackChannelResourceModel struct {
 type TeamAdditionalMemberResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Email       types.String `tfsdk:"email"`
-	Description types.String `tfsdk:"description,omitempty"`
+	Description types.String `tfsdk:"description"`
 }
 
 /***********************************************************************************************************************
@@ -84,28 +84,28 @@ func (r *TeamResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				MarkdownDescription: "Name of the team.",
 				Required:            true,
 			},
+			"slack_channels": schema.ListNestedAttribute{
+				MarkdownDescription: "A list of Slack channels related to the team.",
+				Required:            true,
 
-			// Optional attributes
-			"description": schema.StringAttribute{
-				MarkdownDescription: "Description of the team.",
-				Optional:            true,
-			},
-			"summary": schema.StringAttribute{
-				MarkdownDescription: "Summary of the team.",
-				Optional:            true,
-			},
-
-			// Computed attributes
-			"id": schema.StringAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							MarkdownDescription: "Name of the Slack channel.",
+							Required:            true,
+						},
+						"notifications_enabled": schema.BoolAttribute{
+							MarkdownDescription: "Whether or not notifications are enabled for the Slack channel.",
+							Required:            true,
+						},
+					},
 				},
 			},
-		},
-		Blocks: map[string]schema.Block{
-			"link": schema.ListNestedBlock{
-				NestedObject: schema.NestedBlockObject{
+			"links": schema.ListNestedAttribute{
+				MarkdownDescription: "Links related to the team.",
+				Required:            true,
+
+				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
 							MarkdownDescription: "Name of the link.",
@@ -129,24 +129,11 @@ func (r *TeamResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 					},
 				},
 			},
-			"slack_channel": schema.ListNestedBlock{
-				MarkdownDescription: "A list of Slack channels related to the team.",
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"name": schema.StringAttribute{
-							MarkdownDescription: "Name of the Slack channel.",
-							Required:            true,
-						},
-						"notifications_enabled": schema.BoolAttribute{
-							MarkdownDescription: "Whether notifications are enabled for the Slack channel.",
-							Optional:            true,
-						},
-					},
-				},
-			},
-			"additional_member": schema.ListNestedBlock{
+			"additional_members": schema.ListNestedAttribute{
 				MarkdownDescription: "A list of additional members, outside of the IdP group. Use this field to add members like managers, PMs, etc.",
-				NestedObject: schema.NestedBlockObject{
+				Required:            true,
+
+				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
 							MarkdownDescription: "Name of the member.",
@@ -162,6 +149,27 @@ func (r *TeamResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 						},
 					},
 				},
+			},
+
+			// Optional attributes
+			"description": schema.StringAttribute{
+				MarkdownDescription: "Description of the team.",
+				Optional:            true,
+			},
+			"summary": schema.StringAttribute{
+				MarkdownDescription: "Summary of the team.",
+				Optional:            true,
+			},
+
+			// Computed attributes
+			"id": schema.StringAttribute{
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"archived": schema.BoolAttribute{
+				Computed: true,
 			},
 		},
 	}
@@ -206,7 +214,7 @@ func (r *TeamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	// Issue API request
-	teamResponse, err := r.client.Teams().Get(ctx, data.Tag.String())
+	teamResponse, err := r.client.Teams().Get(ctx, data.Tag.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read team, got error: %s", err))
 		return
@@ -220,7 +228,7 @@ func (r *TeamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	data.Summary = types.StringValue(teamResponse.Metadata.Summary)
 	data.Archived = types.BoolValue(teamResponse.IsArchived)
 
-	var slackChannels []TeamSlackChannelResourceModel
+	var slackChannels = make([]TeamSlackChannelResourceModel, 0)
 	for _, channel := range teamResponse.SlackChannels {
 		slackChannels = append(slackChannels, TeamSlackChannelResourceModel{
 			Name:                 types.StringValue(channel.Name),
@@ -229,7 +237,7 @@ func (r *TeamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 	data.SlackChannels = slackChannels
 
-	var additionalMembers []TeamAdditionalMemberResourceModel
+	var additionalMembers = make([]TeamAdditionalMemberResourceModel, 0)
 	for _, channel := range teamResponse.AdditionalMembers {
 		additionalMembers = append(additionalMembers, TeamAdditionalMemberResourceModel{
 			Name:        types.StringValue(channel.Name),
@@ -239,7 +247,7 @@ func (r *TeamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 	data.AdditionalMembers = additionalMembers
 
-	var links []TeamLinkResourceModel
+	var links = make([]TeamLinkResourceModel, 0)
 	for _, link := range teamResponse.Links {
 		links = append(links, TeamLinkResourceModel{
 			Name:        types.StringValue(link.Name),
@@ -265,45 +273,56 @@ func (r *TeamResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	var links []cortex.TeamLink
+	var links = make([]cortex.TeamLink, 0)
 	for _, link := range data.Links {
 		links = append(links, cortex.TeamLink{
-			Name:        link.Name.String(),
-			Type:        link.Type.String(),
-			Url:         link.Url.String(),
-			Description: link.Description.String(),
+			Name:        link.Name.ValueString(),
+			Type:        link.Type.ValueString(),
+			Url:         link.Url.ValueString(),
+			Description: link.Description.ValueString(),
 		})
 	}
 
-	var slackChannels []cortex.TeamSlackChannel
+	var slackChannels = make([]cortex.TeamSlackChannel, 0)
 	for _, channel := range data.SlackChannels {
 		slackChannels = append(slackChannels, cortex.TeamSlackChannel{
-			Name:                 channel.Name.String(),
+			Name:                 channel.Name.ValueString(),
 			NotificationsEnabled: channel.NotificationsEnabled.ValueBool(),
 		})
 	}
 
-	var additionalMembers []cortex.TeamMember
+	var additionalMembers = make([]cortex.TeamMember, 0)
 	for _, member := range data.AdditionalMembers {
 		additionalMembers = append(additionalMembers, cortex.TeamMember{
-			Name:        member.Name.String(),
-			Email:       member.Email.String(),
-			Description: member.Description.String(),
+			Name:        member.Name.ValueString(),
+			Email:       member.Email.ValueString(),
+			Description: member.Description.ValueString(),
 		})
 	}
 
 	clientRequest := cortex.CreateTeamRequest{
-		TeamTag:    data.Tag.String(),
+		TeamTag:    data.Tag.ValueString(),
 		IsArchived: data.Archived.ValueBool(),
 		Metadata: cortex.TeamMetadata{
-			Name:        data.Name.String(),
-			Description: data.Description.String(),
-			Summary:     data.Summary.String(),
+			Name:        data.Name.ValueString(),
+			Description: data.Description.ValueString(),
+			Summary:     data.Summary.ValueString(),
 		},
 		SlackChannels:     slackChannels,
 		AdditionalMembers: additionalMembers,
 		Links:             links,
-		IdpGroup:          cortex.TeamIdpGroup{}, // TODO: unsure what to do with this yet, since it isn't present in the response
+	}
+	if true { // TODO: key off of IDP group vs Cortex managed
+		clientRequest.Type = "CORTEX"
+		clientRequest.CortexTeam = cortex.TeamCortexManaged{
+			Members: make([]cortex.TeamMember, 0),
+		}
+	} else {
+		clientRequest.IdpGroup = cortex.TeamIdpGroup{
+			Group:    data.Tag.ValueString(),
+			Provider: "OKTA", // TODO make dynamic in TF syntax
+			Members:  []cortex.TeamIdpGroupMember{},
+		}
 	}
 	team, err := r.client.Teams().Create(ctx, clientRequest)
 	if err != nil {
@@ -314,6 +333,7 @@ func (r *TeamResource) Create(ctx context.Context, req resource.CreateRequest, r
 	// Set the ID in state based on the tag
 	data.Id = data.Tag
 	data.Tag = types.StringValue(team.TeamTag)
+	data.Archived = types.BoolValue(team.IsArchived)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -331,45 +351,45 @@ func (r *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	var links []cortex.TeamLink
+	//
+	var links = make([]cortex.TeamLink, 0)
 	for _, link := range data.Links {
 		links = append(links, cortex.TeamLink{
-			Name:        link.Name.String(),
-			Type:        link.Type.String(),
-			Url:         link.Url.String(),
-			Description: link.Description.String(),
+			Name:        link.Name.ValueString(),
+			Type:        link.Type.ValueString(),
+			Url:         link.Url.ValueString(),
+			Description: link.Description.ValueString(),
 		})
 	}
 
-	var slackChannels []cortex.TeamSlackChannel
+	var slackChannels = make([]cortex.TeamSlackChannel, 0)
 	for _, channel := range data.SlackChannels {
 		slackChannels = append(slackChannels, cortex.TeamSlackChannel{
-			Name:                 channel.Name.String(),
+			Name:                 channel.Name.ValueString(),
 			NotificationsEnabled: channel.NotificationsEnabled.ValueBool(),
 		})
 	}
-
-	var additionalMembers []cortex.TeamMember
+	//
+	var additionalMembers = make([]cortex.TeamMember, 0)
 	for _, member := range data.AdditionalMembers {
 		additionalMembers = append(additionalMembers, cortex.TeamMember{
-			Name:        member.Name.String(),
-			Email:       member.Email.String(),
-			Description: member.Description.String(),
+			Name:        member.Name.ValueString(),
+			Email:       member.Email.ValueString(),
+			Description: member.Description.ValueString(),
 		})
 	}
 
 	clientRequest := cortex.UpdateTeamRequest{
 		Metadata: cortex.TeamMetadata{
-			Name:        data.Name.String(),
-			Description: data.Description.String(),
-			Summary:     data.Summary.String(),
+			Name:        data.Name.ValueString(),
+			Description: data.Description.ValueString(),
+			Summary:     data.Summary.ValueString(),
 		},
 		SlackChannels:     slackChannels,
 		AdditionalMembers: additionalMembers,
 		Links:             links,
 	}
-	team, err := r.client.Teams().Update(ctx, data.Tag.String(), clientRequest)
+	team, err := r.client.Teams().Update(ctx, data.Tag.ValueString(), clientRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update team, got error: %s", err))
 		return
@@ -378,6 +398,7 @@ func (r *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	// Set the ID in state based on the tag
 	data.Id = data.Tag
 	data.Tag = types.StringValue(team.TeamTag)
+	data.Archived = types.BoolValue(team.IsArchived)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -393,7 +414,7 @@ func (r *TeamResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	err := r.client.Teams().Archive(ctx, data.Tag.String())
+	err := r.client.Teams().Delete(ctx, data.Tag.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete team, got error: %s", err))
 		return

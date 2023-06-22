@@ -4,20 +4,19 @@ import (
 	"context"
 	"fmt"
 	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
-	"github.com/hashicorp/terraform-plugin-framework/path"
-	"os"
-
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"os"
 )
 
 // Ensure CortexProvider satisfies various provider interfaces.
 var _ provider.Provider = &CortexProvider{}
 
-const DefaultBaseApiUrl = "https://api.getcortexapp.com/"
+const DefaultBaseApiUrl = "https://api.getcortexapp.com"
 
 // CortexProvider defines the provider implementation.
 type CortexProvider struct {
@@ -64,11 +63,14 @@ func (p *CortexProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	}
 
 	// Configuration values are now available.
-	if data.BaseApiUrl.IsNull() {
-		baseApiUrl := os.Getenv("CORTEX_API_URL")
-		if baseApiUrl == "" {
-			data.BaseApiUrl = types.StringValue(DefaultBaseApiUrl)
+	baseApiUrl := DefaultBaseApiUrl
+	if data.BaseApiUrl.IsNull() || data.BaseApiUrl.ValueString() == "" {
+		envApiUrl := os.Getenv("CORTEX_API_URL")
+		if envApiUrl != "" {
+			baseApiUrl = envApiUrl
 		}
+	} else {
+		baseApiUrl = data.BaseApiUrl.ValueString()
 	}
 	if data.Token.IsUnknown() || data.Token.ValueString() == "" {
 		token := os.Getenv("CORTEX_API_TOKEN")
@@ -82,10 +84,11 @@ func (p *CortexProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	// Creating a new GitLab Client from the provider configuration
 	client, err := cortex.NewClient(
 		cortex.WithContext(ctx),
-		cortex.WithURL(data.BaseApiUrl.ValueString()),
+		cortex.WithURL(baseApiUrl),
 		cortex.WithToken(data.Token.ValueString()),
 		cortex.WithVersion(p.version),
 	)
+
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to create Cortex API Client from provider configuration", fmt.Sprintf("The provider failed to create a new Cortex API Client from the given configuration: %+v", err))
 		return

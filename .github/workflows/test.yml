@@ -73,7 +73,7 @@ jobs:
           terraform_wrapper: false
       - run: go mod download
       - env:
-          TF_ACC: "" # for now, leave off
-          CORTEX_API_TOKEN: "changeme"
+          TF_ACC: "1"
+          CORTEX_API_TOKEN: ${{ secrets.CORTEX_API_TOKEN }}
         run: go test -v -cover ./... # later, change to: ./internal/provider/
         timeout-minutes: 10
