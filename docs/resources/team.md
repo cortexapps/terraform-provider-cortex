@@ -17,23 +17,24 @@ Team Entity
 
 ### Required
 
+- `additional_members` (Attributes List) A list of additional members, outside of the IdP group. Use this field to add members like managers, PMs, etc. (see [below for nested schema](#nestedatt--additional_members))
+- `links` (Attributes List) Links related to the team. (see [below for nested schema](#nestedatt--links))
 - `name` (String) Name of the team.
+- `slack_channels` (Attributes List) A list of Slack channels related to the team. (see [below for nested schema](#nestedatt--slack_channels))
 - `tag` (String) Unique identifier for the team.
 
 ### Optional
 
-- `additional_member` (Block List) A list of additional members, outside of the IdP group. Use this field to add members like managers, PMs, etc. (see [below for nested schema](#nestedblock--additional_member))
 - `description` (String) Description of the team.
-- `link` (Block List) (see [below for nested schema](#nestedblock--link))
-- `slack_channel` (Block List) A list of Slack channels related to the team. (see [below for nested schema](#nestedblock--slack_channel))
 - `summary` (String) Summary of the team.
 
 ### Read-Only
 
+- `archived` (Boolean)
 - `id` (String) The ID of this resource.
 
-<a id="nestedblock--additional_member"></a>
-### Nested Schema for `additional_member`
+<a id="nestedatt--additional_members"></a>
+### Nested Schema for `additional_members`
 
 Required:
 
@@ -45,8 +46,8 @@ Optional:
 - `description` (String) A short description of the member.
 
 
-<a id="nestedblock--link"></a>
-### Nested Schema for `link`
+<a id="nestedatt--links"></a>
+### Nested Schema for `links`
 
 Required:
 
@@ -59,13 +60,10 @@ Optional:
 - `description` (String) A short description of the link.
 
 
-<a id="nestedblock--slack_channel"></a>
-### Nested Schema for `slack_channel`
+<a id="nestedatt--slack_channels"></a>
+### Nested Schema for `slack_channels`
 
 Required:
 
 - `name` (String) Name of the Slack channel.
-
-Optional:
-
-- `notifications_enabled` (Boolean) Whether notifications are enabled for the Slack channel.
+- `notifications_enabled` (Boolean) Whether or not notifications are enabled for the Slack channel.

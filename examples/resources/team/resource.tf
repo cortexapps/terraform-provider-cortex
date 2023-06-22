@@ -24,7 +24,7 @@ resource "cortex_team" "platform-engineering" {
     {
       name  = "John Doe One"
       email = "test+one@cortex.io"
-    }, {
+      }, {
       name  = "John Doe Two"
       email = "test+two@cortex.io"
     }
