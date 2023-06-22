@@ -16,6 +16,7 @@ type CatalogEntitiesClientInterface interface {
 
 type CatalogEntitiesClient struct {
 	client *HttpClient
+	parser *CatalogEntityParser
 }
 
 var _ CatalogEntitiesClientInterface = &CatalogEntitiesClient{}
@@ -28,6 +29,7 @@ func (c *CatalogEntitiesClient) Client() *sling.Sling {
  * Types
  **********************************************************************************************************************/
 
+// CatalogEntity is the nested response object that is typically returned from the catalog entities endpoints.
 type CatalogEntity struct {
 	Tag          string                 `json:"tag" yaml:"x-cortex-tag"`
 	Title        string                 `json:"title" yaml:"title"`
@@ -69,12 +71,6 @@ type CatalogEntityLink struct {
 	Url  string `json:"url" yaml:"url"`
 }
 
-// CatalogEntityDefinition Required for non-service catalog entities.
-type CatalogEntityDefinition struct {
-	Version      string `json:"version" yaml:"version"`
-	Distribution string `json:"distribution" yaml:"distribution"`
-}
-
 type CatalogEntityViolation struct {
 	Description   string   `json:"description"`
 	ViolationType string   `json:"violationType"`
@@ -110,8 +106,8 @@ func (c *CatalogEntitiesClient) Get(ctx context.Context, tag string) (*CatalogEn
 	return catalogEntityResponse, nil
 }
 
-func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag string) (*CatalogEntity, error) {
-	entity := &CatalogEntity{}
+func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag string) (*CatalogEntityData, error) {
+	entity := &CatalogEntityData{}
 	entityDescriptorResponse := ""
 
 	apiError := &ApiError{}
@@ -127,149 +123,7 @@ func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag strin
 		return entity, errors.Join(errors.New("Failed decoding catalog entity descriptor into YAML: "), err)
 	}
 
-	return c.YamlToEntity(ctx, entity, yamlEntity)
-}
-
-// YamlToEntity converts YAML into a CatalogEntity, from the following specification example:
-/*
-openapi: 3.0.0
-info:
-  title: Chat Service
-  description: Chat service is responsible for handling chat feature.
-  x-cortex-tag: chat-service
-  x-cortex-type: service
-  x-cortex-link:
-    - name: Chat ServiceAPI Spec
-      type: OPENAPI
-      url: ./docs/chat-service-openapi-spec.yaml
-  x-cortex-groups:
-    - python-services
-  x-cortex-owners:
-    - type: group
-      name: Delta
-      provider: OKTA
-      description: Delta Team
-    - type: slack
-      channel: delta-team
-      notificationsEnabled: true
-  x-cortex-custom-metadata:
-    core-service: true
-  x-cortex-dependency:
-    tag: authentication-service
-    tag: chat-database
-  x-cortex-git:
-    github:
-      repository: org/chat-service
-  x-cortex-oncall:
-    pagerduty:
-      id: ASDF1234
-      type: SCHEDULE
-  x-cortex-apm:
-    datadog:
-      monitors:
-        - 12345
-  x-cortex-issues:
-    jira:
-      projects:
-        - CS
-*/
-func (c *CatalogEntitiesClient) YamlToEntity(ctx context.Context, entity *CatalogEntity, yamlEntity map[string]interface{}) (*CatalogEntity, error) {
-	info := yamlEntity["info"].(map[string]interface{})
-
-	entity.Title = info["title"].(string)
-	entity.Description = info["description"].(string)
-	entity.Tag = info["x-cortex-tag"].(string)
-	entity.Type = info["x-cortex-type"].(string)
-
-	entity.Links = []CatalogEntityLink{}
-	if info["x-cortex-link"] != nil {
-		for _, link := range info["x-cortex-link"].([]interface{}) {
-			linkMap := link.(map[string]interface{})
-			entity.Links = append(entity.Links, CatalogEntityLink{
-				Name: linkMap["name"].(string),
-				Type: linkMap["type"].(string),
-				Url:  linkMap["url"].(string),
-			})
-		}
-	}
-
-	entity.Groups = []string{}
-	if info["x-cortex-groups"] != nil {
-		for _, group := range info["x-cortex-groups"].([]interface{}) {
-			entity.Groups = append(entity.Groups, group.(string))
-		}
-	}
-
-	entity.Ownership = CatalogEntityOwnership{
-		Groups:        []CatalogEntityGroup{},
-		SlackChannels: []CatalogEntitySlackChannel{},
-		Emails:        []CatalogEntityEmail{},
-	}
-	if info["x-cortex-owners"] != nil {
-		for _, owner := range info["x-cortex-owners"].([]interface{}) {
-			ownerMap := owner.(map[string]interface{})
-			if ownerMap["type"] == "group" {
-				entity.Ownership.Groups = append(entity.Ownership.Groups, CatalogEntityGroup{
-					GroupName:   ownerMap["name"].(string),
-					Provider:    ownerMap["provider"].(string),
-					Description: ownerMap["description"].(string),
-				})
-			} else if ownerMap["type"] == "slack" {
-				entity.Ownership.SlackChannels = append(entity.Ownership.SlackChannels, CatalogEntitySlackChannel{
-					Channel:              ownerMap["channel"].(string),
-					Description:          ownerMap["description"].(string),
-					NotificationsEnabled: ownerMap["notificationsEnabled"].(bool),
-				})
-			} else if ownerMap["type"] == "email" {
-				entity.Ownership.Emails = append(entity.Ownership.Emails, CatalogEntityEmail{
-					Email: ownerMap["email"].(string),
-				})
-			}
-		}
-	}
-
-	entity.Metadata = map[string]interface{}{}
-	if info["x-cortex-custom-metadata"] != nil {
-		for key, value := range info["x-cortex-custom-metadata"].(map[string]interface{}) {
-			entity.Metadata[key] = value
-		}
-	}
-
-	entity.Dependencies = []string{}
-	if info["x-cortex-dependency"] != nil {
-		for _, dependency := range info["x-cortex-dependency"].([]interface{}) {
-			entity.Dependencies = append(entity.Dependencies, dependency.(string))
-		}
-	}
-
-	/*
-		TODO: handle these
-		  x-cortex-children:
-			# children can be of type service, resource, or domain
-			- tag: chat-service
-			- tag: chat-database
-		  x-cortex-domain-parents:
-			# parents can be of type domain only
-			- tag: payments-domain
-			- tag: web-domain
-		  x-cortex-git:
-		    github:
-		      repository: org/chat-service
-		  x-cortex-oncall:
-		    pagerduty:
-		      id: ASDF1234
-		      type: SCHEDULE
-		  x-cortex-apm:
-		    datadog:
-		      monitors:
-		        - 12345
-		  x-cortex-issues:
-		    jira:
-		      projects:
-		        - CS
-	*/
-
-	return entity, nil
+	return c.parser.YamlToEntity(entity, yamlEntity)
 }
 
 /***********************************************************************************************************************
@@ -318,37 +172,6 @@ type UpsertCatalogEntityRequest struct {
 type UpsertCatalogEntityResponse struct {
 	Ok         bool                     `json:"ok"`
 	Violations []CatalogEntityViolation `json:"violations"`
-}
-
-// CatalogEntityData is a struct used in upsert requests in the `info` parameter, since its structure does not
-// match the structure of the CatalogEntity struct in responses.
-type CatalogEntityData struct {
-	Title       string                  `json:"title"`
-	Description string                  `json:"description,omitempty"`
-	Tag         string                  `json:"x-cortex-tag"`
-	Ownership   []CatalogEntityOwner    `json:"x-cortex-owners,omitempty"`
-	Groups      []string                `json:"x-cortex-groups,omitempty"` // TODO: is this -groups or -service-groups? docs unclear
-	Links       []CatalogEntityLink     `json:"x-cortex-link,omitempty"`
-	Metadata    map[string]interface{}  `json:"x-cortex-custom-metadata,omitempty"`
-	Type        string                  `json:"x-cortex-type,omitempty"`
-	Definition  CatalogEntityDefinition `json:"x-cortex-definition,omitempty"`
-
-	// Various generic integration attributes
-	Alerts         []CatalogEntityAlert        `json:"x-cortex-alerts,omitempty"`
-	Apm            CatalogEntityApm            `json:"x-cortex-apm,omitempty"`
-	Dashboards     CatalogEntityDashboards     `json:"x-cortex-dashboards,omitempty"`
-	Git            CatalogEntityGit            `json:"x-cortex-git,omitempty"`
-	Issues         CatalogEntityIssues         `json:"x-cortex-issues,omitempty"`
-	OnCall         CatalogEntityOnCall         `json:"x-cortex-oncall,omitempty"`
-	SLOs           CatalogEntitySLOs           `json:"x-cortex-slos,omitempty"`
-	StaticAnalysis CatalogEntityStaticAnalysis `json:"x-cortex-static-analysis,omitempty"`
-
-	// Integration-specific things
-	BugSnag   CatalogEntityBugSnag   `json:"x-cortex-bugsnag,omitempty"`
-	Checkmarx CatalogEntityCheckmarx `json:"x-cortex-checkmarx,omitempty"`
-	Rollbar   CatalogEntityRollbar   `json:"x-cortex-rollbar,omitempty"`
-	Sentry    CatalogEntitySentry    `json:"x-cortex-sentry,omitempty"`
-	Snyk      CatalogEntitySnyk      `json:"x-cortex-snyk,omitempty"`
 }
 
 func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEntityRequest) (*CatalogEntity, error) {

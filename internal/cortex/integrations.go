@@ -1,6 +1,51 @@
 package cortex
 
 /***********************************************************************************************************************
+ * Catalog Entity Descriptor
+ **********************************************************************************************************************/
+
+// CatalogEntityData is a struct used from YAML-based data, since its structure does not
+// match the structure of the CatalogEntity struct in other responses.
+// See: https://github.com/cortexapps/solutions/blob/master/examples/yaml/catalog/resource.yaml
+type CatalogEntityData struct {
+	Title        string                    `json:"title"`
+	Description  string                    `json:"description,omitempty"`
+	Tag          string                    `json:"x-cortex-tag"`
+	Type         string                    `json:"x-cortex-type,omitempty" yaml:"x-cortex-type"`
+	Definition   map[string]interface{}    `json:"x-cortex-definition,omitempty" yaml:"x-cortex-definition"`
+	Owners       []CatalogEntityOwner      `json:"x-cortex-owners,omitempty" yaml:"x-cortex-owners"`
+	Groups       []string                  `json:"x-cortex-groups,omitempty" yaml:"x-cortex-groups"` // TODO: is this -groups or -service-groups? docs unclear
+	Links        []CatalogEntityLink       `json:"x-cortex-link,omitempty" yaml:"x-cortex-link"`
+	Metadata     map[string]interface{}    `json:"x-cortex-custom-metadata,omitempty" yaml:"x-cortex-custom-metadata"`
+	Dependencies []CatalogEntityDependency `json:"x-cortex-dependency,omitempty" yaml:"x-cortex-dependency"`
+
+	// Various generic integration attributes
+	Alerts         []CatalogEntityAlert        `json:"x-cortex-alerts,omitempty" yaml:"x-cortex-alerts"`
+	Apm            CatalogEntityApm            `json:"x-cortex-apm,omitempty" yaml:"x-cortex-apm"`
+	Dashboards     CatalogEntityDashboards     `json:"x-cortex-dashboards,omitempty" yaml:"x-cortex-dashboards"`
+	Git            CatalogEntityGit            `json:"x-cortex-git,omitempty" yaml:"x-cortex-git"`
+	Issues         CatalogEntityIssues         `json:"x-cortex-issues,omitempty" yaml:"x-cortex-issues"`
+	OnCall         CatalogEntityOnCall         `json:"x-cortex-oncall,omitempty" yaml:"x-cortex-oncall"`
+	SLOs           CatalogEntitySLOs           `json:"x-cortex-slos,omitempty" yaml:"x-cortex-slos"`
+	StaticAnalysis CatalogEntityStaticAnalysis `json:"x-cortex-static-analysis,omitempty" yaml:"x-cortex-static-analysis"`
+
+	// Integration-specific things
+	BugSnag   CatalogEntityBugSnag   `json:"x-cortex-bugsnag,omitempty" yaml:"x-cortex-bugsnag"`
+	Checkmarx CatalogEntityCheckmarx `json:"x-cortex-checkmarx,omitempty" yaml:"x-cortex-checkmarx"`
+	Rollbar   CatalogEntityRollbar   `json:"x-cortex-rollbar,omitempty" yaml:"x-cortex-rollbar"`
+	Sentry    CatalogEntitySentry    `json:"x-cortex-sentry,omitempty" yaml:"x-cortex-sentry"`
+	Snyk      CatalogEntitySnyk      `json:"x-cortex-snyk,omitempty" yaml:"x-cortex-snyk"`
+}
+
+type CatalogEntityDependency struct {
+	Tag         string                 `json:"tag" yaml:"tag"`
+	Method      string                 `json:"method,omitempty" yaml:"method,omitempty"`
+	Path        string                 `json:"path,omitempty" yaml:"path,omitempty"`
+	Description string                 `json:"description,omitempty" yaml:"description,omitempty"`
+	Metadata    map[string]interface{} `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+}
+
+/***********************************************************************************************************************
  * Integrations - Generic structs for integrations
  **********************************************************************************************************************/
 
@@ -21,7 +66,7 @@ type CatalogEntityDashboards struct {
 }
 
 type CatalogEntityDashboardsEmbed struct {
-	Type string `json:"type" yaml:"type"`
+	Type string `json:"type" yaml:"type"` // <datadog | grafana | newrelic>
 	URL  string `json:"url" yaml:"url"`
 }
 
@@ -45,19 +90,20 @@ type CatalogEntityOnCall struct {
 }
 
 type CatalogEntityOwner struct {
-	Name        string `json:"name" yaml:"name"`
+	Name        string `json:"name" yaml:"name"` // Must be of form <org>/<team>
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	Type        string `json:"type" yaml:"type"`
+	Type        string `json:"type" yaml:"type"` // group, user, slack
 	Provider    string `json:"provider" yaml:"provider"`
+	Channel     string `json:"channel,omitempty" yaml:"channel,omitempty"` // for slack, do not add # to beginning
 }
 
 type CatalogEntitySLOs struct {
-	DataDog    []CatalogEntitySLODataDog    `json:"datadog,omitempty" yaml:"datadog,omitempty"`
-	Dynatrace  []CatalogEntitySLODynatrace  `json:"dynatrace,omitempty" yaml:"dynatrace,omitempty"`
-	LightStep  []CatalogEntitySLOLightStep  `json:"lightstep,omitempty" yaml:"lightstep,omitempty"`
-	Prometheus []CatalogEntitySLOPrometheus `json:"prometheus,omitempty" yaml:"prometheus,omitempty"`
-	SignalFX   []CatalogEntitySLOSignalFX   `json:"signalfx,omitempty" yaml:"signalfx,omitempty"`
-	SumoLogic  []CatalogEntitySLOSumoLogic  `json:"sumologic,omitempty" yaml:"sumologic,omitempty"`
+	DataDog    []CatalogEntitySLODataDog         `json:"datadog,omitempty" yaml:"datadog,omitempty"`
+	Dynatrace  []CatalogEntitySLODynatrace       `json:"dynatrace,omitempty" yaml:"dynatrace,omitempty"`
+	LightStep  CatalogEntitySLOLightStep         `json:"lightstep,omitempty" yaml:"lightstep,omitempty"`
+	Prometheus []CatalogEntitySLOPrometheusQuery `json:"prometheus,omitempty" yaml:"prometheus,omitempty"`
+	SignalFX   []CatalogEntitySLOSignalFX        `json:"signalfx,omitempty" yaml:"signalfx,omitempty"`
+	SumoLogic  []CatalogEntitySLOSumoLogic       `json:"sumologic,omitempty" yaml:"sumologic,omitempty"`
 }
 
 type CatalogEntityStaticAnalysis struct {
@@ -165,6 +211,7 @@ type CatalogEntityGitGitlab struct {
 type CatalogEntityIssuesJira struct {
 	DefaultJQL string   `json:"defaultJql" yaml:"defaultJql"`
 	Projects   []string `json:"projects,omitempty" yaml:"projects,omitempty"`
+	Labels     []string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Components []string `json:"components,omitempty" yaml:"components,omitempty"`
 }
 
@@ -172,12 +219,34 @@ type CatalogEntityIssuesJira struct {
  * LightStep - https://docs.cortex.io/docs/reference/integrations/lightstep
  **********************************************************************************************************************/
 
+/**
+x-cortex-slos:
+  lightstep:
+    - streamId: sc4jmdXT
+      targets:
+		  latency:
+			- percentile: 0.5
+			  target: 2
+			  slo: 0.9995
+			- percentile: 0.7
+			  target: 1
+			  slo: 0.9998
+*/
+
 type CatalogEntitySLOLightStep struct {
-	StreamID string                             `json:"streamId" yaml:"streamId"`
-	Latency  []CatalogEntitySLOLightStepLatency `json:"latency" yaml:"latency"`
+	Streams []CatalogEntitySLOLightStepStream `json:"stream" yaml:"stream"`
 }
 
-type CatalogEntitySLOLightStepLatency struct {
+type CatalogEntitySLOLightStepStream struct {
+	StreamID string                          `json:"streamId" yaml:"streamId"`
+	Targets  CatalogEntitySLOLightStepTarget `json:"targets" yaml:"targets"`
+}
+
+type CatalogEntitySLOLightStepTarget struct {
+	Latencies []CatalogEntitySLOLightStepTargetLatency `json:"latency" yaml:"latency"`
+}
+
+type CatalogEntitySLOLightStepTargetLatency struct {
 	Percentile float64 `json:"percentile" yaml:"percentile"`
 	Target     int     `json:"target" yaml:"target"`
 	SLO        float64 `json:"slo" yaml:"slo"`
@@ -214,7 +283,7 @@ type CatalogEntityOnCallPagerduty struct {
  * Prometheus - https://docs.cortex.io/docs/reference/integrations/prometheus
  **********************************************************************************************************************/
 
-type CatalogEntitySLOPrometheus struct {
+type CatalogEntitySLOPrometheusQuery struct {
 	ErrorQuery string  `json:"errorQuery" yaml:"errorQuery"`
 	TotalQuery string  `json:"totalQuery" yaml:"totalQuery"`
 	SLO        float64 `json:"slo" yaml:"slo"`
@@ -259,7 +328,7 @@ type CatalogEntitySnyk struct {
 }
 
 type CatalogEntitySnykProject struct {
-	Organization string `json:"organization" yaml:"organization"`
+	Organization string `json:"organizationId" yaml:"organizationId"`
 	ProjectID    string `json:"projectId" yaml:"projectId"`
 }
 

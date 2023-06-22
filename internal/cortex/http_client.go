@@ -125,7 +125,7 @@ func (c *HttpClient) Ping(ctx context.Context) error {
 /********** Client Interfaces **********/
 
 func (c *HttpClient) CatalogEntities() CatalogEntitiesClientInterface {
-	return &CatalogEntitiesClient{client: c}
+	return &CatalogEntitiesClient{client: c, parser: &CatalogEntityParser{}}
 }
 
 func (c *HttpClient) CatalogEntityCustomData() CatalogEntityCustomDataClientInterface {
