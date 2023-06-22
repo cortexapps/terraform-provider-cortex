@@ -112,6 +112,9 @@ func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag strin
 
 	apiError := &ApiError{}
 	response, err := c.Client().Get(Route("catalog", tag+"/openapi")).Receive(entityDescriptorResponse, apiError)
+	if err != nil {
+		return entity, errors.Join(errors.New("Failed getting catalog entity descriptor: "), err)
+	}
 
 	err = c.client.handleResponseStatus(response, apiError)
 	if err != nil {

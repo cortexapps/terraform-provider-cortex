@@ -162,7 +162,7 @@ func (c *TeamsClient) Create(ctx context.Context, req CreateTeamRequest) (*Team,
 	err = c.client.handleResponseStatus(response, apiError)
 	if err != nil {
 		reqJson, _ := json.Marshal(req)
-		log.Println(fmt.Sprintf("Failed creating team: %+v\n\nRequest:\n%+v", err, string(reqJson)))
+		log.Printf("Failed creating team: %+v\n\nRequest:\n%+v", err, string(reqJson))
 		return teamResponse, err
 	}
 
@@ -192,7 +192,7 @@ func (c *TeamsClient) Update(ctx context.Context, tag string, req UpdateTeamRequ
 	err = c.client.handleResponseStatus(response, apiError)
 	if err != nil {
 		reqJson, _ := json.Marshal(req)
-		log.Println(fmt.Sprintf("Failed updating team: %+v\n\nRequest:\n%+v\n%+v", err, string(reqJson), apiError.String()))
+		log.Printf("Failed updating team: %+v\n\nRequest:\n%+v\n%+v", err, string(reqJson), apiError.String())
 		return teamResponse, err
 	}
 
@@ -215,12 +215,12 @@ func (c *TeamsClient) Delete(ctx context.Context, tag string) error {
 
 	response, err := c.Client().Delete(Route("teams", "")).QueryStruct(req).Receive(teamResponse, apiError)
 	if err != nil {
-		return errors.New(fmt.Sprintf("could not delete team %v:\n\n%+v", tag, err.Error()))
+		return fmt.Errorf("could not delete team %v:\n\n%+v", tag, err.Error())
 	}
 
 	err = c.client.handleResponseStatus(response, apiError)
 	if err != nil {
-		log.Println(fmt.Sprintf("Could not delete team %v:\n\n%+v", tag, err.Error()))
+		log.Printf("Could not delete team %v:\n\n%+v", tag, err.Error())
 		return err
 	}
 
@@ -239,7 +239,7 @@ func (c *TeamsClient) Archive(ctx context.Context, tag string) error {
 
 	response, err := c.Client().Put(Route("teams", tag+"/archive")).Receive(teamResponse, apiError)
 	if err != nil {
-		return errors.New("could not archive team: " + err.Error())
+		return fmt.Errorf("could not archive team: %v", err.Error())
 	}
 
 	err = c.client.handleResponseStatus(response, apiError)

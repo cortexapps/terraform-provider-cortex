@@ -108,10 +108,13 @@ func (c *ScorecardsClient) GetFromDescriptor(ctx context.Context, tag string) (*
 
 	apiError := &ApiError{}
 	response, err := c.Client().Get(Route("scorecards", tag+"/descriptor")).Receive(scorecardDescriptorResponse, apiError)
+	if err != nil {
+		return scorecard, errors.Join(errors.New("Failed getting scorecard descriptor: "), err)
+	}
 
 	err = c.client.handleResponseStatus(response, apiError)
 	if err != nil {
-		return scorecard, errors.Join(errors.New("Failed getting scorecard descriptor: "), err)
+		return scorecard, errors.Join(errors.New("Failed handling scorecard descriptor status: "), err)
 	}
 	yamlScorecard := map[string]interface{}{}
 	err = yaml.Unmarshal([]byte(scorecardDescriptorResponse), yamlScorecard)
@@ -140,16 +143,15 @@ func (c *ScorecardsClient) GetFromDescriptor(ctx context.Context, tag string) (*
 
 	ladder := yamlScorecard["ladder"].(map[string]interface{})
 
-	var levels []ScorecardLevel
+	var levels []ScorecardLevelSummary
 	for _, level := range ladder["levels"].([]interface{}) {
 		levelMap := level.(map[string]interface{})
-		levels = append(levels, ScorecardLevel{
-			Name:        levelMap["name"].(string),
-			Rank:        int(levelMap["rank"].(int64)),
-			Color:       levelMap["color"].(string),
-			Description: levelMap["description"].(string),
+		levels = append(levels, ScorecardLevelSummary{
+			Name: levelMap["name"].(string),
+			Rank: levelMap["rank"].(int64),
 		})
 	}
+	scorecard.Levels = levels
 
 	scorecard.Filter = ScorecardFilter{
 		Category: yamlScorecard["filter"].(map[string]interface{})["category"].(string),

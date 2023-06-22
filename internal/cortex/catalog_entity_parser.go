@@ -2,7 +2,7 @@ package cortex
 
 type CatalogEntityParser struct{}
 
-// YamlToEntity converts YAML into a CatalogEntity, from the specification
+// YamlToEntity converts YAML into a CatalogEntity, from the specification.
 func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity map[string]interface{}) (*CatalogEntityData, error) {
 	info := yamlEntity["info"].(map[string]interface{})
 
@@ -13,10 +13,7 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 
 	entity.Links = []CatalogEntityLink{}
 	if info["x-cortex-link"] != nil {
-		err := c.interpolateLinks(entity, info["x-cortex-link"].([]interface{}))
-		if err != nil {
-			return entity, err
-		}
+		c.interpolateLinks(entity, info["x-cortex-link"].([]interface{}))
 	}
 
 	entity.Groups = []string{}
@@ -28,10 +25,7 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 
 	entity.Owners = []CatalogEntityOwner{}
 	if info["x-cortex-owners"] != nil {
-		err := c.interpolateOwners(entity, info["x-cortex-owners"].([]interface{}))
-		if err != nil {
-			return entity, err
-		}
+		c.interpolateOwners(entity, info["x-cortex-owners"].([]interface{}))
 	}
 
 	entity.Metadata = map[string]interface{}{}
@@ -43,65 +37,48 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 
 	entity.Dependencies = []CatalogEntityDependency{}
 	if info["x-cortex-dependency"] != nil {
-		err := c.interpolateDependencies(entity, info["x-cortex-dependency"].([]interface{}))
-		if err != nil {
-			return entity, err
-		}
+		c.interpolateDependencies(entity, info["x-cortex-dependency"].([]interface{}))
 	}
 
 	if info["x-cortex-git"] != nil {
 		entity.Git = CatalogEntityGit{}
-		err := c.interpolateGit(entity, info["x-cortex-git"].(map[string]interface{}))
-		if err != nil {
-			return entity, err
-		}
+		c.interpolateGit(entity, info["x-cortex-git"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-dashboards"] != nil {
-		err := c.interpolateDashboards(entity, info["x-cortex-dashboards"].(map[string]interface{}))
-		if err != nil {
-			return entity, err
-		}
+		c.interpolateDashboards(entity, info["x-cortex-dashboards"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-issues"] != nil {
 		entity.Issues = CatalogEntityIssues{}
 		issuesMap := info["x-cortex-issues"].(map[string]interface{})
 		if issuesMap["jira"] != nil {
-			err := c.interpolateJira(entity, issuesMap["jira"].(map[string]interface{}))
-			if err != nil {
-				return entity, err
-			}
+			c.interpolateJira(entity, issuesMap["jira"].(map[string]interface{}))
 		}
 	}
 
 	if info["x-cortex-slos"] != nil {
 		slosMap := info["x-cortex-slos"].(map[string]interface{})
-		err := c.interpolateSLOs(entity, slosMap)
-		if err != nil {
-			return entity, err
-		}
+		c.interpolateSLOs(entity, slosMap)
 	}
 
 	if info["x-cortex-oncall"] != nil {
 		onCallMap := info["x-cortex-oncall"].(map[string]interface{})
-		err := c.interpolateOnCall(entity, onCallMap)
-		if err != nil {
-			return entity, err
-		}
+		c.interpolateOnCall(entity, onCallMap)
 	}
 
 	if info["x-cortex-sentry"] != nil {
-		err := c.interpolateSentry(entity, info["x-cortex-sentry"].(map[string]interface{}))
-		if err != nil {
-			return entity, err
-		}
+		c.interpolateSentry(entity, info["x-cortex-sentry"].(map[string]interface{}))
+	}
+
+	if info["x-cortex-snyk"] != nil {
+		c.interpolateSnyk(entity, info["x-cortex-snyk"].(map[string]interface{}))
 	}
 
 	return entity, nil
 }
 
-func (c *CatalogEntityParser) interpolateLinks(entity *CatalogEntityData, links []interface{}) error {
+func (c *CatalogEntityParser) interpolateLinks(entity *CatalogEntityData, links []interface{}) {
 	for _, link := range links {
 		linkMap := link.(map[string]interface{})
 		entity.Links = append(entity.Links, CatalogEntityLink{
@@ -110,10 +87,9 @@ func (c *CatalogEntityParser) interpolateLinks(entity *CatalogEntityData, links 
 			Url:  linkMap["url"].(string),
 		})
 	}
-	return nil
 }
 
-func (c *CatalogEntityParser) interpolateOwners(entity *CatalogEntityData, owners []interface{}) error {
+func (c *CatalogEntityParser) interpolateOwners(entity *CatalogEntityData, owners []interface{}) {
 	for _, owner := range owners {
 		ownerMap := owner.(map[string]interface{})
 		entity.Owners = append(entity.Owners, CatalogEntityOwner{
@@ -123,10 +99,9 @@ func (c *CatalogEntityParser) interpolateOwners(entity *CatalogEntityData, owner
 			Description: ownerMap["description"].(string),
 		})
 	}
-	return nil
 }
 
-func (c *CatalogEntityParser) interpolateDependencies(entity *CatalogEntityData, dependencies []interface{}) error {
+func (c *CatalogEntityParser) interpolateDependencies(entity *CatalogEntityData, dependencies []interface{}) {
 	for _, dependency := range dependencies {
 		dependencyMap := dependency.(map[string]interface{})
 		entity.Dependencies = append(entity.Dependencies, CatalogEntityDependency{
@@ -137,10 +112,9 @@ func (c *CatalogEntityParser) interpolateDependencies(entity *CatalogEntityData,
 			Metadata:    dependencyMap["metadata"].(map[string]interface{}),
 		})
 	}
-	return nil
 }
 
-func (c *CatalogEntityParser) interpolateDashboards(entity *CatalogEntityData, dashboardsMap map[string]interface{}) error {
+func (c *CatalogEntityParser) interpolateDashboards(entity *CatalogEntityData, dashboardsMap map[string]interface{}) {
 	entity.Dashboards = CatalogEntityDashboards{
 		Embeds: []CatalogEntityDashboardsEmbed{},
 	}
@@ -154,10 +128,9 @@ func (c *CatalogEntityParser) interpolateDashboards(entity *CatalogEntityData, d
 			})
 		}
 	}
-	return nil
 }
 
-func (c *CatalogEntityParser) interpolateOnCall(entity *CatalogEntityData, onCallMap map[string]interface{}) error {
+func (c *CatalogEntityParser) interpolateOnCall(entity *CatalogEntityData, onCallMap map[string]interface{}) {
 	entity.OnCall = CatalogEntityOnCall{}
 	if onCallMap["pagerduty"] != nil {
 		pdMap := onCallMap["pagerduty"].(map[string]interface{})
@@ -180,10 +153,9 @@ func (c *CatalogEntityParser) interpolateOnCall(entity *CatalogEntityData, onCal
 			Type: voMap["type"].(string),
 		}
 	}
-	return nil
 }
 
-func (c *CatalogEntityParser) interpolateGit(entity *CatalogEntityData, gitMap map[string]interface{}) error {
+func (c *CatalogEntityParser) interpolateGit(entity *CatalogEntityData, gitMap map[string]interface{}) {
 	if gitMap["github"] != nil {
 		githubMap := gitMap["github"].(map[string]interface{})
 		entity.Git.Github = CatalogEntityGitGithub{
@@ -212,10 +184,9 @@ func (c *CatalogEntityParser) interpolateGit(entity *CatalogEntityData, gitMap m
 			Repository: bitbucketMap["repository"].(string),
 		}
 	}
-	return nil
 }
 
-func (c *CatalogEntityParser) interpolateJira(entity *CatalogEntityData, jiraMap map[string]interface{}) error {
+func (c *CatalogEntityParser) interpolateJira(entity *CatalogEntityData, jiraMap map[string]interface{}) {
 	if jiraMap["defaultJql"] != nil {
 		entity.Issues.Jira.DefaultJQL = jiraMap["defaultJQL"].(string)
 	}
@@ -237,28 +208,20 @@ func (c *CatalogEntityParser) interpolateJira(entity *CatalogEntityData, jiraMap
 			entity.Issues.Jira.Projects = append(entity.Issues.Jira.Components, component.(string))
 		}
 	}
-	return nil
 }
 
-func (c *CatalogEntityParser) interpolateSLOs(entity *CatalogEntityData, slosMap map[string]interface{}) error {
+func (c *CatalogEntityParser) interpolateSLOs(entity *CatalogEntityData, slosMap map[string]interface{}) {
 	entity.SLOs = CatalogEntitySLOs{}
 	if slosMap["lightstep"] != nil {
-		err := c.interpolateLightStep(entity, slosMap["lightstep"].(map[string]interface{}))
-		if err != nil {
-			return err
-		}
+		c.interpolateLightStep(entity, slosMap["lightstep"].(map[string]interface{}))
 	}
 	if slosMap["prometheus"] != nil {
-		err := c.interpolatePrometheus(entity, slosMap["prometheus"].([]interface{}))
-		if err != nil {
-			return err
-		}
+		c.interpolatePrometheus(entity, slosMap["prometheus"].([]interface{}))
 	}
 	// TODO: SignalFX, DataDog, DynaTrace, SumoLogic
-	return nil
 }
 
-func (c *CatalogEntityParser) interpolateLightStep(entity *CatalogEntityData, lightstepMap map[string]interface{}) error {
+func (c *CatalogEntityParser) interpolateLightStep(entity *CatalogEntityData, lightstepMap map[string]interface{}) {
 	entity.SLOs.LightStep = CatalogEntitySLOLightStep{
 		Streams: []CatalogEntitySLOLightStepStream{},
 	}
@@ -287,10 +250,9 @@ func (c *CatalogEntityParser) interpolateLightStep(entity *CatalogEntityData, li
 			entity.SLOs.LightStep.Streams = append(entity.SLOs.LightStep.Streams, streamSLO)
 		}
 	}
-	return nil
 }
 
-func (c *CatalogEntityParser) interpolatePrometheus(entity *CatalogEntityData, prometheusQueries []interface{}) error {
+func (c *CatalogEntityParser) interpolatePrometheus(entity *CatalogEntityData, prometheusQueries []interface{}) {
 	entity.SLOs.Prometheus = []CatalogEntitySLOPrometheusQuery{}
 	for _, query := range prometheusQueries {
 		queryMap := query.(map[string]interface{})
@@ -300,15 +262,13 @@ func (c *CatalogEntityParser) interpolatePrometheus(entity *CatalogEntityData, p
 			SLO:        queryMap["slo"].(float64),
 		})
 	}
-	return nil
 }
 
-func (c *CatalogEntityParser) interpolateSentry(entity *CatalogEntityData, sentryMap map[string]interface{}) error {
+func (c *CatalogEntityParser) interpolateSentry(entity *CatalogEntityData, sentryMap map[string]interface{}) {
 	entity.Sentry.Project = sentryMap["project"].(string)
-	return nil
 }
 
-func (c *CatalogEntityParser) interpolateSnyk(entity *CatalogEntityData, snykMap map[string]interface{}) error {
+func (c *CatalogEntityParser) interpolateSnyk(entity *CatalogEntityData, snykMap map[string]interface{}) {
 	if snykMap["projects"] != nil {
 		projects := snykMap["projects"].([]interface{})
 		for _, project := range projects {
@@ -319,5 +279,4 @@ func (c *CatalogEntityParser) interpolateSnyk(entity *CatalogEntityData, snykMap
 			})
 		}
 	}
-	return nil
 }
