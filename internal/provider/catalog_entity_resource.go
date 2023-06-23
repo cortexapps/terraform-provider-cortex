@@ -171,6 +171,39 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
+			"alerts": schema.ListNestedAttribute{
+				MarkdownDescription: "List of alerts for the entity.",
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"type": schema.StringAttribute{
+							MarkdownDescription: "Type of alert. Valid values are `opsgenie`",
+							Required:            true,
+						},
+						"tag": schema.StringAttribute{
+							MarkdownDescription: "Tag of the alert.",
+							Required:            true,
+						},
+						"value": schema.StringAttribute{
+							MarkdownDescription: "Value of the alert.",
+							Optional:            true,
+						},
+					},
+				},
+			},
+
+			// TODO: apm
+			// TODO: dashboards
+			// TODO: git
+			// TODO: issues
+			// TODO: on_call
+			// TODO: slos
+			// TODO: static_analysis
+			// TODO: bugsnag
+			// TODO: checkmarx
+			// TODO: rollbar
+			// TODO: sentry
+			// TODO: snyk
 
 			//Computed
 			"id": schema.StringAttribute{

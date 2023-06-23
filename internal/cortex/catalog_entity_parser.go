@@ -73,6 +73,10 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 		c.interpolateSnyk(entity, info["x-cortex-snyk"].(map[string]interface{}))
 	}
 
+	if info["x-cortex-alerts"] != nil {
+		c.interpolateAlerts(entity, info["x-cortex-alerts"].([]interface{}))
+	}
+
 	return entity, nil
 }
 
@@ -279,5 +283,16 @@ func (c *CatalogEntityParser) interpolateSnyk(entity *CatalogEntityData, snykMap
 				Organization: MapFetchToString(projectMap, "organizationId"),
 			})
 		}
+	}
+}
+
+func (c *CatalogEntityParser) interpolateAlerts(entity *CatalogEntityData, alerts []interface{}) {
+	for _, alert := range alerts {
+		alertMap := alert.(map[string]interface{})
+		entity.Alerts = append(entity.Alerts, CatalogEntityAlert{
+			Type:  MapFetchToString(alertMap, "type"),
+			Tag:   MapFetchToString(alertMap, "tag"),
+			Value: MapFetchToString(alertMap, "value"),
+		})
 	}
 }

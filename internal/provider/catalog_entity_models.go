@@ -18,6 +18,7 @@ type CatalogEntityResourceModel struct {
 	Links        []CatalogEntityLinkResourceModel       `tfsdk:"links"`
 	Metadata     types.String                           `tfsdk:"metadata"`
 	Dependencies []CatalogEntityDependencyResourceModel `tfsdk:"dependencies"`
+	Alerts       []CatalogEntityAlertResourceModel      `tfsdk:"alerts"`
 }
 
 func (o CatalogEntityResourceModel) ToApiModel() cortex.CatalogEntityData {
@@ -46,6 +47,11 @@ func (o CatalogEntityResourceModel) ToApiModel() cortex.CatalogEntityData {
 		dependencies[i] = dependency.ToApiModel()
 	}
 
+	alerts := make([]cortex.CatalogEntityAlert, len(o.Alerts))
+	for i, alert := range o.Alerts {
+		alerts[i] = alert.ToApiModel()
+	}
+
 	return cortex.CatalogEntityData{
 		Tag:          o.Tag.ValueString(),
 		Title:        o.Name.ValueString(),
@@ -55,6 +61,7 @@ func (o CatalogEntityResourceModel) ToApiModel() cortex.CatalogEntityData {
 		Links:        links,
 		Metadata:     metadata,
 		Dependencies: dependencies,
+		Alerts:       alerts,
 	}
 }
 
@@ -119,5 +126,19 @@ func (o CatalogEntityDependencyResourceModel) ToApiModel() cortex.CatalogEntityD
 		Path:        o.Path.ValueString(),
 		Description: o.Description.ValueString(),
 		Metadata:    metadata,
+	}
+}
+
+type CatalogEntityAlertResourceModel struct {
+	Type  types.String `tfsdk:"type"`
+	Tag   types.String `tfsdk:"tag"`
+	Value types.String `tfsdk:"value"`
+}
+
+func (o CatalogEntityAlertResourceModel) ToApiModel() cortex.CatalogEntityAlert {
+	return cortex.CatalogEntityAlert{
+		Type:  o.Type.ValueString(),
+		Tag:   o.Tag.ValueString(),
+		Value: o.Value.ValueString(),
 	}
 }

@@ -21,6 +21,7 @@ Catalog Entity
 
 ### Optional
 
+- `alerts` (Attributes List) List of alerts for the entity. (see [below for nested schema](#nestedatt--alerts))
 - `dependencies` (Attributes List) List of dependencies for the entity. (see [below for nested schema](#nestedatt--dependencies))
 - `description` (String) Description of the entity visible in the Service or Resource Catalog. Markdown is supported.
 - `groups` (List of String) List of groups related to the entity.
@@ -32,6 +33,19 @@ Catalog Entity
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedatt--alerts"></a>
+### Nested Schema for `alerts`
+
+Required:
+
+- `tag` (String) Tag of the alert.
+- `type` (String) Type of alert. Valid values are `opsgenie`
+
+Optional:
+
+- `value` (String) Value of the alert.
+
 
 <a id="nestedatt--dependencies"></a>
 ### Nested Schema for `dependencies`

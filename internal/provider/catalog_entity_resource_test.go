@@ -118,6 +118,14 @@ resource "cortex_catalog_entity" "test" {
 		"lists!"
 	]
   })
+
+  alerts = [
+    {
+      type  = "opsgenie"
+      tag   = "different-tag"
+      value = "my-service-override-tag"
+    }
+  ]
 }
 `, tag, name, description)
 }
