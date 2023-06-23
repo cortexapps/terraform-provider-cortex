@@ -21,6 +21,7 @@ Catalog Entity
 
 ### Optional
 
+- `dependencies` (Attributes List) List of dependencies for the entity. (see [below for nested schema](#nestedatt--dependencies))
 - `description` (String) Description of the entity visible in the Service or Resource Catalog. Markdown is supported.
 - `groups` (List of String) List of groups related to the entity.
 - `links` (Attributes List) List of links related to the entity. (see [below for nested schema](#nestedatt--links))
@@ -31,6 +32,21 @@ Catalog Entity
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedatt--dependencies"></a>
+### Nested Schema for `dependencies`
+
+Required:
+
+- `tag` (String) Tag of the dependency.
+
+Optional:
+
+- `description` (String) Description of the dependency.
+- `metadata` (String) Custom metadata for the dependency, in JSON format in a string. (Use the `jsonencode` function to convert a JSON object to a string.)
+- `method` (String) HTTP method if depending on a specific endpoint.
+- `path` (String) The actual endpoint this dependency refers to.
+
 
 <a id="nestedatt--links"></a>
 ### Nested Schema for `links`

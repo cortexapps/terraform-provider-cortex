@@ -51,8 +51,22 @@ resource "cortex_catalog_entity" "products-service" {
 
   dependencies = [
     {
-      name = "products-db"
-      type = "database"
+      tag         = "variants-service"
+      method      = "POST"
+      path        = "/api/v2/variants"
+      description = "Creates a new variant"
+      metadata = jsonencode({
+        "my-key" : "the value",
+        "another-key" : {
+          "this" : "is",
+          "an" : "object"
+        },
+        "final-key" : [
+          "also",
+          "use",
+          "lists!"
+        ]
+      })
     }
   ]
 

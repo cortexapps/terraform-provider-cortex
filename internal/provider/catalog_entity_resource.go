@@ -143,6 +143,34 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 				MarkdownDescription: "Custom metadata for the entity, in JSON format in a string. (Use the `jsonencode` function to convert a JSON object to a string.)",
 				Optional:            true,
 			},
+			"dependencies": schema.ListNestedAttribute{
+				MarkdownDescription: "List of dependencies for the entity.",
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"tag": schema.StringAttribute{
+							MarkdownDescription: "Tag of the dependency.",
+							Required:            true,
+						},
+						"method": schema.StringAttribute{
+							MarkdownDescription: "HTTP method if depending on a specific endpoint.",
+							Optional:            true,
+						},
+						"path": schema.StringAttribute{
+							MarkdownDescription: "The actual endpoint this dependency refers to.",
+							Optional:            true,
+						},
+						"description": schema.StringAttribute{
+							MarkdownDescription: "Description of the dependency.",
+							Optional:            true,
+						},
+						"metadata": schema.StringAttribute{
+							MarkdownDescription: "Custom metadata for the dependency, in JSON format in a string. (Use the `jsonencode` function to convert a JSON object to a string.)",
+							Optional:            true,
+						},
+					},
+				},
+			},
 
 			//Computed
 			"id": schema.StringAttribute{
@@ -225,12 +253,34 @@ func (r *CatalogEntityResource) Read(ctx context.Context, req resource.ReadReque
 	data.Tag = types.StringValue(entity.Tag)
 
 	// coerce map of unknown types into string
-	metadata, err := json.Marshal(entity.Metadata)
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read metadata, got error: %s", err))
-		return
+	if entity.Metadata != nil {
+		metadata, err := json.Marshal(entity.Metadata)
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read metadata, got error: %s", err))
+			return
+		}
+		data.Metadata = types.StringValue(string(metadata))
 	}
-	data.Metadata = types.StringValue(string(metadata))
+
+	if data.Dependencies != nil {
+		for _, dependency := range entity.Dependencies {
+			depMetadata := []byte("")
+			if dependency.Metadata != nil {
+				depMetadata, err = json.Marshal(dependency.Metadata)
+				if err != nil {
+					resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read dependency metadata, got error: %s", err))
+					return
+				}
+			}
+			depResourceModel := CatalogEntityDependencyResourceModel{
+				Tag:      types.StringValue(dependency.Tag),
+				Method:   types.StringValue(dependency.Method),
+				Path:     types.StringValue(dependency.Path),
+				Metadata: types.StringValue(string(depMetadata)),
+			}
+			data.Dependencies = append(data.Dependencies, depResourceModel)
+		}
+	}
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

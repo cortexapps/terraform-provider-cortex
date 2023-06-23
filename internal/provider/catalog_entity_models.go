@@ -9,14 +9,15 @@ import (
 
 // CatalogEntityResourceModel describes the resource data model.
 type CatalogEntityResourceModel struct {
-	Id          types.String                      `tfsdk:"id"`
-	Tag         types.String                      `tfsdk:"tag"`
-	Name        types.String                      `tfsdk:"name"`
-	Description types.String                      `tfsdk:"description"`
-	Owners      []CatalogEntityOwnerResourceModel `tfsdk:"owners"`
-	Groups      []types.String                    `tfsdk:"groups"`
-	Links       []CatalogEntityLinkResourceModel  `tfsdk:"links"`
-	Metadata    types.String                      `tfsdk:"metadata"`
+	Id           types.String                           `tfsdk:"id"`
+	Tag          types.String                           `tfsdk:"tag"`
+	Name         types.String                           `tfsdk:"name"`
+	Description  types.String                           `tfsdk:"description"`
+	Owners       []CatalogEntityOwnerResourceModel      `tfsdk:"owners"`
+	Groups       []types.String                         `tfsdk:"groups"`
+	Links        []CatalogEntityLinkResourceModel       `tfsdk:"links"`
+	Metadata     types.String                           `tfsdk:"metadata"`
+	Dependencies []CatalogEntityDependencyResourceModel `tfsdk:"dependencies"`
 }
 
 func (o CatalogEntityResourceModel) ToApiModel() cortex.CatalogEntityData {
@@ -33,20 +34,27 @@ func (o CatalogEntityResourceModel) ToApiModel() cortex.CatalogEntityData {
 		links[i] = link.ToApiModel()
 	}
 	metadata := make(map[string]interface{})
-	err := json.Unmarshal([]byte(o.Metadata.ValueString()), &metadata)
-	if err != nil {
-		fmt.Println(err)
-		metadata = make(map[string]interface{})
+	if !o.Metadata.IsNull() && !o.Metadata.IsUnknown() && o.Metadata.ValueString() != "" {
+		err := json.Unmarshal([]byte(o.Metadata.ValueString()), &metadata)
+		if err != nil {
+			fmt.Println(err)
+			metadata = make(map[string]interface{})
+		}
+	}
+	dependencies := make([]cortex.CatalogEntityDependency, len(o.Dependencies))
+	for i, dependency := range o.Dependencies {
+		dependencies[i] = dependency.ToApiModel()
 	}
 
 	return cortex.CatalogEntityData{
-		Tag:         o.Tag.ValueString(),
-		Title:       o.Name.ValueString(),
-		Description: o.Description.ValueString(),
-		Owners:      owners,
-		Groups:      groups,
-		Links:       links,
-		Metadata:    metadata,
+		Tag:          o.Tag.ValueString(),
+		Title:        o.Name.ValueString(),
+		Description:  o.Description.ValueString(),
+		Owners:       owners,
+		Groups:       groups,
+		Links:        links,
+		Metadata:     metadata,
+		Dependencies: dependencies,
 	}
 }
 
@@ -84,5 +92,32 @@ func (o CatalogEntityLinkResourceModel) ToApiModel() cortex.CatalogEntityLink {
 		Type: o.Type.ValueString(),
 		Name: o.Name.ValueString(),
 		Url:  o.Url.ValueString(),
+	}
+}
+
+type CatalogEntityDependencyResourceModel struct {
+	Tag         types.String `tfsdk:"tag"`
+	Method      types.String `tfsdk:"method"`
+	Path        types.String `tfsdk:"path"`
+	Description types.String `tfsdk:"description"`
+	Metadata    types.String `tfsdk:"metadata"`
+}
+
+func (o CatalogEntityDependencyResourceModel) ToApiModel() cortex.CatalogEntityDependency {
+	metadata := make(map[string]interface{})
+	if !o.Metadata.IsNull() && !o.Metadata.IsUnknown() && o.Metadata.ValueString() != "" {
+		err := json.Unmarshal([]byte(o.Metadata.ValueString()), &metadata)
+		if err != nil {
+			fmt.Println(err)
+			metadata = make(map[string]interface{})
+		}
+	}
+
+	return cortex.CatalogEntityDependency{
+		Tag:         o.Tag.ValueString(),
+		Method:      o.Method.ValueString(),
+		Path:        o.Path.ValueString(),
+		Description: o.Description.ValueString(),
+		Metadata:    metadata,
 	}
 }
