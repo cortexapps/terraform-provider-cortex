@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -31,10 +33,59 @@ type CatalogEntityResource struct {
 
 // CatalogEntityResourceModel describes the resource data model.
 type CatalogEntityResourceModel struct {
-	Id          types.String `tfsdk:"id"`
-	Tag         types.String `tfsdk:"tag"`
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
+	Id          types.String                      `tfsdk:"id"`
+	Tag         types.String                      `tfsdk:"tag"`
+	Name        types.String                      `tfsdk:"name"`
+	Description types.String                      `tfsdk:"description"`
+	Owners      []CatalogEntityOwnerResourceModel `tfsdk:"owners"`
+	Groups      []types.String                    `tfsdk:"groups"`
+}
+
+func (o CatalogEntityResourceModel) ToApiModel() cortex.CatalogEntityData {
+	owners := make([]cortex.CatalogEntityOwner, len(o.Owners))
+	for i, owner := range o.Owners {
+		owners[i] = owner.ToApiModel()
+	}
+	groups := make([]string, len(o.Groups))
+	for i, group := range o.Groups {
+		groups[i] = group.ValueString()
+	}
+
+	return cortex.CatalogEntityData{
+		Tag:         o.Tag.ValueString(),
+		Title:       o.Name.ValueString(),
+		Description: o.Description.ValueString(),
+		Owners:      owners,
+		Groups:      groups,
+	}
+}
+
+type CatalogEntityOwnerResourceModel struct {
+	Type                 types.String `tfsdk:"type"` // group, user, slack
+	Name                 types.String `tfsdk:"name"` // Must be of form <org>/<team>
+	Description          types.String `tfsdk:"description"`
+	Provider             types.String `tfsdk:"provider"`
+	Email                types.String `tfsdk:"email"`
+	Channel              types.String `tfsdk:"channel"` // for slack, do not add # to beginning
+	NotificationsEnabled types.Bool   `tfsdk:"notifications_enabled"`
+}
+
+func (o CatalogEntityOwnerResourceModel) ToApiModel() cortex.CatalogEntityOwner {
+	return cortex.CatalogEntityOwner{
+		Type:                 o.Type.ValueString(),
+		Name:                 o.Name.ValueString(),
+		Email:                o.Email.ValueString(),
+		Description:          o.Description.ValueString(),
+		Provider:             o.Provider.ValueString(),
+		Channel:              o.Channel.ValueString(),
+		NotificationsEnabled: o.NotificationsEnabled.ValueBool(),
+	}
+}
+
+func (r *CatalogEntityResource) toUpsertRequest(data *CatalogEntityResourceModel) cortex.UpsertCatalogEntityRequest {
+	return cortex.UpsertCatalogEntityRequest{
+		Info: data.ToApiModel(),
+	}
 }
 
 /***********************************************************************************************************************
@@ -65,6 +116,55 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+			},
+
+			// Optional attributes
+			"owners": schema.ListNestedAttribute{
+				MarkdownDescription: "List of owners for the entity. Owners can be users, groups, or Slack channels.",
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"type": schema.StringAttribute{
+							MarkdownDescription: "Type of owner. Valid values are `EMAIL`, `GROUP`, `OKTA`, or `SLACK`.",
+							Required:            true,
+							Validators: []validator.String{
+								stringvalidator.OneOf("EMAIL", "GROUP", "OKTA", "SLACK"),
+							},
+						},
+						"name": schema.StringAttribute{
+							MarkdownDescription: "Name of the owner. Only required for `user` or `group` types.",
+							Optional:            true,
+						},
+						"email": schema.StringAttribute{
+							MarkdownDescription: "Email of the owner. Only allowed if `type` is `user`.",
+							Optional:            true,
+						},
+						"description": schema.StringAttribute{
+							MarkdownDescription: "Description of the owner. Optional.",
+							Optional:            true,
+						},
+						"provider": schema.StringAttribute{
+							MarkdownDescription: "Provider of the owner. Only allowed if `type` is `group`.",
+							Optional:            true,
+							Validators: []validator.String{
+								stringvalidator.OneOf("ACTIVE_DIRECTORY", "BAMBOO_HR", "CORTEX", "GITHUB", "GOOGLE", "OKTA", "OPSGENIE", "WORKDAY"),
+							},
+						},
+						"channel": schema.StringAttribute{
+							MarkdownDescription: "Channel of the owner. Only allowed if `type` is `slack`. Omit the #.",
+							Optional:            true,
+						},
+						"notifications_enabled": schema.BoolAttribute{
+							MarkdownDescription: "Whether Slack notifications are enabled for all owners of this service. Only allowed if `type` is `slack`.",
+							Optional:            true,
+						},
+					},
+				},
+			},
+			"groups": schema.ListAttribute{
+				MarkdownDescription: "List of groups related to the entity.",
+				Optional:            true,
+				ElementType:         types.StringType,
 			},
 
 			//Computed
@@ -109,13 +209,7 @@ func (r *CatalogEntityResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	// Issue API request
-	upsertRequest := cortex.UpsertCatalogEntityRequest{
-		Info: cortex.CatalogEntityData{
-			Tag:         data.Tag.ValueString(),
-			Title:       data.Name.ValueString(),
-			Description: data.Description.ValueString(),
-		},
-	}
+	upsertRequest := r.toUpsertRequest(data)
 	ceResponse, err := r.client.CatalogEntities().Upsert(ctx, upsertRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read catalog entity, got error: %s", err))
@@ -179,13 +273,7 @@ func (r *CatalogEntityResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	// Issue API request
-	upsertRequest := cortex.UpsertCatalogEntityRequest{
-		Info: cortex.CatalogEntityData{
-			Tag:         data.Tag.ValueString(),
-			Title:       data.Name.ValueString(),
-			Description: data.Description.ValueString(),
-		},
-	}
+	upsertRequest := r.toUpsertRequest(data)
 	entity, err := r.client.CatalogEntities().Upsert(ctx, upsertRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read catalog entity, got error: %s", err))

@@ -23,3 +23,14 @@ type jsonDecoder struct{}
 func (d jsonDecoder) Decode(resp *http.Response, v interface{}) error {
 	return json.NewDecoder(resp.Body).Decode(v)
 }
+
+func MapFetch(m map[string]interface{}, key string, defaultValue any) any {
+	if val, ok := m[key]; ok {
+		return val.(string)
+	}
+	return defaultValue
+}
+
+func MapFetchToString(m map[string]interface{}, key string) string {
+	return MapFetch(m, key, "").(string)
+}

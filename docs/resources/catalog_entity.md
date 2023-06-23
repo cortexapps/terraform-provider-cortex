@@ -22,8 +22,26 @@ Catalog Entity
 ### Optional
 
 - `description` (String) Description of the entity visible in the Service or Resource Catalog. Markdown is supported.
+- `groups` (List of String) List of groups related to the entity.
 - `name` (String) Human-readable name for the entity
+- `owners` (Attributes List) List of owners for the entity. Owners can be users, groups, or Slack channels. (see [below for nested schema](#nestedatt--owners))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedatt--owners"></a>
+### Nested Schema for `owners`
+
+Required:
+
+- `type` (String) Type of owner. Valid values are `EMAIL`, `GROUP`, `OKTA`, or `SLACK`.
+
+Optional:
+
+- `channel` (String) Channel of the owner. Only allowed if `type` is `slack`. Omit the #.
+- `description` (String) Description of the owner. Optional.
+- `email` (String) Email of the owner. Only allowed if `type` is `user`.
+- `name` (String) Name of the owner. Only required for `user` or `group` types.
+- `notifications_enabled` (Boolean) Whether Slack notifications are enabled for all owners of this service. Only allowed if `type` is `slack`.
+- `provider` (String) Provider of the owner. Only allowed if `type` is `group`.

@@ -118,8 +118,7 @@ func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag strin
 		Yaml: true,
 	}
 	uri := Route("catalog_entities", tag+"/openapi")
-	cl := c.Client().Get(uri).QueryStruct(params)
-	cl = cl.ResponseDecoder(yamlDecoder{})
+	cl := c.Client().Get(uri).QueryStruct(params).ResponseDecoder(yamlDecoder{})
 	response, err := cl.Receive(entityDescriptorResponse, apiError)
 	if err != nil {
 		return entity, errors.Join(fmt.Errorf("failed getting catalog entity descriptor for %s from %s", tag, uri), err)
@@ -197,6 +196,8 @@ func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEnt
 		return entity, errors.New("could not marshal yaml: " + err.Error())
 	}
 	body := strings.NewReader(string(bytes))
+
+	log.Printf("CREATE body: %+v", body)
 	response, err := c.Client().
 		Set("Content-Type", "application/openapi;charset=UTF-8").
 		Set("Accept", "application/json").

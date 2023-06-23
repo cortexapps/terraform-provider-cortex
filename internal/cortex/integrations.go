@@ -96,8 +96,9 @@ type CatalogEntityOnCall struct {
 }
 
 type CatalogEntityOwner struct {
-	Type                 string `json:"type" yaml:"type"`                     // group, user, slack
-	Name                 string `json:"name,omitempty" yaml:"name,omitempty"` // Must be of form <org>/<team>
+	Type                 string `json:"type" yaml:"type"`                       // group, user, slack
+	Name                 string `json:"name,omitempty" yaml:"name,omitempty"`   // Must be of form <org>/<team>
+	Email                string `json:"email,omitempty" yaml:"email,omitempty"` // user only
 	Description          string `json:"description,omitempty" yaml:"description,omitempty"`
 	Provider             string `json:"provider,omitempty" yaml:"provider,omitempty"`
 	Channel              string `json:"channel,omitempty" yaml:"channel,omitempty"` // for slack, do not add # to beginning

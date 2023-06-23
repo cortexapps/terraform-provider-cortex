@@ -6,14 +6,15 @@ resource "cortex_catalog_entity" "products-service" {
 
   owners = [
     {
-      name     = "John Doe"
-      type     = "user"
-      provider = "OKTA"
+      name  = "John Doe"
+      type  = "user"
+      email = "john.doe@cortex.io"
     },
     {
-      name     = "Engineering"
-      type     = "group"
-      provider = "OKTA"
+      name        = "Engineering"
+      type        = "group"
+      description = "The engineering group"
+      provider    = "CORTEX"
     },
     {
       type                  = "slack"
