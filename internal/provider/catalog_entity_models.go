@@ -22,9 +22,12 @@ type CatalogEntityResourceModel struct {
 	Dependencies []CatalogEntityDependencyResourceModel `tfsdk:"dependencies"`
 	Alerts       []CatalogEntityAlertResourceModel      `tfsdk:"alerts"`
 	Git          types.Object                           `tfsdk:"git"`
+	Issues       types.Object                           `tfsdk:"issues"`
 }
 
 func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityData {
+	defaultObjOptions := basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true}
+
 	owners := make([]cortex.CatalogEntityOwner, len(o.Owners))
 	for i, owner := range o.Owners {
 		owners[i] = owner.ToApiModel()
@@ -56,7 +59,12 @@ func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Catal
 	}
 
 	git := &CatalogEntityGitResourceModel{}
-	err := o.Git.As(ctx, git, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})
+	err := o.Git.As(ctx, git, defaultObjOptions)
+	if err != nil {
+		fmt.Println(err)
+	}
+	issues := &CatalogEntityIssuesResourceModel{}
+	err = o.Issues.As(ctx, issues, defaultObjOptions)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -72,6 +80,7 @@ func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Catal
 		Dependencies: dependencies,
 		Alerts:       alerts,
 		Git:          git.ToApiModel(),
+		Issues:       issues.ToApiModel(ctx),
 	}
 }
 
@@ -226,5 +235,50 @@ type CatalogEntityBitbucketResourceModel struct {
 func (o CatalogEntityBitbucketResourceModel) ToApiModel() cortex.CatalogEntityGitBitBucket {
 	return cortex.CatalogEntityGitBitBucket{
 		Repository: o.Repository.ValueString(),
+	}
+}
+
+/***********************************************************************************************************************
+ * Issues
+ ***********************************************************************************************************************/
+
+type CatalogEntityIssuesResourceModel struct {
+	Jira CatalogEntityIssuesJiraResourceModel `tfsdk:"jira"`
+}
+
+func (o CatalogEntityIssuesResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityIssues {
+	return cortex.CatalogEntityIssues{
+		Jira: o.Jira.ToApiModel(ctx),
+	}
+}
+
+type CatalogEntityIssuesJiraResourceModel struct {
+	DefaultJQL types.String `tfsdk:"default_jql"`
+	Projects   types.Set    `tfsdk:"projects"`
+	Labels     types.Set    `tfsdk:"labels"`
+	Components types.Set    `tfsdk:"components"`
+}
+
+func (o CatalogEntityIssuesJiraResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityIssuesJira {
+	var projects = make([]string, len(o.Projects.Elements()))
+	err := o.Labels.ElementsAs(ctx, projects, true)
+	if err != nil {
+		fmt.Println(err)
+	}
+	var labels = make([]string, len(o.Labels.Elements()))
+	err = o.Labels.ElementsAs(ctx, labels, true)
+	if err != nil {
+		fmt.Println(err)
+	}
+	var components = make([]string, len(o.Components.Elements()))
+	err = o.Components.ElementsAs(ctx, components, true)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return cortex.CatalogEntityIssuesJira{
+		DefaultJQL: o.DefaultJQL.ValueString(),
+		Projects:   projects,
+		Labels:     labels,
+		Components: components,
 	}
 }

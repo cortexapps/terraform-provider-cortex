@@ -254,10 +254,40 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
+			"issues": schema.SingleNestedAttribute{
+				MarkdownDescription: "Issue tracking configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"jira": schema.SingleNestedAttribute{
+						MarkdownDescription: "Jira configuration for the entity.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"default_jql": schema.StringAttribute{
+								MarkdownDescription: "Default JQL to surface issues for the entity.",
+								Optional:            true,
+							},
+							"projects": schema.SetAttribute{
+								MarkdownDescription: "List of Jira projects for the entity.",
+								Optional:            true,
+								ElementType:         types.StringType,
+							},
+							"components": schema.SetAttribute{
+								MarkdownDescription: "List of Jira components for the entity.",
+								Optional:            true,
+								ElementType:         types.StringType,
+							},
+							"labels": schema.SetAttribute{
+								MarkdownDescription: "List of Jira labels for the entity.",
+								Optional:            true,
+								ElementType:         types.StringType,
+							},
+						},
+					},
+				},
+			},
 
 			// TODO: apm
 			// TODO: dashboards
-			// TODO: issues
 			// TODO: on_call
 			// TODO: slos
 			// TODO: static_analysis

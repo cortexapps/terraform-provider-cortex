@@ -26,6 +26,7 @@ Catalog Entity
 - `description` (String) Description of the entity visible in the Service or Resource Catalog. Markdown is supported.
 - `git` (Attributes) Git configuration for the entity. (see [below for nested schema](#nestedatt--git))
 - `groups` (List of String) List of groups related to the entity.
+- `issues` (Attributes) Issue tracking configuration for the entity. (see [below for nested schema](#nestedatt--issues))
 - `links` (Attributes List) List of links related to the entity. (see [below for nested schema](#nestedatt--links))
 - `metadata` (String) Custom metadata for the entity, in JSON format in a string. (Use the `jsonencode` function to convert a JSON object to a string.)
 - `name` (String) Human-readable name for the entity
@@ -116,6 +117,25 @@ Required:
 Optional:
 
 - `base_path` (String) Base path if not /
+
+
+
+<a id="nestedatt--issues"></a>
+### Nested Schema for `issues`
+
+Optional:
+
+- `jira` (Attributes) Jira configuration for the entity. (see [below for nested schema](#nestedatt--issues--jira))
+
+<a id="nestedatt--issues--jira"></a>
+### Nested Schema for `issues.jira`
+
+Optional:
+
+- `components` (Set of String) List of Jira components for the entity.
+- `default_jql` (String) Default JQL to surface issues for the entity.
+- `labels` (Set of String) List of Jira labels for the entity.
+- `projects` (Set of String) List of Jira projects for the entity.
 
 
 

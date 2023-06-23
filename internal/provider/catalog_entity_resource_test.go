@@ -47,7 +47,6 @@ func TestAccCatalogEntityResource(t *testing.T) {
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.azure.repository", "cortexio/products-service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.azure.base_path", "/"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.bitbucket.repository", "cortexio/products-service"),
-					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.bitbucket.base_path", "/"),
 				),
 			},
 			// ImportState testing
@@ -156,6 +155,12 @@ resource "cortex_catalog_entity" "test" {
     }
   }
 
+  issues = {
+    jira = {
+      default_jql = "project = CORTEX AND component = Products"
+      projects = ["PRODUCTS"]
+    }
+  }
 }
 `, tag, name, description)
 }
