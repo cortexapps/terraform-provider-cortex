@@ -31,57 +31,6 @@ type CatalogEntityResource struct {
 	client *cortex.HttpClient
 }
 
-// CatalogEntityResourceModel describes the resource data model.
-type CatalogEntityResourceModel struct {
-	Id          types.String                      `tfsdk:"id"`
-	Tag         types.String                      `tfsdk:"tag"`
-	Name        types.String                      `tfsdk:"name"`
-	Description types.String                      `tfsdk:"description"`
-	Owners      []CatalogEntityOwnerResourceModel `tfsdk:"owners"`
-	Groups      []types.String                    `tfsdk:"groups"`
-}
-
-func (o CatalogEntityResourceModel) ToApiModel() cortex.CatalogEntityData {
-	owners := make([]cortex.CatalogEntityOwner, len(o.Owners))
-	for i, owner := range o.Owners {
-		owners[i] = owner.ToApiModel()
-	}
-	groups := make([]string, len(o.Groups))
-	for i, group := range o.Groups {
-		groups[i] = group.ValueString()
-	}
-
-	return cortex.CatalogEntityData{
-		Tag:         o.Tag.ValueString(),
-		Title:       o.Name.ValueString(),
-		Description: o.Description.ValueString(),
-		Owners:      owners,
-		Groups:      groups,
-	}
-}
-
-type CatalogEntityOwnerResourceModel struct {
-	Type                 types.String `tfsdk:"type"` // group, user, slack
-	Name                 types.String `tfsdk:"name"` // Must be of form <org>/<team>
-	Description          types.String `tfsdk:"description"`
-	Provider             types.String `tfsdk:"provider"`
-	Email                types.String `tfsdk:"email"`
-	Channel              types.String `tfsdk:"channel"` // for slack, do not add # to beginning
-	NotificationsEnabled types.Bool   `tfsdk:"notifications_enabled"`
-}
-
-func (o CatalogEntityOwnerResourceModel) ToApiModel() cortex.CatalogEntityOwner {
-	return cortex.CatalogEntityOwner{
-		Type:                 o.Type.ValueString(),
-		Name:                 o.Name.ValueString(),
-		Email:                o.Email.ValueString(),
-		Description:          o.Description.ValueString(),
-		Provider:             o.Provider.ValueString(),
-		Channel:              o.Channel.ValueString(),
-		NotificationsEnabled: o.NotificationsEnabled.ValueBool(),
-	}
-}
-
 func (r *CatalogEntityResource) toUpsertRequest(data *CatalogEntityResourceModel) cortex.UpsertCatalogEntityRequest {
 	return cortex.UpsertCatalogEntityRequest{
 		Info: data.ToApiModel(),
@@ -165,6 +114,29 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 				MarkdownDescription: "List of groups related to the entity.",
 				Optional:            true,
 				ElementType:         types.StringType,
+			},
+			"links": schema.ListNestedAttribute{
+				MarkdownDescription: "List of links related to the entity.",
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							MarkdownDescription: "Name of the link.",
+							Required:            true,
+						},
+						"type": schema.StringAttribute{
+							MarkdownDescription: "Type of the link. Valid values are `runbook`, `documentation`, `logs`, `dashboard`, `metrics`, `healthcheck`.",
+							Required:            true,
+							Validators: []validator.String{
+								stringvalidator.OneOf("runbook", "documentation", "logs", "dashboard", "metrics", "healthcheck"),
+							},
+						},
+						"url": schema.StringAttribute{
+							MarkdownDescription: "URL of the link.",
+							Required:            true,
+						},
+					},
+				},
 			},
 
 			//Computed

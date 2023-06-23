@@ -18,14 +18,33 @@ func TestAccCatalogEntityResource(t *testing.T) {
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "tag", "test"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "name", "A Test Service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "description", "A test service for the Terraform provider"),
+
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.#", "3"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.0.type", "EMAIL"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.0.name", "John Doe"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.0.email", "john.doe@cortex.io"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.1.type", "GROUP"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.1.name", "Engineering"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.1.provider", "CORTEX"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.2.type", "SLACK"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.2.channel", "engineering"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.2.notifications_enabled", "false"),
+
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "groups.#", "2"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "groups.0", "test"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "groups.1", "test2"),
+
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "links.#", "1"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "links.0.name", "Internal Docs"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "links.0.type", "documentation"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "links.0.url", "https://internal-docs.cortex.io/products-service"),
 				),
 			},
 			// ImportState testing
 			{
 				ResourceName:      "cortex_catalog_entity.test",
 				ImportState:       true,
-				ImportStateVerify: false,
+				ImportStateVerify: false, // TODO: Fix this
 				// This is not normally necessary, but is here because this
 				// example code does not have an actual upstream service.
 				// Once the Read method is able to refresh information from
@@ -39,6 +58,9 @@ func TestAccCatalogEntityResource(t *testing.T) {
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "tag", "test"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "name", "A Test Service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "description", "A test service for the Terraform provider 2"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.#", "3"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "groups.#", "2"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "links.#", "1"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -74,6 +96,14 @@ resource "cortex_catalog_entity" "test" {
   groups = [
    "test",
    "test2"
+  ]
+
+  links = [
+    {
+      name = "Internal Docs"
+      type = "documentation"
+      url  = "https://internal-docs.cortex.io/products-service"
+    }
   ]
 }
 `, tag, name, description)

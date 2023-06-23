@@ -23,12 +23,23 @@ Catalog Entity
 
 - `description` (String) Description of the entity visible in the Service or Resource Catalog. Markdown is supported.
 - `groups` (List of String) List of groups related to the entity.
+- `links` (Attributes List) List of links related to the entity. (see [below for nested schema](#nestedatt--links))
 - `name` (String) Human-readable name for the entity
 - `owners` (Attributes List) List of owners for the entity. Owners can be users, groups, or Slack channels. (see [below for nested schema](#nestedatt--owners))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedatt--links"></a>
+### Nested Schema for `links`
+
+Required:
+
+- `name` (String) Name of the link.
+- `type` (String) Type of the link. Valid values are `runbook`, `documentation`, `logs`, `dashboard`, `metrics`, `healthcheck`.
+- `url` (String) URL of the link.
+
 
 <a id="nestedatt--owners"></a>
 ### Nested Schema for `owners`
