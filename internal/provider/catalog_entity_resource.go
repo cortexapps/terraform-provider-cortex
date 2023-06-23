@@ -123,14 +123,13 @@ func (r *CatalogEntityResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	// Set computed attributes
-	data.Id = data.Tag
+	data.Id = types.StringValue(ceResponse.Tag)
 	data.Tag = types.StringValue(ceResponse.Tag)
+	// TODO: Add other attributes, consolidate this into a shared method
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
-
-// TODO: implement this from GetDescriptor.
 
 func (r *CatalogEntityResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *CatalogEntityResourceModel
@@ -142,21 +141,23 @@ func (r *CatalogEntityResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read example, got error: %s", err))
-	//     return
-	// }
+	// Issue API request
+	entity, err := r.client.CatalogEntities().GetFromDescriptor(ctx, data.Tag.ValueString())
+
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read example, got error: %s", err))
+		return
+	}
+
+	// Set attributes from API response
+	data.Id = types.StringValue(entity.Tag)
+	data.Tag = types.StringValue(entity.Tag)
+	data.Name = types.StringValue(entity.Title)
+	data.Description = types.StringValue(entity.Description)
+	// TODO: Add other attributes, consolidate this into a shared method
 
 	// Save updated data into Terraform state
-	//resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-
-	resp.State.SetAttribute(ctx, path.Root("id"), data.Tag)
-	resp.State.SetAttribute(ctx, path.Root("tag"), data.Tag)
-	resp.State.SetAttribute(ctx, path.Root("name"), data.Name)
-	resp.State.SetAttribute(ctx, path.Root("description"), data.Description)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *CatalogEntityResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -177,7 +178,7 @@ func (r *CatalogEntityResource) Update(ctx context.Context, req resource.UpdateR
 			Description: data.Description.ValueString(),
 		},
 	}
-	ceResponse, err := r.client.CatalogEntities().Upsert(ctx, upsertRequest)
+	entity, err := r.client.CatalogEntities().Upsert(ctx, upsertRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read catalog entity, got error: %s", err))
 		return
@@ -185,7 +186,10 @@ func (r *CatalogEntityResource) Update(ctx context.Context, req resource.UpdateR
 
 	// Set computed attributes
 	data.Id = data.Tag
-	data.Tag = types.StringValue(ceResponse.Tag)
+	data.Tag = types.StringValue(entity.Tag)
+	data.Name = types.StringValue(entity.Title)
+	data.Description = types.StringValue(entity.Description)
+	// TODO: Add other attributes, consolidate this into a shared method
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -214,6 +218,4 @@ func (r *CatalogEntityResource) Delete(ctx context.Context, req resource.DeleteR
 
 func (r *CatalogEntityResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("tag"), req, resp)
-	resp.State.SetAttribute(ctx, path.Root("name"), "A Test Service")
-	resp.State.SetAttribute(ctx, path.Root("description"), "A test service for the Terraform provider")
 }

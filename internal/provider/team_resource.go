@@ -334,6 +334,7 @@ func (r *TeamResource) Create(ctx context.Context, req resource.CreateRequest, r
 	data.Id = data.Tag
 	data.Tag = types.StringValue(team.TeamTag)
 	data.Archived = types.BoolValue(team.IsArchived)
+	// TODO: Add other attributes, consolidate this into a shared method
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -351,7 +352,7 @@ func (r *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	//
+
 	var links = make([]cortex.TeamLink, 0)
 	for _, link := range data.Links {
 		links = append(links, cortex.TeamLink{
@@ -399,6 +400,7 @@ func (r *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	data.Id = data.Tag
 	data.Tag = types.StringValue(team.TeamTag)
 	data.Archived = types.BoolValue(team.IsArchived)
+	// TODO: Add other attributes, consolidate this into a shared method
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

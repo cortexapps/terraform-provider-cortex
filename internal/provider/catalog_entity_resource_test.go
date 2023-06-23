@@ -28,9 +28,11 @@ func TestAccCatalogEntityResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccCatalogEntityResourceConfig("test", "A Test Service", "A test service for the Terraform provider"),
+				Config: testAccCatalogEntityResourceConfig("test", "A Test Service", "A test service for the Terraform provider 2"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "tag", "test"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "name", "A Test Service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "description", "A test service for the Terraform provider 2"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
