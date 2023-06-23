@@ -36,10 +36,18 @@ resource "cortex_catalog_entity" "products-service" {
     }
   ]
 
-  metadata = {
-    "continuous-deployment" = true
-    "prometheus-enabled"    = true
-  }
+  metadata = jsonencode({
+    "my-key" : "the value",
+    "another-key" : {
+      "this" : "is",
+      "an" : "object"
+    },
+    "final-key" : [
+      "also",
+      "use",
+      "lists!"
+    ]
+  })
 
   dependencies = [
     {

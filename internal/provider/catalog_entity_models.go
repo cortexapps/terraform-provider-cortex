@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -14,6 +16,7 @@ type CatalogEntityResourceModel struct {
 	Owners      []CatalogEntityOwnerResourceModel `tfsdk:"owners"`
 	Groups      []types.String                    `tfsdk:"groups"`
 	Links       []CatalogEntityLinkResourceModel  `tfsdk:"links"`
+	Metadata    types.String                      `tfsdk:"metadata"`
 }
 
 func (o CatalogEntityResourceModel) ToApiModel() cortex.CatalogEntityData {
@@ -29,6 +32,12 @@ func (o CatalogEntityResourceModel) ToApiModel() cortex.CatalogEntityData {
 	for i, link := range o.Links {
 		links[i] = link.ToApiModel()
 	}
+	metadata := make(map[string]interface{})
+	err := json.Unmarshal([]byte(o.Metadata.ValueString()), &metadata)
+	if err != nil {
+		fmt.Println(err)
+		metadata = make(map[string]interface{})
+	}
 
 	return cortex.CatalogEntityData{
 		Tag:         o.Tag.ValueString(),
@@ -37,6 +46,7 @@ func (o CatalogEntityResourceModel) ToApiModel() cortex.CatalogEntityData {
 		Owners:      owners,
 		Groups:      groups,
 		Links:       links,
+		Metadata:    metadata,
 	}
 }
 

@@ -30,9 +30,7 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 
 	entity.Metadata = map[string]interface{}{}
 	if info["x-cortex-custom-metadata"] != nil {
-		for key, value := range info["x-cortex-custom-metadata"].(map[string]interface{}) {
-			entity.Metadata[key] = value
-		}
+		entity.Metadata = info["x-cortex-custom-metadata"].(map[string]interface{})
 	}
 
 	entity.Dependencies = []CatalogEntityDependency{}

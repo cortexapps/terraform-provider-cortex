@@ -105,6 +105,19 @@ resource "cortex_catalog_entity" "test" {
       url  = "https://internal-docs.cortex.io/products-service"
     }
   ]
+
+  metadata = jsonencode({
+	"my-key": "the value",
+	"another-key": {
+		"this": "is",
+		"an": "object"
+	},
+	"final-key": [
+		"also",
+		"use",
+		"lists!"
+	]
+  })
 }
 `, tag, name, description)
 }

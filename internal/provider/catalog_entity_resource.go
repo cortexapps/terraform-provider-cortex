@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -138,6 +139,10 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
+			"metadata": schema.StringAttribute{
+				MarkdownDescription: "Custom metadata for the entity, in JSON format in a string. (Use the `jsonencode` function to convert a JSON object to a string.)",
+				Optional:            true,
+			},
 
 			//Computed
 			"id": schema.StringAttribute{
@@ -215,20 +220,17 @@ func (r *CatalogEntityResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-	// TODO: Good practice it seems here is to issue a Read call which then stores into state?
-	// https://github.com/hashicorp/terraform-provider-consul/blob/master/consul/resource_consul_acl_token.go#L222
-	// https://github.com/hashicorp/terraform-provider-consul/blob/master/consul/resource_consul_acl_token.go#L144
-	// This could be just a v1 provider sdk thing though
-
-	// or maybe see https://github.com/hashicorp/terraform-provider-random/blob/main/internal/provider/resource_pet.go#L125
-	// which seems to have a batch state set?
-
 	// Set attributes from API response
 	data.Id = types.StringValue(entity.Tag)
 	data.Tag = types.StringValue(entity.Tag)
-	data.Name = types.StringValue(entity.Title)
-	data.Description = types.StringValue(entity.Description)
-	// TODO: Add other attributes, consolidate this into a shared method
+
+	// coerce map of unknown types into string
+	metadata, err := json.Marshal(entity.Metadata)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read metadata, got error: %s", err))
+		return
+	}
+	data.Metadata = types.StringValue(string(metadata))
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

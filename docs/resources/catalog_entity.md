@@ -24,6 +24,7 @@ Catalog Entity
 - `description` (String) Description of the entity visible in the Service or Resource Catalog. Markdown is supported.
 - `groups` (List of String) List of groups related to the entity.
 - `links` (Attributes List) List of links related to the entity. (see [below for nested schema](#nestedatt--links))
+- `metadata` (String) Custom metadata for the entity, in JSON format in a string. (Use the `jsonencode` function to convert a JSON object to a string.)
 - `name` (String) Human-readable name for the entity
 - `owners` (Attributes List) List of owners for the entity. Owners can be users, groups, or Slack channels. (see [below for nested schema](#nestedatt--owners))
 
