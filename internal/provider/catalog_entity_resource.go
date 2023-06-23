@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -109,34 +108,29 @@ func (r *CatalogEntityResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create example, got error: %s", err))
-	//     return
-	// }
+	// Issue API request
+	upsertRequest := cortex.UpsertCatalogEntityRequest{
+		Info: cortex.CatalogEntityData{
+			Tag:         data.Tag.ValueString(),
+			Title:       data.Name.ValueString(),
+			Description: data.Description.ValueString(),
+		},
+	}
+	ceResponse, err := r.client.CatalogEntities().Upsert(ctx, upsertRequest)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read catalog entity, got error: %s", err))
+		return
+	}
 
-	// Sample data for now
-	data.Tag = types.StringValue("test")
-	data.Name = types.StringValue("A Test Service")
-	data.Description = types.StringValue("A test service for the Terraform provider")
-
-	// Write logs using the tflog package
-	// Documentation: https://terraform.io/plugin/log
-	tflog.Trace(ctx, "created a catalog entity")
-
-	// Set the ID in state based on the tag
-	//data.Id = data.Tag
+	// Set computed attributes
+	data.Id = data.Tag
+	data.Tag = types.StringValue(ceResponse.Tag)
 
 	// Save data into Terraform state
-	//resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-
-	resp.State.SetAttribute(ctx, path.Root("id"), data.Tag)
-	resp.State.SetAttribute(ctx, path.Root("tag"), data.Tag)
-	resp.State.SetAttribute(ctx, path.Root("name"), data.Name)
-	resp.State.SetAttribute(ctx, path.Root("description"), data.Description)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
+
+// TODO: implement this from GetDescriptor.
 
 func (r *CatalogEntityResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *CatalogEntityResourceModel
@@ -169,46 +163,53 @@ func (r *CatalogEntityResource) Update(ctx context.Context, req resource.UpdateR
 	var data *CatalogEntityResourceModel
 
 	// Read Terraform plan data into the model
-	//resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update example, got error: %s", err))
-	//     return
-	// }
+	// Issue API request
+	upsertRequest := cortex.UpsertCatalogEntityRequest{
+		Info: cortex.CatalogEntityData{
+			Tag:         data.Tag.ValueString(),
+			Title:       data.Name.ValueString(),
+			Description: data.Description.ValueString(),
+		},
+	}
+	ceResponse, err := r.client.CatalogEntities().Upsert(ctx, upsertRequest)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read catalog entity, got error: %s", err))
+		return
+	}
 
-	// Save updated data into Terraform state
-	//resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	// Set computed attributes
+	data.Id = data.Tag
+	data.Tag = types.StringValue(ceResponse.Tag)
 
-	resp.State.SetAttribute(ctx, path.Root("id"), data.Tag)
-	resp.State.SetAttribute(ctx, path.Root("tag"), data.Tag)
-	resp.State.SetAttribute(ctx, path.Root("name"), data.Name)
-	resp.State.SetAttribute(ctx, path.Root("description"), data.Description)
+	// Save data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *CatalogEntityResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	//var data *CatalogEntityResourceModel
-
-	// Read Terraform prior state data into the model
-	//resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	var data *CatalogEntityResourceModel
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := r.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete example, got error: %s", err))
-	//     return
-	// }
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	err := r.client.CatalogEntities().Delete(ctx, data.Tag.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete catalog entity, got error: %s", err))
+		return
+	}
 }
 
 func (r *CatalogEntityResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

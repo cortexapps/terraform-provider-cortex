@@ -9,7 +9,11 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 	entity.Title = info["title"].(string)
 	entity.Description = info["description"].(string)
 	entity.Tag = info["x-cortex-tag"].(string)
-	entity.Type = info["x-cortex-type"].(string)
+	if info["x-cortex-type"] != nil {
+		entity.Type = info["x-cortex-type"].(string)
+	} else {
+		entity.Type = "service"
+	}
 
 	entity.Links = []CatalogEntityLink{}
 	if info["x-cortex-link"] != nil {

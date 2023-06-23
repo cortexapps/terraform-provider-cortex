@@ -8,33 +8,33 @@ package cortex
 // match the structure of the CatalogEntity struct in other responses.
 // See: https://github.com/cortexapps/solutions/blob/master/examples/yaml/catalog/resource.yaml
 type CatalogEntityData struct {
-	Title        string                    `json:"title"`
-	Description  string                    `json:"description,omitempty"`
-	Tag          string                    `json:"x-cortex-tag"`
-	Type         string                    `json:"x-cortex-type,omitempty" yaml:"x-cortex-type"`
-	Definition   map[string]interface{}    `json:"x-cortex-definition,omitempty" yaml:"x-cortex-definition"`
-	Owners       []CatalogEntityOwner      `json:"x-cortex-owners,omitempty" yaml:"x-cortex-owners"`
+	Title        string                    `json:"title" yaml:"title"`
+	Description  string                    `json:"description,omitempty" yaml:"description,omitempty"`
+	Tag          string                    `json:"x-cortex-tag" yaml:"x-cortex-tag"`
+	Type         string                    `json:"x-cortex-type,omitempty" yaml:"x-cortex-type,omitempty"`
+	Definition   map[string]interface{}    `json:"x-cortex-definition,omitempty" yaml:"x-cortex-definition,omitempty"`
+	Owners       []CatalogEntityOwner      `json:"x-cortex-owners,omitempty" yaml:"x-cortex-owners,omitempty"`
 	Groups       []string                  `json:"x-cortex-groups,omitempty" yaml:"x-cortex-groups"` // TODO: is this -groups or -service-groups? docs unclear
-	Links        []CatalogEntityLink       `json:"x-cortex-link,omitempty" yaml:"x-cortex-link"`
-	Metadata     map[string]interface{}    `json:"x-cortex-custom-metadata,omitempty" yaml:"x-cortex-custom-metadata"`
-	Dependencies []CatalogEntityDependency `json:"x-cortex-dependency,omitempty" yaml:"x-cortex-dependency"`
+	Links        []CatalogEntityLink       `json:"x-cortex-link,omitempty" yaml:"x-cortex-link,omitempty"`
+	Metadata     map[string]interface{}    `json:"x-cortex-custom-metadata,omitempty" yaml:"x-cortex-custom-metadata,omitempty"`
+	Dependencies []CatalogEntityDependency `json:"x-cortex-dependency,omitempty" yaml:"x-cortex-dependency,omitempty"`
 
 	// Various generic integration attributes
-	Alerts         []CatalogEntityAlert        `json:"x-cortex-alerts,omitempty" yaml:"x-cortex-alerts"`
-	Apm            CatalogEntityApm            `json:"x-cortex-apm,omitempty" yaml:"x-cortex-apm"`
-	Dashboards     CatalogEntityDashboards     `json:"x-cortex-dashboards,omitempty" yaml:"x-cortex-dashboards"`
-	Git            CatalogEntityGit            `json:"x-cortex-git,omitempty" yaml:"x-cortex-git"`
-	Issues         CatalogEntityIssues         `json:"x-cortex-issues,omitempty" yaml:"x-cortex-issues"`
-	OnCall         CatalogEntityOnCall         `json:"x-cortex-oncall,omitempty" yaml:"x-cortex-oncall"`
-	SLOs           CatalogEntitySLOs           `json:"x-cortex-slos,omitempty" yaml:"x-cortex-slos"`
-	StaticAnalysis CatalogEntityStaticAnalysis `json:"x-cortex-static-analysis,omitempty" yaml:"x-cortex-static-analysis"`
+	Alerts         []CatalogEntityAlert        `json:"x-cortex-alerts,omitempty" yaml:"x-cortex-alerts,omitempty"`
+	Apm            CatalogEntityApm            `json:"x-cortex-apm,omitempty" yaml:"x-cortex-apm,omitempty"`
+	Dashboards     CatalogEntityDashboards     `json:"x-cortex-dashboards,omitempty" yaml:"x-cortex-dashboards,omitempty"`
+	Git            CatalogEntityGit            `json:"x-cortex-git,omitempty" yaml:"x-cortex-git,omitempty"`
+	Issues         CatalogEntityIssues         `json:"x-cortex-issues,omitempty" yaml:"x-cortex-issues,omitempty"`
+	OnCall         CatalogEntityOnCall         `json:"x-cortex-oncall,omitempty" yaml:"x-cortex-oncall,omitempty"`
+	SLOs           CatalogEntitySLOs           `json:"x-cortex-slos,omitempty" yaml:"x-cortex-slos,omitempty"`
+	StaticAnalysis CatalogEntityStaticAnalysis `json:"x-cortex-static-analysis,omitempty" yaml:"x-cortex-static-analysis,omitempty"`
 
 	// Integration-specific things
-	BugSnag   CatalogEntityBugSnag   `json:"x-cortex-bugsnag,omitempty" yaml:"x-cortex-bugsnag"`
-	Checkmarx CatalogEntityCheckmarx `json:"x-cortex-checkmarx,omitempty" yaml:"x-cortex-checkmarx"`
-	Rollbar   CatalogEntityRollbar   `json:"x-cortex-rollbar,omitempty" yaml:"x-cortex-rollbar"`
-	Sentry    CatalogEntitySentry    `json:"x-cortex-sentry,omitempty" yaml:"x-cortex-sentry"`
-	Snyk      CatalogEntitySnyk      `json:"x-cortex-snyk,omitempty" yaml:"x-cortex-snyk"`
+	BugSnag   CatalogEntityBugSnag   `json:"x-cortex-bugsnag,omitempty" yaml:"x-cortex-bugsnag,omitempty"`
+	Checkmarx CatalogEntityCheckmarx `json:"x-cortex-checkmarx,omitempty" yaml:"x-cortex-checkmarx,omitempty"`
+	Rollbar   CatalogEntityRollbar   `json:"x-cortex-rollbar,omitempty" yaml:"x-cortex-rollbar,omitempty"`
+	Sentry    CatalogEntitySentry    `json:"x-cortex-sentry,omitempty" yaml:"x-cortex-sentry,omitempty"`
+	Snyk      CatalogEntitySnyk      `json:"x-cortex-snyk,omitempty" yaml:"x-cortex-snyk,omitempty"`
 }
 
 type CatalogEntityDependency struct {

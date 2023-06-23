@@ -2,15 +2,21 @@ package cortex
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/dghubble/sling"
 	"gopkg.in/yaml.v3"
+	"log"
+	"net/http"
+	"strings"
 )
 
 type CatalogEntitiesClientInterface interface {
 	Get(ctx context.Context, tag string) (*CatalogEntity, error)
+	GetFromDescriptor(ctx context.Context, tag string) (*CatalogEntityData, error)
 	List(ctx context.Context, params *CatalogEntityListParams) (*CatalogEntitiesResponse, error)
+	Upsert(ctx context.Context, req UpsertCatalogEntityRequest) (*CatalogEntityData, error)
 	Delete(ctx context.Context, tag string) error
 }
 
@@ -106,27 +112,51 @@ func (c *CatalogEntitiesClient) Get(ctx context.Context, tag string) (*CatalogEn
 	return catalogEntityResponse, nil
 }
 
+type CatalogEntityGetDescriptorParams struct {
+	Yaml bool `url:"yaml"`
+}
+
+type yamlDecoder struct{}
+
+// Decode decodes the Response Body into the value pointed to by v.
+// Caller must provide a non-nil v and close the resp.Body.
+func (d yamlDecoder) Decode(resp *http.Response, v interface{}) error {
+	return yaml.NewDecoder(resp.Body).Decode(v)
+}
+
+// jsonDecoder decodes http response JSON into a JSON-tagged struct value.
+type jsonDecoder struct{}
+
+// Decode decodes the Response Body into the value pointed to by v.
+// Caller must provide a non-nil v and close the resp.Body.
+func (d jsonDecoder) Decode(resp *http.Response, v interface{}) error {
+	return json.NewDecoder(resp.Body).Decode(v)
+}
+
 func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag string) (*CatalogEntityData, error) {
 	entity := &CatalogEntityData{}
-	entityDescriptorResponse := ""
+	entityDescriptorResponse := map[string]interface{}{}
+	entityDescriptorResponse["openapi"] = "3.0.1"
 
 	apiError := &ApiError{}
-	response, err := c.Client().Get(Route("catalog", tag+"/openapi")).Receive(entityDescriptorResponse, apiError)
+	params := &CatalogEntityGetDescriptorParams{
+		Yaml: true,
+	}
+	uri := Route("catalog_entities", tag+"/openapi")
+	cl := c.Client().Get(uri).QueryStruct(params)
+	cl = cl.ResponseDecoder(yamlDecoder{})
+	response, err := cl.Receive(entityDescriptorResponse, apiError)
 	if err != nil {
-		return entity, errors.Join(errors.New("Failed getting catalog entity descriptor: "), err)
+		return entity, errors.Join(fmt.Errorf("failed getting catalog entity descriptor for %s from %s", tag, uri), err)
 	}
 
 	err = c.client.handleResponseStatus(response, apiError)
 	if err != nil {
-		return entity, errors.Join(errors.New("Failed getting catalog entity descriptor: "), err)
+		return entity, errors.Join(fmt.Errorf("failed handling response status for %s from %s", tag, uri), err)
 	}
-	yamlEntity := map[string]interface{}{}
-	err = yaml.Unmarshal([]byte(entityDescriptorResponse), yamlEntity)
-	if err != nil {
-		return entity, errors.Join(errors.New("Failed decoding catalog entity descriptor into YAML: "), err)
-	}
-
-	return c.parser.YamlToEntity(entity, yamlEntity)
+	log.Printf("body: %+v", entityDescriptorResponse)
+	cl.ResponseDecoder(jsonDecoder{})
+	return c.parser.YamlToEntity(entity, entityDescriptorResponse)
 }
 
 /***********************************************************************************************************************
@@ -177,21 +207,35 @@ type UpsertCatalogEntityResponse struct {
 	Violations []CatalogEntityViolation `json:"violations"`
 }
 
-func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEntityRequest) (*CatalogEntity, error) {
-	entity := &CatalogEntity{}
+func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEntityRequest) (*CatalogEntityData, error) {
+	entity := &CatalogEntityData{}
+	req.OpenApi = "3.0.1"
 	upsertResponse := &UpsertCatalogEntityResponse{
 		Ok:         false,
 		Violations: []CatalogEntityViolation{},
 	}
 	apiError := &ApiError{}
 
-	response, err := c.Client().Post(Route("open_api", "")).BodyJSON(req).Receive(upsertResponse, apiError)
+	// The API requires submitting the request as YAML, so we need to marshal it first.
+	bytes, err := yaml.Marshal(req)
+	if err != nil {
+		return entity, errors.New("could not marshal yaml: " + err.Error())
+	}
+	body := strings.NewReader(string(bytes))
+	response, err := c.Client().
+		Set("Content-Type", "application/openapi;charset=UTF-8").
+		Set("Accept", "application/json").
+		Post(Route("open_api", "")).
+		Body(body).
+		Receive(upsertResponse, apiError)
 	if err != nil {
 		return entity, errors.New("could not upsert catalog entity: " + err.Error())
 	}
 
 	err = c.client.handleResponseStatus(response, apiError)
 	if err != nil {
+		reqYaml, _ := yaml.Marshal(req)
+		log.Printf("Failed upserting catalog entity: %+v\n\nRequest:\n%+v\n%+v", err, string(reqYaml), apiError.String())
 		return entity, err
 	}
 
@@ -205,8 +249,7 @@ func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEnt
 	}
 
 	// re-fetch the catalog entity, since it's not returned here
-	entity, err = c.Get(ctx, req.Info.Tag)
-	return entity, err
+	return c.GetFromDescriptor(ctx, req.Info.Tag)
 }
 
 /***********************************************************************************************************************

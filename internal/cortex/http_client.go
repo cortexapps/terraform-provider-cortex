@@ -116,8 +116,6 @@ func (c *HttpClient) handleResponseStatus(response *http.Response, apiError *Api
 	case code == 401:
 		return fmt.Errorf("%s\n%s", ApiErrorUnauthorized, apiError)
 	default:
-		//b, _ := io.ReadAll(response.Body)
-		//b = string(b)
 		return fmt.Errorf("%d request failed with error: %+v", code, apiError.String())
 	}
 }
