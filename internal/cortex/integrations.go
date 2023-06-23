@@ -37,6 +37,12 @@ type CatalogEntityData struct {
 	Snyk      CatalogEntitySnyk      `json:"x-cortex-snyk,omitempty" yaml:"x-cortex-snyk,omitempty"`
 }
 
+type CatalogEntityLink struct {
+	Name string `json:"name" yaml:"name"`
+	Type string `json:"type" yaml:"type"` // runbook, documentation, logs, dashboard, metrics, healthcheck
+	Url  string `json:"url" yaml:"url"`
+}
+
 type CatalogEntityDependency struct {
 	Tag         string                 `json:"tag" yaml:"tag"`
 	Method      string                 `json:"method,omitempty" yaml:"method,omitempty"`
@@ -90,17 +96,18 @@ type CatalogEntityOnCall struct {
 }
 
 type CatalogEntityOwner struct {
-	Name        string `json:"name" yaml:"name"` // Must be of form <org>/<team>
-	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	Type        string `json:"type" yaml:"type"` // group, user, slack
-	Provider    string `json:"provider" yaml:"provider"`
-	Channel     string `json:"channel,omitempty" yaml:"channel,omitempty"` // for slack, do not add # to beginning
+	Type                 string `json:"type" yaml:"type"`                     // group, user, slack
+	Name                 string `json:"name,omitempty" yaml:"name,omitempty"` // Must be of form <org>/<team>
+	Description          string `json:"description,omitempty" yaml:"description,omitempty"`
+	Provider             string `json:"provider,omitempty" yaml:"provider,omitempty"`
+	Channel              string `json:"channel,omitempty" yaml:"channel,omitempty"` // for slack, do not add # to beginning
+	NotificationsEnabled bool   `json:"notificationsEnabled,omitempty" yaml:"notificationsEnabled,omitempty"`
 }
 
 type CatalogEntitySLOs struct {
 	DataDog    []CatalogEntitySLODataDog         `json:"datadog,omitempty" yaml:"datadog,omitempty"`
 	Dynatrace  []CatalogEntitySLODynatrace       `json:"dynatrace,omitempty" yaml:"dynatrace,omitempty"`
-	LightStep  CatalogEntitySLOLightStep         `json:"lightstep,omitempty" yaml:"lightstep,omitempty"`
+	Lightstep  CatalogEntitySLOLightstep         `json:"lightstep,omitempty" yaml:"lightstep,omitempty"`
 	Prometheus []CatalogEntitySLOPrometheusQuery `json:"prometheus,omitempty" yaml:"prometheus,omitempty"`
 	SignalFX   []CatalogEntitySLOSignalFX        `json:"signalfx,omitempty" yaml:"signalfx,omitempty"`
 	SumoLogic  []CatalogEntitySLOSumoLogic       `json:"sumologic,omitempty" yaml:"sumologic,omitempty"`
@@ -233,20 +240,20 @@ x-cortex-slos:
 			  slo: 0.9998
 */
 
-type CatalogEntitySLOLightStep struct {
-	Streams []CatalogEntitySLOLightStepStream `json:"stream" yaml:"stream"`
+type CatalogEntitySLOLightstep struct {
+	Streams []CatalogEntitySLOLightstepStream `json:"stream" yaml:"stream"`
 }
 
-type CatalogEntitySLOLightStepStream struct {
+type CatalogEntitySLOLightstepStream struct {
 	StreamID string                          `json:"streamId" yaml:"streamId"`
-	Targets  CatalogEntitySLOLightStepTarget `json:"targets" yaml:"targets"`
+	Targets  CatalogEntitySLOLightstepTarget `json:"targets" yaml:"targets"`
 }
 
-type CatalogEntitySLOLightStepTarget struct {
-	Latencies []CatalogEntitySLOLightStepTargetLatency `json:"latency" yaml:"latency"`
+type CatalogEntitySLOLightstepTarget struct {
+	Latencies []CatalogEntitySLOLightstepTargetLatency `json:"latency" yaml:"latency"`
 }
 
-type CatalogEntitySLOLightStepTargetLatency struct {
+type CatalogEntitySLOLightstepTargetLatency struct {
 	Percentile float64 `json:"percentile" yaml:"percentile"`
 	Target     int     `json:"target" yaml:"target"`
 	SLO        float64 `json:"slo" yaml:"slo"`
@@ -307,7 +314,7 @@ type CatalogEntitySLOSignalFX struct {
 	Query     string `json:"query" yaml:"query"`
 	Rollup    string `json:"rollup" yaml:"rollup"`
 	Target    int    `json:"target" yaml:"target"`
-	LookBack  string `json:"lookback" yaml:"lookback"`
+	Lookback  string `json:"lookback" yaml:"lookback"`
 	Operation string `json:"operation" yaml:"operation"`
 }
 

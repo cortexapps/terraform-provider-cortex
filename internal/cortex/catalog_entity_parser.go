@@ -217,7 +217,7 @@ func (c *CatalogEntityParser) interpolateJira(entity *CatalogEntityData, jiraMap
 func (c *CatalogEntityParser) interpolateSLOs(entity *CatalogEntityData, slosMap map[string]interface{}) {
 	entity.SLOs = CatalogEntitySLOs{}
 	if slosMap["lightstep"] != nil {
-		c.interpolateLightStep(entity, slosMap["lightstep"].(map[string]interface{}))
+		c.interpolateLightstep(entity, slosMap["lightstep"].(map[string]interface{}))
 	}
 	if slosMap["prometheus"] != nil {
 		c.interpolatePrometheus(entity, slosMap["prometheus"].([]interface{}))
@@ -225,17 +225,17 @@ func (c *CatalogEntityParser) interpolateSLOs(entity *CatalogEntityData, slosMap
 	// TODO: SignalFX, DataDog, DynaTrace, SumoLogic
 }
 
-func (c *CatalogEntityParser) interpolateLightStep(entity *CatalogEntityData, lightstepMap map[string]interface{}) {
-	entity.SLOs.LightStep = CatalogEntitySLOLightStep{
-		Streams: []CatalogEntitySLOLightStepStream{},
+func (c *CatalogEntityParser) interpolateLightstep(entity *CatalogEntityData, lightstepMap map[string]interface{}) {
+	entity.SLOs.Lightstep = CatalogEntitySLOLightstep{
+		Streams: []CatalogEntitySLOLightstepStream{},
 	}
 	if lightstepMap["streams"] != nil {
 		streams := lightstepMap["streams"].([]interface{})
 		for _, stream := range streams {
 			streamMap := stream.(map[string]interface{})
-			streamSLO := CatalogEntitySLOLightStepStream{
+			streamSLO := CatalogEntitySLOLightstepStream{
 				StreamID: streamMap["streamId"].(string),
-				Targets:  CatalogEntitySLOLightStepTarget{},
+				Targets:  CatalogEntitySLOLightstepTarget{},
 			}
 			if streamMap["targets"] != nil {
 				streamTargetMap := streamMap["targets"].(map[string]interface{})
@@ -243,7 +243,7 @@ func (c *CatalogEntityParser) interpolateLightStep(entity *CatalogEntityData, li
 					latencies := streamTargetMap["latency"].([]interface{})
 					for _, latency := range latencies {
 						latencyMap := latency.(map[string]interface{})
-						streamSLO.Targets.Latencies = append(streamSLO.Targets.Latencies, CatalogEntitySLOLightStepTargetLatency{
+						streamSLO.Targets.Latencies = append(streamSLO.Targets.Latencies, CatalogEntitySLOLightstepTargetLatency{
 							Percentile: latencyMap["percentile"].(float64),
 							Target:     latencyMap["target"].(int),
 							SLO:        latencyMap["slo"].(float64),
@@ -251,7 +251,7 @@ func (c *CatalogEntityParser) interpolateLightStep(entity *CatalogEntityData, li
 					}
 				}
 			}
-			entity.SLOs.LightStep.Streams = append(entity.SLOs.LightStep.Streams, streamSLO)
+			entity.SLOs.Lightstep.Streams = append(entity.SLOs.Lightstep.Streams, streamSLO)
 		}
 	}
 }

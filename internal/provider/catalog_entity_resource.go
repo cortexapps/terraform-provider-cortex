@@ -149,6 +149,14 @@ func (r *CatalogEntityResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
+	// TODO: Good practice it seems here is to issue a Read call which then stores into state?
+	// https://github.com/hashicorp/terraform-provider-consul/blob/master/consul/resource_consul_acl_token.go#L222
+	// https://github.com/hashicorp/terraform-provider-consul/blob/master/consul/resource_consul_acl_token.go#L144
+	// This could be just a v1 provider sdk thing though
+
+	// or maybe see https://github.com/hashicorp/terraform-provider-random/blob/main/internal/provider/resource_pet.go#L125
+	// which seems to have a batch state set?
+
 	// Set attributes from API response
 	data.Id = types.StringValue(entity.Tag)
 	data.Tag = types.StringValue(entity.Tag)

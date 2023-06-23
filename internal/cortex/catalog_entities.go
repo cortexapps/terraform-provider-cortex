@@ -2,13 +2,11 @@ package cortex
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/dghubble/sling"
 	"gopkg.in/yaml.v3"
 	"log"
-	"net/http"
 	"strings"
 )
 
@@ -71,12 +69,6 @@ type CatalogEntitySlackChannel struct {
 	NotificationsEnabled bool   `json:"notificationsEnabled" yaml:"notificationsEnabled"`
 }
 
-type CatalogEntityLink struct {
-	Name string `json:"name" yaml:"name"`
-	Type string `json:"type" yaml:"type"`
-	Url  string `json:"url" yaml:"url"`
-}
-
 type CatalogEntityViolation struct {
 	Description   string   `json:"description"`
 	ViolationType string   `json:"violationType"`
@@ -114,23 +106,6 @@ func (c *CatalogEntitiesClient) Get(ctx context.Context, tag string) (*CatalogEn
 
 type CatalogEntityGetDescriptorParams struct {
 	Yaml bool `url:"yaml"`
-}
-
-type yamlDecoder struct{}
-
-// Decode decodes the Response Body into the value pointed to by v.
-// Caller must provide a non-nil v and close the resp.Body.
-func (d yamlDecoder) Decode(resp *http.Response, v interface{}) error {
-	return yaml.NewDecoder(resp.Body).Decode(v)
-}
-
-// jsonDecoder decodes http response JSON into a JSON-tagged struct value.
-type jsonDecoder struct{}
-
-// Decode decodes the Response Body into the value pointed to by v.
-// Caller must provide a non-nil v and close the resp.Body.
-func (d jsonDecoder) Decode(resp *http.Response, v interface{}) error {
-	return json.NewDecoder(resp.Body).Decode(v)
 }
 
 func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag string) (*CatalogEntityData, error) {
