@@ -1,10 +1,12 @@
 package provider
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 // CatalogEntityResourceModel describes the resource data model.
@@ -19,9 +21,10 @@ type CatalogEntityResourceModel struct {
 	Metadata     types.String                           `tfsdk:"metadata"`
 	Dependencies []CatalogEntityDependencyResourceModel `tfsdk:"dependencies"`
 	Alerts       []CatalogEntityAlertResourceModel      `tfsdk:"alerts"`
+	Git          types.Object                           `tfsdk:"git"`
 }
 
-func (o CatalogEntityResourceModel) ToApiModel() cortex.CatalogEntityData {
+func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityData {
 	owners := make([]cortex.CatalogEntityOwner, len(o.Owners))
 	for i, owner := range o.Owners {
 		owners[i] = owner.ToApiModel()
@@ -52,6 +55,12 @@ func (o CatalogEntityResourceModel) ToApiModel() cortex.CatalogEntityData {
 		alerts[i] = alert.ToApiModel()
 	}
 
+	git := &CatalogEntityGitResourceModel{}
+	err := o.Git.As(ctx, git, basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true})
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	return cortex.CatalogEntityData{
 		Tag:          o.Tag.ValueString(),
 		Title:        o.Name.ValueString(),
@@ -62,6 +71,7 @@ func (o CatalogEntityResourceModel) ToApiModel() cortex.CatalogEntityData {
 		Metadata:     metadata,
 		Dependencies: dependencies,
 		Alerts:       alerts,
+		Git:          git.ToApiModel(),
 	}
 }
 
@@ -140,5 +150,81 @@ func (o CatalogEntityAlertResourceModel) ToApiModel() cortex.CatalogEntityAlert 
 		Type:  o.Type.ValueString(),
 		Tag:   o.Tag.ValueString(),
 		Value: o.Value.ValueString(),
+	}
+}
+
+/***********************************************************************************************************************
+ * Git
+ ***********************************************************************************************************************/
+
+type CatalogEntityGitResourceModel struct {
+	Github    CatalogEntityGithubResourceModel    `tfsdk:"github"`
+	Gitlab    CatalogEntityGitlabResourceModel    `tfsdk:"gitlab"`
+	Azure     CatalogEntityAzureResourceModel     `tfsdk:"azure"`
+	Bitbucket CatalogEntityBitbucketResourceModel `tfsdk:"bitbucket"`
+}
+
+func (o CatalogEntityGitResourceModel) ToApiModel() cortex.CatalogEntityGit {
+	git := cortex.CatalogEntityGit{}
+	if o.Github.Repository.ValueString() != "" {
+		git.Github = o.Github.ToApiModel()
+	}
+	if o.Gitlab.Repository.ValueString() != "" {
+		git.Gitlab = o.Gitlab.ToApiModel()
+	}
+	if o.Azure.Repository.ValueString() != "" {
+		git.Azure = o.Azure.ToApiModel()
+	}
+	if o.Bitbucket.Repository.ValueString() != "" {
+		git.BitBucket = o.Bitbucket.ToApiModel()
+	}
+	return git
+}
+
+type CatalogEntityGithubResourceModel struct {
+	Repository types.String `tfsdk:"repository"`
+	BasePath   types.String `tfsdk:"base_path"`
+}
+
+func (o CatalogEntityGithubResourceModel) ToApiModel() cortex.CatalogEntityGitGithub {
+	return cortex.CatalogEntityGitGithub{
+		Repository: o.Repository.ValueString(),
+		BasePath:   o.BasePath.ValueString(),
+	}
+}
+
+type CatalogEntityGitlabResourceModel struct {
+	Repository types.String `tfsdk:"repository"`
+	BasePath   types.String `tfsdk:"base_path"`
+}
+
+func (o CatalogEntityGitlabResourceModel) ToApiModel() cortex.CatalogEntityGitGitlab {
+	return cortex.CatalogEntityGitGitlab{
+		Repository: o.Repository.ValueString(),
+		BasePath:   o.BasePath.ValueString(),
+	}
+}
+
+type CatalogEntityAzureResourceModel struct {
+	Project    types.String `tfsdk:"project"`
+	Repository types.String `tfsdk:"repository"`
+	BasePath   types.String `tfsdk:"base_path"`
+}
+
+func (o CatalogEntityAzureResourceModel) ToApiModel() cortex.CatalogEntityGitAzureDevOps {
+	return cortex.CatalogEntityGitAzureDevOps{
+		Project:    o.Project.ValueString(),
+		Repository: o.Repository.ValueString(),
+		BasePath:   o.BasePath.ValueString(),
+	}
+}
+
+type CatalogEntityBitbucketResourceModel struct {
+	Repository types.String `tfsdk:"repository"`
+}
+
+func (o CatalogEntityBitbucketResourceModel) ToApiModel() cortex.CatalogEntityGitBitBucket {
+	return cortex.CatalogEntityGitBitBucket{
+		Repository: o.Repository.ValueString(),
 	}
 }

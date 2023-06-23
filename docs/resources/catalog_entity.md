@@ -24,6 +24,7 @@ Catalog Entity
 - `alerts` (Attributes List) List of alerts for the entity. (see [below for nested schema](#nestedatt--alerts))
 - `dependencies` (Attributes List) List of dependencies for the entity. (see [below for nested schema](#nestedatt--dependencies))
 - `description` (String) Description of the entity visible in the Service or Resource Catalog. Markdown is supported.
+- `git` (Attributes) Git configuration for the entity. (see [below for nested schema](#nestedatt--git))
 - `groups` (List of String) List of groups related to the entity.
 - `links` (Attributes List) List of links related to the entity. (see [below for nested schema](#nestedatt--links))
 - `metadata` (String) Custom metadata for the entity, in JSON format in a string. (Use the `jsonencode` function to convert a JSON object to a string.)
@@ -60,6 +61,62 @@ Optional:
 - `metadata` (String) Custom metadata for the dependency, in JSON format in a string. (Use the `jsonencode` function to convert a JSON object to a string.)
 - `method` (String) HTTP method if depending on a specific endpoint.
 - `path` (String) The actual endpoint this dependency refers to.
+
+
+<a id="nestedatt--git"></a>
+### Nested Schema for `git`
+
+Optional:
+
+- `azure` (Attributes) Azure configuration for the entity. (see [below for nested schema](#nestedatt--git--azure))
+- `bitbucket` (Attributes) BitBucket configuration for the entity. (see [below for nested schema](#nestedatt--git--bitbucket))
+- `github` (Attributes) GitHub configuration for the entity. (see [below for nested schema](#nestedatt--git--github))
+- `gitlab` (Attributes) GitLab configuration for the entity. (see [below for nested schema](#nestedatt--git--gitlab))
+
+<a id="nestedatt--git--azure"></a>
+### Nested Schema for `git.azure`
+
+Required:
+
+- `project` (String) Azure project for the entity.
+- `repository` (String) Azure repository for the entity.
+
+Optional:
+
+- `base_path` (String) Base path if not /
+
+
+<a id="nestedatt--git--bitbucket"></a>
+### Nested Schema for `git.bitbucket`
+
+Required:
+
+- `repository` (String) BitBucket repository for the entity.
+
+
+<a id="nestedatt--git--github"></a>
+### Nested Schema for `git.github`
+
+Required:
+
+- `repository` (String) GitHub repository for the entity.
+
+Optional:
+
+- `base_path` (String) Base path if not /
+
+
+<a id="nestedatt--git--gitlab"></a>
+### Nested Schema for `git.gitlab`
+
+Required:
+
+- `repository` (String) GitLab repository for the entity.
+
+Optional:
+
+- `base_path` (String) Base path if not /
+
 
 
 <a id="nestedatt--links"></a>

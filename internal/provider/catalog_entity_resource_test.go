@@ -38,6 +38,16 @@ func TestAccCatalogEntityResource(t *testing.T) {
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "links.0.name", "Internal Docs"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "links.0.type", "documentation"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "links.0.url", "https://internal-docs.cortex.io/products-service"),
+
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.github.repository", "cortexio/products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.github.base_path", "/"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.gitlab.repository", "cortexio/products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.gitlab.base_path", "/"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.azure.project", "cortexio"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.azure.repository", "cortexio/products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.azure.base_path", "/"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.bitbucket.repository", "cortexio/products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.bitbucket.base_path", "/"),
 				),
 			},
 			// ImportState testing
@@ -126,6 +136,26 @@ resource "cortex_catalog_entity" "test" {
       value = "my-service-override-tag"
     }
   ]
+
+  git = {
+    github = {
+      repository = "cortexio/products-service"
+      base_path  = "/"
+    }
+    gitlab = {
+      repository = "cortexio/products-service"
+      base_path  = "/"
+    }
+    azure = {
+      project    = "cortexio"
+      repository = "cortexio/products-service"
+      base_path  = "/"
+    }
+    bitbucket = {
+      repository = "cortexio/products-service"
+    }
+  }
+
 }
 `, tag, name, description)
 }

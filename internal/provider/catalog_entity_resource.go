@@ -32,9 +32,9 @@ type CatalogEntityResource struct {
 	client *cortex.HttpClient
 }
 
-func (r *CatalogEntityResource) toUpsertRequest(data *CatalogEntityResourceModel) cortex.UpsertCatalogEntityRequest {
+func (r *CatalogEntityResource) toUpsertRequest(ctx context.Context, data *CatalogEntityResourceModel) cortex.UpsertCatalogEntityRequest {
 	return cortex.UpsertCatalogEntityRequest{
-		Info: data.ToApiModel(),
+		Info: data.ToApiModel(ctx),
 	}
 }
 
@@ -192,9 +192,71 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 				},
 			},
 
+			"git": schema.SingleNestedAttribute{
+				MarkdownDescription: "Git configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"github": schema.SingleNestedAttribute{
+						MarkdownDescription: "GitHub configuration for the entity.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"repository": schema.StringAttribute{
+								MarkdownDescription: "GitHub repository for the entity.",
+								Required:            true,
+							},
+							"base_path": schema.StringAttribute{
+								MarkdownDescription: "Base path if not /",
+								Optional:            true,
+							},
+						},
+					},
+					"gitlab": schema.SingleNestedAttribute{
+						MarkdownDescription: "GitLab configuration for the entity.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"repository": schema.StringAttribute{
+								MarkdownDescription: "GitLab repository for the entity.",
+								Required:            true,
+							},
+							"base_path": schema.StringAttribute{
+								MarkdownDescription: "Base path if not /",
+								Optional:            true,
+							},
+						},
+					},
+					"azure": schema.SingleNestedAttribute{
+						MarkdownDescription: "Azure configuration for the entity.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"project": schema.StringAttribute{
+								MarkdownDescription: "Azure project for the entity.",
+								Required:            true,
+							},
+							"repository": schema.StringAttribute{
+								MarkdownDescription: "Azure repository for the entity.",
+								Required:            true,
+							},
+							"base_path": schema.StringAttribute{
+								MarkdownDescription: "Base path if not /",
+								Optional:            true,
+							},
+						},
+					},
+					"bitbucket": schema.SingleNestedAttribute{
+						MarkdownDescription: "BitBucket configuration for the entity.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"repository": schema.StringAttribute{
+								MarkdownDescription: "BitBucket repository for the entity.",
+								Required:            true,
+							},
+						},
+					},
+				},
+			},
+
 			// TODO: apm
 			// TODO: dashboards
-			// TODO: git
 			// TODO: issues
 			// TODO: on_call
 			// TODO: slos
@@ -247,7 +309,7 @@ func (r *CatalogEntityResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	// Issue API request
-	upsertRequest := r.toUpsertRequest(data)
+	upsertRequest := r.toUpsertRequest(ctx, data)
 	ceResponse, err := r.client.CatalogEntities().Upsert(ctx, upsertRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read catalog entity, got error: %s", err))
@@ -330,7 +392,7 @@ func (r *CatalogEntityResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	// Issue API request
-	upsertRequest := r.toUpsertRequest(data)
+	upsertRequest := r.toUpsertRequest(ctx, data)
 	entity, err := r.client.CatalogEntities().Upsert(ctx, upsertRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read catalog entity, got error: %s", err))
