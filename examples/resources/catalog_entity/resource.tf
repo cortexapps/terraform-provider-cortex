@@ -23,8 +23,8 @@ resource "cortex_catalog_entity" "products-service" {
   ]
 
   groups = [
-    'production',
-    'lang-golang',
+    "production",
+    "lang-golang",
   ]
 
   links = [
@@ -49,9 +49,9 @@ resource "cortex_catalog_entity" "products-service" {
 
   alerts = [
     {
-      type = "opsgenie"
-      tag : 'different-tag'
-      value : 'my-service-override-tag'
+      type  = "opsgenie"
+      tag   = "different-tag"
+      value = "my-service-override-tag"
     }
   ]
 
@@ -144,7 +144,7 @@ resource "cortex_catalog_entity" "products-service" {
       streams = [
         {
           stream_id = "asdf1234567"
-          targets   = {
+          targets = {
             latencies = [
               {
                 percentile = 0.5
@@ -175,7 +175,7 @@ resource "cortex_catalog_entity" "products-service" {
         query     = "sf_metric:'jvm.memory.max' AND area:'nonheap'"
         rollup    = "AVERAGE"
         target    = 512000
-        lookback  = 'P1Y'
+        lookback  = "P1Y"
         operation = "<="
       }
     ]
@@ -200,7 +200,7 @@ resource "cortex_catalog_entity" "products-service" {
     }
     veracode = {
       application_names = ["products-service"]
-      sandboxes         = [
+      sandboxes = [
         {
           application_name = "products-service"
           sandbox_name     = "staging"
