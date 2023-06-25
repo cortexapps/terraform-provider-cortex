@@ -24,6 +24,8 @@ type CatalogEntityResourceModel struct {
 	Git          types.Object                           `tfsdk:"git"`
 	Issues       types.Object                           `tfsdk:"issues"`
 	OnCall       types.Object                           `tfsdk:"on_call"`
+	Sentry       types.Object                           `tfsdk:"sentry"`
+	Snyk         types.Object                           `tfsdk:"snyk"`
 }
 
 func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityData {
@@ -69,8 +71,19 @@ func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Catal
 	if err != nil {
 		fmt.Println(err)
 	}
-	on_call := &CatalogEntityOnCallResourceModel{}
-	err = o.OnCall.As(ctx, on_call, defaultObjOptions)
+	onCall := &CatalogEntityOnCallResourceModel{}
+	err = o.OnCall.As(ctx, onCall, defaultObjOptions)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	sentry := &CatalogEntitySentryResourceModel{}
+	err = o.Sentry.As(ctx, sentry, defaultObjOptions)
+	if err != nil {
+		fmt.Println(err)
+	}
+	snyk := &CatalogEntitySnykResourceModel{}
+	err = o.Snyk.As(ctx, snyk, defaultObjOptions)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -87,7 +100,9 @@ func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Catal
 		Alerts:       alerts,
 		Git:          git.ToApiModel(),
 		Issues:       issues.ToApiModel(ctx),
-		OnCall:       on_call.ToApiModel(),
+		OnCall:       onCall.ToApiModel(),
+		Sentry:       sentry.ToApiModel(),
+		Snyk:         snyk.ToApiModel(),
 	}
 }
 
@@ -341,5 +356,51 @@ func (o CatalogEntityOnCallVictorOpsResourceModel) ToApiModel() cortex.CatalogEn
 	return cortex.CatalogEntityOnCallVictorOps{
 		ID:   o.ID.ValueString(),
 		Type: o.Type.ValueString(),
+	}
+}
+
+/***********************************************************************************************************************
+ * Sentry
+ **********************************************************************************************************************/
+
+type CatalogEntitySentryResourceModel struct {
+	Project types.String `tfsdk:"project"`
+}
+
+func (o CatalogEntitySentryResourceModel) ToApiModel() cortex.CatalogEntitySentry {
+	return cortex.CatalogEntitySentry{
+		Project: o.Project.ValueString(),
+	}
+}
+
+/***********************************************************************************************************************
+ * Snyk
+ **********************************************************************************************************************/
+
+type CatalogEntitySnykResourceModel struct {
+	Projects []CatalogEntitySnykProjectResourceModel `tfsdk:"projects"`
+}
+
+func (o CatalogEntitySnykResourceModel) ToApiModel() cortex.CatalogEntitySnyk {
+	var projects = make([]cortex.CatalogEntitySnykProject, len(o.Projects))
+	for i, e := range o.Projects {
+		projects[i] = e.ToApiModel()
+	}
+	return cortex.CatalogEntitySnyk{
+		Projects: projects,
+	}
+}
+
+type CatalogEntitySnykProjectResourceModel struct {
+	Organization types.String `tfsdk:"organization"`
+	ProjectID    types.String `tfsdk:"project_id"`
+	Source       types.String `tfsdk:"source"`
+}
+
+func (o CatalogEntitySnykProjectResourceModel) ToApiModel() cortex.CatalogEntitySnykProject {
+	return cortex.CatalogEntitySnykProject{
+		Organization: o.Organization.ValueString(),
+		ProjectID:    o.ProjectID.ValueString(),
+		Source:       o.Source.ValueString(),
 	}
 }

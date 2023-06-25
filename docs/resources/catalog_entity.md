@@ -32,6 +32,8 @@ Catalog Entity
 - `name` (String) Human-readable name for the entity
 - `on_call` (Attributes) On-call configuration for the entity. (see [below for nested schema](#nestedatt--on_call))
 - `owners` (Attributes List) List of owners for the entity. Owners can be users, groups, or Slack channels. (see [below for nested schema](#nestedatt--owners))
+- `sentry` (Attributes) Sentry configuration for the entity. (see [below for nested schema](#nestedatt--sentry))
+- `snyk` (Attributes) Snyk configuration for the entity. (see [below for nested schema](#nestedatt--snyk))
 
 ### Read-Only
 
@@ -202,3 +204,28 @@ Optional:
 - `name` (String) Name of the owner. Only required for `user` or `group` types.
 - `notifications_enabled` (Boolean) Whether Slack notifications are enabled for all owners of this service. Only allowed if `type` is `slack`.
 - `provider` (String) Provider of the owner. Only allowed if `type` is `group`.
+
+
+<a id="nestedatt--sentry"></a>
+### Nested Schema for `sentry`
+
+Required:
+
+- `project` (String) Sentry project ID for the entity.
+
+
+<a id="nestedatt--snyk"></a>
+### Nested Schema for `snyk`
+
+Optional:
+
+- `projects` (Attributes List) List of Snyk projects for the entity. (see [below for nested schema](#nestedatt--snyk--projects))
+
+<a id="nestedatt--snyk--projects"></a>
+### Nested Schema for `snyk.projects`
+
+Required:
+
+- `organization` (String) Snyk organization ID.
+- `project_id` (String) Snyk project ID.
+- `source` (String) Type of Snyk product. Valid values are `CODE` or `OPEN_SOURCE`.

@@ -349,8 +349,45 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 			// TODO: bugsnag
 			// TODO: checkmarx
 			// TODO: rollbar
-			// TODO: sentry
-			// TODO: snyk
+			"sentry": schema.SingleNestedAttribute{
+				MarkdownDescription: "Sentry configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"project": schema.StringAttribute{
+						MarkdownDescription: "Sentry project ID for the entity.",
+						Required:            true,
+					},
+				},
+			},
+			"snyk": schema.SingleNestedAttribute{
+				MarkdownDescription: "Snyk configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"projects": schema.ListNestedAttribute{
+						MarkdownDescription: "List of Snyk projects for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"organization": schema.StringAttribute{
+									MarkdownDescription: "Snyk organization ID.",
+									Required:            true,
+								},
+								"project_id": schema.StringAttribute{
+									MarkdownDescription: "Snyk project ID.",
+									Required:            true,
+								},
+								"source": schema.StringAttribute{
+									MarkdownDescription: "Type of Snyk product. Valid values are `CODE` or `OPEN_SOURCE`.",
+									Required:            true,
+									Validators: []validator.String{
+										stringvalidator.OneOf("CODE", "OPEN_SOURCE"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 
 			//Computed
 			"id": schema.StringAttribute{

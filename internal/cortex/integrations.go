@@ -338,6 +338,7 @@ type CatalogEntitySnyk struct {
 type CatalogEntitySnykProject struct {
 	Organization string `json:"organizationId" yaml:"organizationId"`
 	ProjectID    string `json:"projectId" yaml:"projectId"`
+	Source       string `json:"source,omitempty" yaml:"source,omitempty"`
 }
 
 /***********************************************************************************************************************

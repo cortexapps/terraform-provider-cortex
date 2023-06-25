@@ -47,6 +47,11 @@ func TestAccCatalogEntityResource(t *testing.T) {
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.azure.repository", "cortexio/products-service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.azure.base_path", "/"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.bitbucket.repository", "cortexio/products-service"),
+
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "sentry.project", "cortexio/products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "snyk.projects.0.organization", "cortexio"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "snyk.projects.0.project_id", "cortexio/products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "snyk.projects.0.source", "CODE"),
 				),
 			},
 			// ImportState testing
@@ -160,6 +165,20 @@ resource "cortex_catalog_entity" "test" {
       default_jql = "project = CORTEX AND component = Products"
       projects = ["PRODUCTS"]
     }
+  }
+
+  sentry = {
+    project = "cortexio/products-service"
+  }
+
+  snyk = {
+	projects = [
+	  {
+	    organization = "cortexio"
+	    project_id = "cortexio/products-service"
+	    source = "CODE"
+	  }
+	]
   }
 }
 `, tag, name, description)
