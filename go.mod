@@ -10,6 +10,8 @@ require (
 	github.com/hashicorp/terraform-plugin-go v0.16.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-testing v1.3.0
+	github.com/life4/genesis v1.2.0
+	github.com/motemen/go-loghttp v0.0.0-20170804080138-974ac5ceac27
 	github.com/stretchr/testify v1.8.4
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -58,7 +60,6 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/motemen/go-loghttp v0.0.0-20170804080138-974ac5ceac27 // indirect
 	github.com/motemen/go-nuts v0.0.0-20220604134737-2658d0104f31 // indirect
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

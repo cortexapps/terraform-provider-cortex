@@ -7,6 +7,7 @@ import (
 	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	slices "github.com/life4/genesis/slices"
 )
 
 // CatalogEntityResourceModel describes the resource data model.
@@ -230,10 +231,14 @@ type CatalogEntityGithubResourceModel struct {
 }
 
 func (o CatalogEntityGithubResourceModel) ToApiModel() cortex.CatalogEntityGitGithub {
-	return cortex.CatalogEntityGitGithub{
+	entity := cortex.CatalogEntityGitGithub{
 		Repository: o.Repository.ValueString(),
-		BasePath:   o.BasePath.ValueString(),
 	}
+	basePath := o.BasePath.ValueString()
+	if basePath != "" && basePath != "/" {
+		entity.BasePath = basePath
+	}
+	return entity
 }
 
 type CatalogEntityGitlabResourceModel struct {
@@ -242,10 +247,14 @@ type CatalogEntityGitlabResourceModel struct {
 }
 
 func (o CatalogEntityGitlabResourceModel) ToApiModel() cortex.CatalogEntityGitGitlab {
-	return cortex.CatalogEntityGitGitlab{
+	entity := cortex.CatalogEntityGitGitlab{
 		Repository: o.Repository.ValueString(),
-		BasePath:   o.BasePath.ValueString(),
 	}
+	basePath := o.BasePath.ValueString()
+	if basePath != "" && basePath != "/" {
+		entity.BasePath = basePath
+	}
+	return entity
 }
 
 type CatalogEntityAzureResourceModel struct {
@@ -255,11 +264,15 @@ type CatalogEntityAzureResourceModel struct {
 }
 
 func (o CatalogEntityAzureResourceModel) ToApiModel() cortex.CatalogEntityGitAzureDevOps {
-	return cortex.CatalogEntityGitAzureDevOps{
+	entity := cortex.CatalogEntityGitAzureDevOps{
 		Project:    o.Project.ValueString(),
 		Repository: o.Repository.ValueString(),
-		BasePath:   o.BasePath.ValueString(),
 	}
+	basePath := o.BasePath.ValueString()
+	if basePath != "" && basePath != "/" {
+		entity.BasePath = basePath
+	}
+	return entity
 }
 
 type CatalogEntityBitbucketResourceModel struct {
@@ -311,9 +324,9 @@ func (o CatalogEntityIssuesJiraResourceModel) ToApiModel(ctx context.Context) co
 	}
 	return cortex.CatalogEntityIssuesJira{
 		DefaultJQL: o.DefaultJQL.ValueString(),
-		Projects:   projects,
-		Labels:     labels,
-		Components: components,
+		Projects:   slices.Reject(projects, func(i string) bool { return i == "" }),
+		Labels:     slices.Reject(labels, func(i string) bool { return i == "" }),
+		Components: slices.Reject(components, func(i string) bool { return i == "" }),
 	}
 }
 
@@ -445,8 +458,9 @@ func (o CatalogEntityApmDataDogResourceModel) ToApiModel(ctx context.Context) co
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	return cortex.CatalogEntityApmDataDog{
-		Monitors: monitors,
+		Monitors: slices.Reject(monitors, func(i int64) bool { return i == 0 }),
 	}
 }
 
@@ -467,8 +481,8 @@ func (o CatalogEntityApmDynatraceResourceModel) ToApiModel(ctx context.Context) 
 		fmt.Println(err)
 	}
 	return cortex.CatalogEntityApmDynatrace{
-		EntityIDs:          entityIds,
-		EntityNameMatchers: entityNameMatchers,
+		EntityIDs:          slices.Reject(entityIds, func(i string) bool { return i == "" }),
+		EntityNameMatchers: slices.Reject(entityNameMatchers, func(i string) bool { return i == "" }),
 	}
 }
 
