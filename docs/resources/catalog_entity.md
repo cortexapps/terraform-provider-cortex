@@ -30,6 +30,7 @@ Catalog Entity
 - `links` (Attributes List) List of links related to the entity. (see [below for nested schema](#nestedatt--links))
 - `metadata` (String) Custom metadata for the entity, in JSON format in a string. (Use the `jsonencode` function to convert a JSON object to a string.)
 - `name` (String) Human-readable name for the entity
+- `on_call` (Attributes) On-call configuration for the entity. (see [below for nested schema](#nestedatt--on_call))
 - `owners` (Attributes List) List of owners for the entity. Owners can be users, groups, or Slack channels. (see [below for nested schema](#nestedatt--owners))
 
 ### Read-Only
@@ -147,6 +148,43 @@ Required:
 - `name` (String) Name of the link.
 - `type` (String) Type of the link. Valid values are `runbook`, `documentation`, `logs`, `dashboard`, `metrics`, `healthcheck`.
 - `url` (String) URL of the link.
+
+
+<a id="nestedatt--on_call"></a>
+### Nested Schema for `on_call`
+
+Optional:
+
+- `ops_genie` (Attributes) OpsGenie configuration for the entity. (see [below for nested schema](#nestedatt--on_call--ops_genie))
+- `pager_duty` (Attributes) PagerDuty configuration for the entity. (see [below for nested schema](#nestedatt--on_call--pager_duty))
+- `victor_ops` (Attributes) VictorOps configuration for the entity. (see [below for nested schema](#nestedatt--on_call--victor_ops))
+
+<a id="nestedatt--on_call--ops_genie"></a>
+### Nested Schema for `on_call.ops_genie`
+
+Required:
+
+- `id` (String) OpsGenie Schedule ID.
+- `type` (String) Type. Valid values are `SCHEDULE`.
+
+
+<a id="nestedatt--on_call--pager_duty"></a>
+### Nested Schema for `on_call.pager_duty`
+
+Required:
+
+- `id` (String) PagerDuty Service, Schedule, or Escalation Policy ID.
+- `type` (String) Type. Valid values are `SERVICE`, `SCHEDULE`, or `ESCALATION_POLICY`.
+
+
+<a id="nestedatt--on_call--victor_ops"></a>
+### Nested Schema for `on_call.victor_ops`
+
+Required:
+
+- `id` (String) VictorOps Schedule ID.
+- `type` (String) Type. Valid values are `SCHEDULE`.
+
 
 
 <a id="nestedatt--owners"></a>

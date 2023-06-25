@@ -191,7 +191,6 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
-
 			"git": schema.SingleNestedAttribute{
 				MarkdownDescription: "Git configuration for the entity.",
 				Optional:            true,
@@ -285,10 +284,66 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
+			"on_call": schema.SingleNestedAttribute{
+				MarkdownDescription: "On-call configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"pager_duty": schema.SingleNestedAttribute{
+						MarkdownDescription: "PagerDuty configuration for the entity.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"id": schema.StringAttribute{
+								MarkdownDescription: "PagerDuty Service, Schedule, or Escalation Policy ID.",
+								Required:            true,
+							},
+							"type": schema.StringAttribute{
+								MarkdownDescription: "Type. Valid values are `SERVICE`, `SCHEDULE`, or `ESCALATION_POLICY`.",
+								Required:            true,
+								Validators: []validator.String{
+									stringvalidator.OneOf("SERVICE", "SCHEDULE", "ESCALATION_POLICY"),
+								},
+							},
+						},
+					},
+					"ops_genie": schema.SingleNestedAttribute{
+						MarkdownDescription: "OpsGenie configuration for the entity.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"id": schema.StringAttribute{
+								MarkdownDescription: "OpsGenie Schedule ID.",
+								Required:            true,
+							},
+							"type": schema.StringAttribute{
+								MarkdownDescription: "Type. Valid values are `SCHEDULE`.",
+								Required:            true,
+								Validators: []validator.String{
+									stringvalidator.OneOf("SCHEDULE"),
+								},
+							},
+						},
+					},
+					"victor_ops": schema.SingleNestedAttribute{
+						MarkdownDescription: "VictorOps configuration for the entity.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"id": schema.StringAttribute{
+								MarkdownDescription: "VictorOps Schedule ID.",
+								Required:            true,
+							},
+							"type": schema.StringAttribute{
+								MarkdownDescription: "Type. Valid values are `SCHEDULE`.",
+								Required:            true,
+								Validators: []validator.String{
+									stringvalidator.OneOf("SCHEDULE"),
+								},
+							},
+						},
+					},
+				},
+			},
 
 			// TODO: apm
 			// TODO: dashboards
-			// TODO: on_call
 			// TODO: slos
 			// TODO: static_analysis
 			// TODO: bugsnag

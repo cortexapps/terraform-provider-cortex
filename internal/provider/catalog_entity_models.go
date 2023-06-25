@@ -23,6 +23,7 @@ type CatalogEntityResourceModel struct {
 	Alerts       []CatalogEntityAlertResourceModel      `tfsdk:"alerts"`
 	Git          types.Object                           `tfsdk:"git"`
 	Issues       types.Object                           `tfsdk:"issues"`
+	OnCall       types.Object                           `tfsdk:"on_call"`
 }
 
 func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityData {
@@ -68,6 +69,11 @@ func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Catal
 	if err != nil {
 		fmt.Println(err)
 	}
+	on_call := &CatalogEntityOnCallResourceModel{}
+	err = o.OnCall.As(ctx, on_call, defaultObjOptions)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	return cortex.CatalogEntityData{
 		Tag:          o.Tag.ValueString(),
@@ -81,6 +87,7 @@ func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Catal
 		Alerts:       alerts,
 		Git:          git.ToApiModel(),
 		Issues:       issues.ToApiModel(ctx),
+		OnCall:       on_call.ToApiModel(),
 	}
 }
 
@@ -280,5 +287,59 @@ func (o CatalogEntityIssuesJiraResourceModel) ToApiModel(ctx context.Context) co
 		Projects:   projects,
 		Labels:     labels,
 		Components: components,
+	}
+}
+
+/***********************************************************************************************************************
+ * On-Call
+ ***********************************************************************************************************************/
+
+type CatalogEntityOnCallResourceModel struct {
+	PagerDuty CatalogEntityOnCallPagerDutyResourceModel `tfsdk:"pager_duty"`
+	OpsGenie  CatalogEntityOnCallOpsGenieResourceModel  `tfsdk:"ops_genie"`
+	VictorOps CatalogEntityOnCallVictorOpsResourceModel `tfsdk:"victor_ops"`
+}
+
+func (o CatalogEntityOnCallResourceModel) ToApiModel() cortex.CatalogEntityOnCall {
+	return cortex.CatalogEntityOnCall{
+		PagerDuty: o.PagerDuty.ToApiModel(),
+		OpsGenie:  o.OpsGenie.ToApiModel(),
+		VictorOps: o.VictorOps.ToApiModel(),
+	}
+}
+
+type CatalogEntityOnCallPagerDutyResourceModel struct {
+	ID   types.String `tfsdk:"id"`
+	Type types.String `tfsdk:"type"`
+}
+
+func (o CatalogEntityOnCallPagerDutyResourceModel) ToApiModel() cortex.CatalogEntityOnCallPagerDuty {
+	return cortex.CatalogEntityOnCallPagerDuty{
+		ID:   o.ID.ValueString(),
+		Type: o.Type.ValueString(),
+	}
+}
+
+type CatalogEntityOnCallOpsGenieResourceModel struct {
+	ID   types.String `tfsdk:"id"`
+	Type types.String `tfsdk:"type"`
+}
+
+func (o CatalogEntityOnCallOpsGenieResourceModel) ToApiModel() cortex.CatalogEntityOnCallOpsGenie {
+	return cortex.CatalogEntityOnCallOpsGenie{
+		ID:   o.ID.ValueString(),
+		Type: o.Type.ValueString(),
+	}
+}
+
+type CatalogEntityOnCallVictorOpsResourceModel struct {
+	ID   types.String `tfsdk:"id"`
+	Type types.String `tfsdk:"type"`
+}
+
+func (o CatalogEntityOnCallVictorOpsResourceModel) ToApiModel() cortex.CatalogEntityOnCallVictorOps {
+	return cortex.CatalogEntityOnCallVictorOps{
+		ID:   o.ID.ValueString(),
+		Type: o.Type.ValueString(),
 	}
 }

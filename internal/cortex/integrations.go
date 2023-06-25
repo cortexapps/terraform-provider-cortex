@@ -90,7 +90,7 @@ type CatalogEntityIssues struct {
 }
 
 type CatalogEntityOnCall struct {
-	Pagerduty CatalogEntityOnCallPagerduty `json:"pagerduty,omitempty" yaml:"pagerduty,omitempty"`
+	PagerDuty CatalogEntityOnCallPagerDuty `json:"pagerduty,omitempty" yaml:"pagerduty,omitempty"`
 	OpsGenie  CatalogEntityOnCallOpsGenie  `json:"opsgenie,omitempty" yaml:"opsgenie,omitempty"`
 	VictorOps CatalogEntityOnCallVictorOps `json:"victorops,omitempty" yaml:"victorops,omitempty"`
 }
@@ -282,7 +282,7 @@ type CatalogEntityApmNewRelic struct {
  * PagerDuty - https://docs.cortex.io/docs/reference/integrations/pagerduty
  **********************************************************************************************************************/
 
-type CatalogEntityOnCallPagerduty struct {
+type CatalogEntityOnCallPagerDuty struct {
 	ID   string `json:"id" yaml:"id"`
 	Type string `json:"type" yaml:"type"`
 }

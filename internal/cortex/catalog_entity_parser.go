@@ -139,7 +139,7 @@ func (c *CatalogEntityParser) interpolateOnCall(entity *CatalogEntityData, onCal
 	entity.OnCall = CatalogEntityOnCall{}
 	if onCallMap["pagerduty"] != nil {
 		pdMap := onCallMap["pagerduty"].(map[string]interface{})
-		entity.OnCall.Pagerduty = CatalogEntityOnCallPagerduty{
+		entity.OnCall.PagerDuty = CatalogEntityOnCallPagerDuty{
 			ID:   MapFetchToString(pdMap, "id"),
 			Type: MapFetchToString(pdMap, "type"),
 		}

@@ -138,7 +138,7 @@ resource "cortex_catalog_entity" "products-service" {
   }
 
   on_call = {
-    pagerduty = {
+    pager_duty = {
       id   = "123456"
       type = "SERVICE" // or SCHEDULE or ESCALATION_POLICY
     }
