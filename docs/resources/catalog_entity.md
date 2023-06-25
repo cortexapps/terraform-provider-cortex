@@ -35,6 +35,7 @@ Catalog Entity
 - `on_call` (Attributes) On-call configuration for the entity. (see [below for nested schema](#nestedatt--on_call))
 - `owners` (Attributes List) List of owners for the entity. Owners can be users, groups, or Slack channels. (see [below for nested schema](#nestedatt--owners))
 - `sentry` (Attributes) Sentry configuration for the entity. (see [below for nested schema](#nestedatt--sentry))
+- `slos` (Attributes) Service-level Objectives configuration for the entity. (see [below for nested schema](#nestedatt--slos))
 - `snyk` (Attributes) Snyk configuration for the entity. (see [below for nested schema](#nestedatt--snyk))
 
 ### Read-Only
@@ -267,6 +268,111 @@ Optional:
 Required:
 
 - `project` (String) Sentry project ID for the entity.
+
+
+<a id="nestedatt--slos"></a>
+### Nested Schema for `slos`
+
+Required:
+
+- `sumo_logic` (Attributes List) SumoLogic SLO configuration for the entity. (see [below for nested schema](#nestedatt--slos--sumo_logic))
+
+Optional:
+
+- `data_dog` (Attributes List) DataDog SLO configuration for the entity. (see [below for nested schema](#nestedatt--slos--data_dog))
+- `dynatrace` (Attributes List) Dynatrace SLO configuration for the entity. (see [below for nested schema](#nestedatt--slos--dynatrace))
+- `lightstep` (Attributes) Lightstep SLO configuration for the entity. (see [below for nested schema](#nestedatt--slos--lightstep))
+- `prometheus` (Attributes List) Prometheus SLO configuration for the entity. (see [below for nested schema](#nestedatt--slos--prometheus))
+- `signal_fx` (Attributes List) SignalFx SLO configuration for the entity. (see [below for nested schema](#nestedatt--slos--signal_fx))
+
+<a id="nestedatt--slos--sumo_logic"></a>
+### Nested Schema for `slos.sumo_logic`
+
+Required:
+
+- `id` (String) SumoLogic SLO ID.
+
+
+<a id="nestedatt--slos--data_dog"></a>
+### Nested Schema for `slos.data_dog`
+
+Required:
+
+- `id` (String) DataDog SLO ID.
+
+
+<a id="nestedatt--slos--dynatrace"></a>
+### Nested Schema for `slos.dynatrace`
+
+Required:
+
+- `id` (String) Dynatrace SLO ID.
+
+
+<a id="nestedatt--slos--lightstep"></a>
+### Nested Schema for `slos.lightstep`
+
+Optional:
+
+- `streams` (Attributes List) List of Lightstep streams for the entity. (see [below for nested schema](#nestedatt--slos--lightstep--streams))
+
+<a id="nestedatt--slos--lightstep--streams"></a>
+### Nested Schema for `slos.lightstep.streams`
+
+Required:
+
+- `stream_id` (String) Lightstep stream ID.
+
+Optional:
+
+- `targets` (Attributes) List of target latencies and error rates for the stream. (see [below for nested schema](#nestedatt--slos--lightstep--streams--targets))
+
+<a id="nestedatt--slos--lightstep--streams--targets"></a>
+### Nested Schema for `slos.lightstep.streams.targets`
+
+Optional:
+
+- `latencies` (Attributes List) List of latency targets for the stream. (see [below for nested schema](#nestedatt--slos--lightstep--streams--targets--latencies))
+
+<a id="nestedatt--slos--lightstep--streams--targets--latencies"></a>
+### Nested Schema for `slos.lightstep.streams.targets.latencies`
+
+Required:
+
+- `percentile` (Number) Percentile latency for your given streamId, out of 1.
+- `slo` (Number) SLO percentile, out of 1.
+- `target` (Number) Target latency, in ms.
+
+
+
+
+
+<a id="nestedatt--slos--prometheus"></a>
+### Nested Schema for `slos.prometheus`
+
+Required:
+
+- `error_query` (String) Query that indicates error events for your metric.
+- `slo` (Number) Target number for SLO.
+- `total_query` (String) Query that indicates all events to be considered for your metric.
+
+Optional:
+
+- `alias` (String) Ties the SLO registration to a Prometheus instance listed under Settings → Prometheus. The alias parameter is optional, but if not provided the SLO will use the default configuration under Settings → Prometheus.
+- `name` (String) The SLO's name in Prometheus. The name parameter is optional.
+
+
+<a id="nestedatt--slos--signal_fx"></a>
+### Nested Schema for `slos.signal_fx`
+
+Required:
+
+- `lookback` (String) ISO-8601 duration `(P[n]Y[n]M[n]DT[n]H[n]M[n]S)`.
+- `operation` (String) > / < / = / <=, >=.
+- `query` (String) Elasticsearch query for your metric. Filter by metric with `sf_metric` and add additional dimensions to narrow the search. Queries resulting in multiple datasets will be rolled up according to `rollup`.
+- `rollup` (String) SUM or AVERAGE.
+- `target` (Number) Target number for SLO.
+
 
 
 <a id="nestedatt--snyk"></a>

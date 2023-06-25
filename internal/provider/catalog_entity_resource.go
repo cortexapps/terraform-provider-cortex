@@ -413,8 +413,154 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
-
-			// TODO: slos
+			"slos": schema.SingleNestedAttribute{
+				MarkdownDescription: "Service-level Objectives configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"data_dog": schema.ListNestedAttribute{
+						MarkdownDescription: "DataDog SLO configuration for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									MarkdownDescription: "DataDog SLO ID.",
+									Required:            true,
+								},
+							},
+						},
+					},
+					"dynatrace": schema.ListNestedAttribute{
+						MarkdownDescription: "Dynatrace SLO configuration for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									MarkdownDescription: "Dynatrace SLO ID.",
+									Required:            true,
+								},
+							},
+						},
+					},
+					"lightstep": schema.SingleNestedAttribute{
+						MarkdownDescription: "Lightstep SLO configuration for the entity.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"streams": schema.ListNestedAttribute{
+								MarkdownDescription: "List of Lightstep streams for the entity.",
+								Optional:            true,
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"stream_id": schema.StringAttribute{
+											MarkdownDescription: "Lightstep stream ID.",
+											Required:            true,
+										},
+										"targets": schema.SingleNestedAttribute{
+											MarkdownDescription: "List of target latencies and error rates for the stream.",
+											Optional:            true,
+											Attributes: map[string]schema.Attribute{
+												"latencies": schema.ListNestedAttribute{
+													MarkdownDescription: "List of latency targets for the stream.",
+													Optional:            true,
+													NestedObject: schema.NestedAttributeObject{
+														Attributes: map[string]schema.Attribute{
+															"percentile": schema.Float64Attribute{
+																MarkdownDescription: "Percentile latency for your given streamId, out of 1.",
+																Required:            true,
+															},
+															"target": schema.Int64Attribute{
+																MarkdownDescription: "Target latency, in ms.",
+																Required:            true,
+															},
+															"slo": schema.Float64Attribute{
+																MarkdownDescription: "SLO percentile, out of 1.",
+																Required:            true,
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"prometheus": schema.ListNestedAttribute{
+						MarkdownDescription: "Prometheus SLO configuration for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"error_query": schema.StringAttribute{
+									MarkdownDescription: "Query that indicates error events for your metric.",
+									Required:            true,
+								},
+								"total_query": schema.StringAttribute{
+									MarkdownDescription: "Query that indicates all events to be considered for your metric.",
+									Required:            true,
+								},
+								"slo": schema.Float64Attribute{
+									MarkdownDescription: "Target number for SLO.",
+									Required:            true,
+								},
+								"alias": schema.StringAttribute{
+									MarkdownDescription: "Ties the SLO registration to a Prometheus instance listed under Settings → Prometheus. The alias parameter is optional, but if not provided the SLO will use the default configuration under Settings → Prometheus.",
+									Optional:            true,
+								},
+								"name": schema.StringAttribute{
+									MarkdownDescription: "The SLO's name in Prometheus. The name parameter is optional.",
+									Optional:            true,
+								},
+							},
+						},
+					},
+					"signal_fx": schema.ListNestedAttribute{
+						MarkdownDescription: "SignalFx SLO configuration for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"query": schema.StringAttribute{
+									MarkdownDescription: "Elasticsearch query for your metric. Filter by metric with `sf_metric` and add additional dimensions to narrow the search. Queries resulting in multiple datasets will be rolled up according to `rollup`.",
+									Required:            true,
+								},
+								"rollup": schema.StringAttribute{
+									MarkdownDescription: "SUM or AVERAGE.",
+									Required:            true,
+									Validators: []validator.String{
+										stringvalidator.OneOf("SUM", "AVERAGE"),
+									},
+								},
+								"target": schema.Float64Attribute{
+									MarkdownDescription: "Target number for SLO.",
+									Required:            true,
+								},
+								"lookback": schema.StringAttribute{
+									MarkdownDescription: "ISO-8601 duration `(P[n]Y[n]M[n]DT[n]H[n]M[n]S)`.",
+									Required:            true,
+								},
+								"operation": schema.StringAttribute{
+									MarkdownDescription: "> / < / = / <=, >=.",
+									Required:            true,
+									Validators: []validator.String{
+										stringvalidator.OneOf(">", "<", "=", "<=", ">="),
+									},
+								},
+							},
+						},
+					},
+					"sumo_logic": schema.ListNestedAttribute{
+						MarkdownDescription: "SumoLogic SLO configuration for the entity.",
+						Required:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									MarkdownDescription: "SumoLogic SLO ID.",
+									Required:            true,
+								},
+							},
+						},
+					},
+				},
+			},
 			// TODO: static_analysis
 			// TODO: bugsnag
 			// TODO: checkmarx

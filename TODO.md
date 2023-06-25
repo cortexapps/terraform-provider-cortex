@@ -30,4 +30,5 @@ Connect to Cortex TF account, figure out how to test safely.
 
 ### Other
 
-Add more acceptance tests for various changing of elements. 
+- Add more acceptance tests for various changing of elements. 
+- Ensure generated YAML in Cortex is valid, specifically with regards to empty attributes

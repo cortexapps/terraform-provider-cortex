@@ -26,6 +26,7 @@ type CatalogEntityResourceModel struct {
 	Git          types.Object                           `tfsdk:"git"`
 	Issues       types.Object                           `tfsdk:"issues"`
 	OnCall       types.Object                           `tfsdk:"on_call"`
+	SLOs         types.Object                           `tfsdk:"slos"`
 	Sentry       types.Object                           `tfsdk:"sentry"`
 	Snyk         types.Object                           `tfsdk:"snyk"`
 }
@@ -81,6 +82,11 @@ func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Catal
 	if err != nil {
 		fmt.Println(err)
 	}
+	serviceLevelObjectives := &CatalogEntitySLOsResourceModel{}
+	err = o.SLOs.As(ctx, serviceLevelObjectives, defaultObjOptions)
+	if err != nil {
+		fmt.Println(err)
+	}
 	sentry := &CatalogEntitySentryResourceModel{}
 	err = o.Sentry.As(ctx, sentry, defaultObjOptions)
 	if err != nil {
@@ -106,6 +112,7 @@ func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Catal
 		Git:          git.ToApiModel(),
 		Issues:       issues.ToApiModel(ctx),
 		OnCall:       onCall.ToApiModel(),
+		SLOs:         serviceLevelObjectives.ToApiModel(),
 		Sentry:       sentry.ToApiModel(),
 		Snyk:         snyk.ToApiModel(),
 	}
@@ -504,5 +511,169 @@ func (o CatalogEntityDashboardEmbedResourceModel) ToApiModel() cortex.CatalogEnt
 	return cortex.CatalogEntityDashboardsEmbed{
 		Type: o.Type.ValueString(),
 		URL:  o.URL.ValueString(),
+	}
+}
+
+/***********************************************************************************************************************
+ * SLOs
+ **********************************************************************************************************************/
+
+type CatalogEntitySLOsResourceModel struct {
+	DataDog    []CatalogEntitySLODataDogResourceModel    `tfsdk:"data_dog"`
+	Dynatrace  []CatalogEntitySLODynatraceResourceModel  `tfsdk:"dynatrace"`
+	Lightstep  CatalogEntitySLOLightstepResourceModel    `tfsdk:"lightstep"`
+	Prometheus []CatalogEntitySLOPrometheusResourceModel `tfsdk:"prometheus"`
+	SignalFX   []CatalogEntitySLOSignalFxResourceModel   `tfsdk:"signal_fx"`
+	SumoLogic  []CatalogEntitySLOSumoLogicResourceModel  `tfsdk:"sumo_logic"`
+}
+
+func (o CatalogEntitySLOsResourceModel) ToApiModel() cortex.CatalogEntitySLOs {
+	var dataDog = make([]cortex.CatalogEntitySLODataDog, len(o.DataDog))
+	for i, e := range o.DataDog {
+		dataDog[i] = e.ToApiModel()
+	}
+	var dynatrace = make([]cortex.CatalogEntitySLODynatrace, len(o.Dynatrace))
+	for i, e := range o.Dynatrace {
+		dynatrace[i] = e.ToApiModel()
+	}
+	var prometheusQueries = make([]cortex.CatalogEntitySLOPrometheusQuery, len(o.Prometheus))
+	for i, e := range o.Prometheus {
+		prometheusQueries[i] = e.ToApiModel()
+	}
+	var signalFx = make([]cortex.CatalogEntitySLOSignalFX, len(o.SignalFX))
+	for i, e := range o.SignalFX {
+		signalFx[i] = e.ToApiModel()
+	}
+	var sumoLogic = make([]cortex.CatalogEntitySLOSumoLogic, len(o.SumoLogic))
+	for i, e := range o.SumoLogic {
+		sumoLogic[i] = e.ToApiModel()
+	}
+	return cortex.CatalogEntitySLOs{
+		DataDog:    dataDog,
+		Dynatrace:  dynatrace,
+		Lightstep:  o.Lightstep.ToApiModel(),
+		Prometheus: prometheusQueries,
+		SignalFX:   signalFx,
+		SumoLogic:  sumoLogic,
+	}
+}
+
+type CatalogEntitySLODataDogResourceModel struct {
+	ID types.String `tfsdk:"id"`
+}
+
+func (o CatalogEntitySLODataDogResourceModel) ToApiModel() cortex.CatalogEntitySLODataDog {
+	return cortex.CatalogEntitySLODataDog{
+		ID: o.ID.ValueString(),
+	}
+}
+
+type CatalogEntitySLODynatraceResourceModel struct {
+	ID types.String `tfsdk:"id"`
+}
+
+func (o CatalogEntitySLODynatraceResourceModel) ToApiModel() cortex.CatalogEntitySLODynatrace {
+	return cortex.CatalogEntitySLODynatrace{
+		ID: o.ID.ValueString(),
+	}
+}
+
+type CatalogEntitySLOLightstepResourceModel struct {
+	Streams []CatalogEntitySLOLightstepStreamResourceModel `tfsdk:"streams"`
+}
+
+func (o CatalogEntitySLOLightstepResourceModel) ToApiModel() cortex.CatalogEntitySLOLightstep {
+	var streams = make([]cortex.CatalogEntitySLOLightstepStream, len(o.Streams))
+	for i, e := range o.Streams {
+		streams[i] = e.ToApiModel()
+	}
+	return cortex.CatalogEntitySLOLightstep{
+		Streams: streams,
+	}
+}
+
+type CatalogEntitySLOLightstepStreamResourceModel struct {
+	StreamID types.String                                       `tfsdk:"stream_id"`
+	Targets  CatalogEntitySLOLightstepStreamTargetResourceModel `tfsdk:"targets"`
+}
+
+func (o CatalogEntitySLOLightstepStreamResourceModel) ToApiModel() cortex.CatalogEntitySLOLightstepStream {
+	return cortex.CatalogEntitySLOLightstepStream{
+		StreamID: o.StreamID.ValueString(),
+		Targets:  o.Targets.ToApiModel(),
+	}
+}
+
+type CatalogEntitySLOLightstepStreamTargetResourceModel struct {
+	Latencies []CatalogEntitySLOLightstepStreamTargetLatencyResourceModel `tfsdk:"latencies"`
+}
+
+func (o CatalogEntitySLOLightstepStreamTargetResourceModel) ToApiModel() cortex.CatalogEntitySLOLightstepTarget {
+	var latencies = make([]cortex.CatalogEntitySLOLightstepTargetLatency, len(o.Latencies))
+	for i, e := range o.Latencies {
+		latencies[i] = e.ToApiModel()
+	}
+	return cortex.CatalogEntitySLOLightstepTarget{
+		Latencies: latencies,
+	}
+}
+
+type CatalogEntitySLOLightstepStreamTargetLatencyResourceModel struct {
+	Percentile types.Float64 `tfsdk:"percentile"`
+	Target     types.Int64   `tfsdk:"target"`
+	SLO        types.Float64 `tfsdk:"slo"`
+}
+
+func (o CatalogEntitySLOLightstepStreamTargetLatencyResourceModel) ToApiModel() cortex.CatalogEntitySLOLightstepTargetLatency {
+	return cortex.CatalogEntitySLOLightstepTargetLatency{
+		Percentile: o.Percentile.ValueFloat64(),
+		Target:     o.Target.ValueInt64(),
+		SLO:        o.SLO.ValueFloat64(),
+	}
+}
+
+type CatalogEntitySLOPrometheusResourceModel struct {
+	ErrorQuery types.String  `tfsdk:"error_query"`
+	TotalQuery types.String  `tfsdk:"total_query"`
+	SLO        types.Float64 `tfsdk:"slo"`
+	Name       types.String  `tfsdk:"name"`
+	Alias      types.String  `tfsdk:"alias"`
+}
+
+func (o CatalogEntitySLOPrometheusResourceModel) ToApiModel() cortex.CatalogEntitySLOPrometheusQuery {
+	return cortex.CatalogEntitySLOPrometheusQuery{
+		ErrorQuery: o.ErrorQuery.ValueString(),
+		TotalQuery: o.TotalQuery.ValueString(),
+		SLO:        o.SLO.ValueFloat64(),
+		Name:       o.Name.ValueString(),
+		Alias:      o.Alias.ValueString(),
+	}
+}
+
+type CatalogEntitySLOSignalFxResourceModel struct {
+	Query     types.String `tfsdk:"query"`
+	Rollup    types.String `tfsdk:"rollup"`
+	Target    types.Int64  `tfsdk:"target"`
+	Lookback  types.String `tfsdk:"lookback"`
+	Operation types.String `tfsdk:"operation"`
+}
+
+func (o CatalogEntitySLOSignalFxResourceModel) ToApiModel() cortex.CatalogEntitySLOSignalFX {
+	return cortex.CatalogEntitySLOSignalFX{
+		Query:     o.Query.ValueString(),
+		Rollup:    o.Rollup.ValueString(),
+		Target:    o.Target.ValueInt64(),
+		Lookback:  o.Lookback.ValueString(),
+		Operation: o.Operation.ValueString(),
+	}
+}
+
+type CatalogEntitySLOSumoLogicResourceModel struct {
+	ID types.String `tfsdk:"id"`
+}
+
+func (o CatalogEntitySLOSumoLogicResourceModel) ToApiModel() cortex.CatalogEntitySLOSumoLogic {
+	return cortex.CatalogEntitySLOSumoLogic{
+		ID: o.ID.ValueString(),
 	}
 }

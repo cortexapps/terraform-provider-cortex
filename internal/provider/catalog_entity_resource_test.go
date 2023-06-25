@@ -198,6 +198,63 @@ resource "cortex_catalog_entity" "test" {
     }
   }
 
+  slos = {
+    data_dog = [
+      {
+        id = "123456"
+      }
+    ]
+    dynatrace = [
+      {
+        id = "123456"
+      }
+    ]
+    lightstep = {
+      streams = [
+        {
+          stream_id = "asdf1234567"
+          targets = {
+            latencies = [
+              {
+                percentile = 0.5
+                target     = 2
+                slo        = 0.9995
+              },
+              {
+                percentile = 0.7
+                target     = 1
+                slo        = 0.9998
+              }
+            ]
+          }
+        }
+      ]
+    }
+    prometheus = [
+      {
+        error_query = "sum(rate(http_requests_total{job=\"products-service\", status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"products-service\"}[5m]))"
+        total_query = "sum(rate(http_requests_total{job=\"products-service\"}[5m]))"
+        slo         = 0.999
+        name        = "HTTP 5xx"
+        alias       = "http-5xx"
+      }
+    ]
+    signal_fx = [
+      {
+        query     = "sf_metric:'jvm.memory.max' AND area:'nonheap'"
+        rollup    = "AVERAGE"
+        target    = 512000
+        lookback  = "P1Y"
+        operation = "<="
+      }
+    ]
+    sumo_logic = [
+      {
+        id = "123456"
+      }
+    ]
+  }
+
   sentry = {
     project = "cortexio/products-service"
   }
