@@ -3,10 +3,7 @@ General TODO file of things left to implement.
 
 ### Catalog Entity
 
-Connect client to TF provider. Figure out how to map different GET/CREATE endpoints properly and ensure state.
-
 Entities:
-- x-cortex-dependency
 - x-cortex-infra (AWS, GCP, etc)
 - x-cortex-k8s
 - OpenAPI docs?
@@ -18,11 +15,19 @@ Connect client to TF provider. Undo YAML approach (work with Cortex to figure ou
 
 ### Teams
 
-Connect client to TF provider.
+Fix the UPDATE issue (this may be a bug with Cortex API).
 
 Also:
-- Team Hierarchies
+- Team Hierarchies? Department mappings to teams?
+
+### Resource Definitions
+
+Get provider working, figure out acceptance tests.
+
+### All Data Sources
+
+Connect to Cortex TF account, figure out how to test safely.
 
 ### Other
 
-Plus tests for everything.
+Add more acceptance tests for various changing of elements. 
