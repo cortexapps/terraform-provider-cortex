@@ -155,6 +155,23 @@ resource "cortex_catalog_entity" "test" {
     }
   }
 
+  dashboards = {
+    embeds = [
+      {
+        type = "grafana"
+        url  = "https://grafana.cortex.io/d/123456"
+      },
+      {
+        type = "newrelic"
+        url  = "https://newrelic.cortex.io/123456"
+      },
+      {
+        type = "datadog"
+        url  = "https://datadog.cortex.io/123456"
+      }
+    ]
+  }
+
   git = {
     github = {
       repository = "cortexio/products-service"

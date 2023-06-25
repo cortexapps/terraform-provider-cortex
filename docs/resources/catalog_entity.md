@@ -23,6 +23,7 @@ Catalog Entity
 
 - `alerts` (Attributes List) List of alerts for the entity. (see [below for nested schema](#nestedatt--alerts))
 - `apm` (Attributes) APM configuration for the entity. (see [below for nested schema](#nestedatt--apm))
+- `dashboards` (Attributes) Dashboards configuration for the entity. (see [below for nested schema](#nestedatt--dashboards))
 - `dependencies` (Attributes List) List of dependencies for the entity. (see [below for nested schema](#nestedatt--dependencies))
 - `description` (String) Description of the entity visible in the Service or Resource Catalog. Markdown is supported.
 - `git` (Attributes) Git configuration for the entity. (see [below for nested schema](#nestedatt--git))
@@ -86,6 +87,23 @@ Optional:
 
 - `alias` (String) Alias for the service. Only used if opted into multi-account support in New Relic.
 - `application_id` (Number) NewRelic application ID for the entity.
+
+
+
+<a id="nestedatt--dashboards"></a>
+### Nested Schema for `dashboards`
+
+Optional:
+
+- `embeds` (Attributes List) List of dashboard embeds for the entity. (see [below for nested schema](#nestedatt--dashboards--embeds))
+
+<a id="nestedatt--dashboards--embeds"></a>
+### Nested Schema for `dashboards.embeds`
+
+Required:
+
+- `type` (String) Type of embed. Valid values are `grafana`, `datadog` or `newrelic`.
+- `url` (String) URL of the embed.
 
 
 

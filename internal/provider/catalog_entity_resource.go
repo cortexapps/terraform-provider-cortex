@@ -388,14 +388,38 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
+			"dashboards": schema.SingleNestedAttribute{
+				MarkdownDescription: "Dashboards configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"embeds": schema.ListNestedAttribute{
+						MarkdownDescription: "List of dashboard embeds for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"type": schema.StringAttribute{
+									MarkdownDescription: "Type of embed. Valid values are `grafana`, `datadog` or `newrelic`.",
+									Required:            true,
+									Validators: []validator.String{
+										stringvalidator.OneOf("grafana", "datadog", "newrelic"),
+									},
+								},
+								"url": schema.StringAttribute{
+									MarkdownDescription: "URL of the embed.",
+									Required:            true,
+								},
+							},
+						},
+					},
+				},
+			},
 
-			// TODO: apm
-			// TODO: dashboards
 			// TODO: slos
 			// TODO: static_analysis
 			// TODO: bugsnag
 			// TODO: checkmarx
 			// TODO: rollbar
+
 			"sentry": schema.SingleNestedAttribute{
 				MarkdownDescription: "Sentry configuration for the entity.",
 				Optional:            true,

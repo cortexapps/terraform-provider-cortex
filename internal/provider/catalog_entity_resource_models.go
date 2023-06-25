@@ -21,10 +21,11 @@ type CatalogEntityResourceModel struct {
 	Metadata     types.String                           `tfsdk:"metadata"`
 	Dependencies []CatalogEntityDependencyResourceModel `tfsdk:"dependencies"`
 	Alerts       []CatalogEntityAlertResourceModel      `tfsdk:"alerts"`
+	Apm          types.Object                           `tfsdk:"apm"`
+	Dashboards   types.Object                           `tfsdk:"dashboards"`
 	Git          types.Object                           `tfsdk:"git"`
 	Issues       types.Object                           `tfsdk:"issues"`
 	OnCall       types.Object                           `tfsdk:"on_call"`
-	Apm          types.Object                           `tfsdk:"apm"`
 	Sentry       types.Object                           `tfsdk:"sentry"`
 	Snyk         types.Object                           `tfsdk:"snyk"`
 }
@@ -473,5 +474,35 @@ func (o CatalogEntityApmNewRelicResourceModel) ToApiModel() cortex.CatalogEntity
 	return cortex.CatalogEntityApmNewRelic{
 		ApplicationID: o.ApplicationID.ValueInt64(),
 		Alias:         o.Alias.ValueString(),
+	}
+}
+
+/***********************************************************************************************************************
+ * Dashboards
+ **********************************************************************************************************************/
+
+type CatalogEntityDashboardResourceModel struct {
+	Embeds []CatalogEntityDashboardEmbedResourceModel `tfsdk:"embeds"`
+}
+
+func (o CatalogEntityDashboardResourceModel) ToApiModel() cortex.CatalogEntityDashboards {
+	var embeds = make([]cortex.CatalogEntityDashboardsEmbed, len(o.Embeds))
+	for i, e := range o.Embeds {
+		embeds[i] = e.ToApiModel()
+	}
+	return cortex.CatalogEntityDashboards{
+		Embeds: embeds,
+	}
+}
+
+type CatalogEntityDashboardEmbedResourceModel struct {
+	Type types.String `tfsdk:"type"`
+	URL  types.String `tfsdk:"url"`
+}
+
+func (o CatalogEntityDashboardEmbedResourceModel) ToApiModel() cortex.CatalogEntityDashboardsEmbed {
+	return cortex.CatalogEntityDashboardsEmbed{
+		Type: o.Type.ValueString(),
+		URL:  o.URL.ValueString(),
 	}
 }
