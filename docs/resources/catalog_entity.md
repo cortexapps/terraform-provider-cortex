@@ -22,6 +22,7 @@ Catalog Entity
 ### Optional
 
 - `alerts` (Attributes List) List of alerts for the entity. (see [below for nested schema](#nestedatt--alerts))
+- `apm` (Attributes) APM configuration for the entity. (see [below for nested schema](#nestedatt--apm))
 - `dependencies` (Attributes List) List of dependencies for the entity. (see [below for nested schema](#nestedatt--dependencies))
 - `description` (String) Description of the entity visible in the Service or Resource Catalog. Markdown is supported.
 - `git` (Attributes) Git configuration for the entity. (see [below for nested schema](#nestedatt--git))
@@ -50,6 +51,42 @@ Required:
 Optional:
 
 - `value` (String) Value of the alert.
+
+
+<a id="nestedatt--apm"></a>
+### Nested Schema for `apm`
+
+Optional:
+
+- `data_dog` (Attributes) DataDog configuration for the entity. (see [below for nested schema](#nestedatt--apm--data_dog))
+- `dynatrace` (Attributes) Dynatrace configuration for the entity. (see [below for nested schema](#nestedatt--apm--dynatrace))
+- `new_relic` (Attributes) NewRelic configuration for the entity. (see [below for nested schema](#nestedatt--apm--new_relic))
+
+<a id="nestedatt--apm--data_dog"></a>
+### Nested Schema for `apm.data_dog`
+
+Optional:
+
+- `monitors` (Set of Number) List of DataDog monitors for the entity.
+
+
+<a id="nestedatt--apm--dynatrace"></a>
+### Nested Schema for `apm.dynatrace`
+
+Optional:
+
+- `entity_ids` (Set of String) List of Dynatrace entity IDs for the entity.
+- `entity_name_matchers` (Set of String) List of Dynatrace entity name matchers for the entity.
+
+
+<a id="nestedatt--apm--new_relic"></a>
+### Nested Schema for `apm.new_relic`
+
+Optional:
+
+- `alias` (String) Alias for the service. Only used if opted into multi-account support in New Relic.
+- `application_id` (Number) NewRelic application ID for the entity.
+
 
 
 <a id="nestedatt--dependencies"></a>

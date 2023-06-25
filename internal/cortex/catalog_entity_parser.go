@@ -246,7 +246,7 @@ func (c *CatalogEntityParser) interpolateLightstep(entity *CatalogEntityData, li
 						latencyMap := latency.(map[string]interface{})
 						streamSLO.Targets.Latencies = append(streamSLO.Targets.Latencies, CatalogEntitySLOLightstepTargetLatency{
 							Percentile: MapFetch(latencyMap, "percentile", 0.0).(float64),
-							Target:     MapFetch(latencyMap, "target", 0).(int),
+							Target:     MapFetch(latencyMap, "target", 0).(int64),
 							SLO:        MapFetch(latencyMap, "slo", 0.0).(float64),
 						})
 					}

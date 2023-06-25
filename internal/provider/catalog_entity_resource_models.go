@@ -24,6 +24,7 @@ type CatalogEntityResourceModel struct {
 	Git          types.Object                           `tfsdk:"git"`
 	Issues       types.Object                           `tfsdk:"issues"`
 	OnCall       types.Object                           `tfsdk:"on_call"`
+	Apm          types.Object                           `tfsdk:"apm"`
 	Sentry       types.Object                           `tfsdk:"sentry"`
 	Snyk         types.Object                           `tfsdk:"snyk"`
 }
@@ -55,14 +56,17 @@ func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Catal
 	for i, dependency := range o.Dependencies {
 		dependencies[i] = dependency.ToApiModel()
 	}
-
 	alerts := make([]cortex.CatalogEntityAlert, len(o.Alerts))
 	for i, alert := range o.Alerts {
 		alerts[i] = alert.ToApiModel()
 	}
-
+	apm := &CatalogEntityApmResourceModel{}
+	err := o.Apm.As(ctx, apm, defaultObjOptions)
+	if err != nil {
+		fmt.Println(err)
+	}
 	git := &CatalogEntityGitResourceModel{}
-	err := o.Git.As(ctx, git, defaultObjOptions)
+	err = o.Git.As(ctx, git, defaultObjOptions)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -76,7 +80,6 @@ func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Catal
 	if err != nil {
 		fmt.Println(err)
 	}
-
 	sentry := &CatalogEntitySentryResourceModel{}
 	err = o.Sentry.As(ctx, sentry, defaultObjOptions)
 	if err != nil {
@@ -98,6 +101,7 @@ func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Catal
 		Metadata:     metadata,
 		Dependencies: dependencies,
 		Alerts:       alerts,
+		Apm:          apm.ToApiModel(ctx),
 		Git:          git.ToApiModel(),
 		Issues:       issues.ToApiModel(ctx),
 		OnCall:       onCall.ToApiModel(),
@@ -402,5 +406,72 @@ func (o CatalogEntitySnykProjectResourceModel) ToApiModel() cortex.CatalogEntity
 		Organization: o.Organization.ValueString(),
 		ProjectID:    o.ProjectID.ValueString(),
 		Source:       o.Source.ValueString(),
+	}
+}
+
+/***********************************************************************************************************************
+ * APM Configuration
+ **********************************************************************************************************************/
+
+type CatalogEntityApmResourceModel struct {
+	DataDog   CatalogEntityApmDataDogResourceModel   `tfsdk:"data_dog"`
+	Dynatrace CatalogEntityApmDynatraceResourceModel `tfsdk:"dynatrace"`
+	NewRelic  CatalogEntityApmNewRelicResourceModel  `tfsdk:"new_relic"`
+}
+
+func (o CatalogEntityApmResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityApm {
+	return cortex.CatalogEntityApm{
+		DataDog:   o.DataDog.ToApiModel(ctx),
+		Dynatrace: o.Dynatrace.ToApiModel(ctx),
+		NewRelic:  o.NewRelic.ToApiModel(),
+	}
+}
+
+type CatalogEntityApmDataDogResourceModel struct {
+	Monitors types.Set `tfsdk:"monitors"`
+}
+
+func (o CatalogEntityApmDataDogResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityApmDataDog {
+	var monitors = make([]int64, len(o.Monitors.Elements()))
+	err := o.Monitors.ElementsAs(ctx, monitors, true)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return cortex.CatalogEntityApmDataDog{
+		Monitors: monitors,
+	}
+}
+
+type CatalogEntityApmDynatraceResourceModel struct {
+	EntityIDs          types.Set `tfsdk:"entity_ids"`
+	EntityNameMatchers types.Set `tfsdk:"entity_name_matchers"`
+}
+
+func (o CatalogEntityApmDynatraceResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityApmDynatrace {
+	var entityIds = make([]string, len(o.EntityIDs.Elements()))
+	err := o.EntityIDs.ElementsAs(ctx, entityIds, true)
+	if err != nil {
+		fmt.Println(err)
+	}
+	var entityNameMatchers = make([]string, len(o.EntityNameMatchers.Elements()))
+	err = o.EntityNameMatchers.ElementsAs(ctx, entityNameMatchers, true)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return cortex.CatalogEntityApmDynatrace{
+		EntityIDs:          entityIds,
+		EntityNameMatchers: entityNameMatchers,
+	}
+}
+
+type CatalogEntityApmNewRelicResourceModel struct {
+	ApplicationID types.Int64  `tfsdk:"application_id"`
+	Alias         types.String `tfsdk:"alias"`
+}
+
+func (o CatalogEntityApmNewRelicResourceModel) ToApiModel() cortex.CatalogEntityApmNewRelic {
+	return cortex.CatalogEntityApmNewRelic{
+		ApplicationID: o.ApplicationID.ValueInt64(),
+		Alias:         o.Alias.ValueString(),
 	}
 }

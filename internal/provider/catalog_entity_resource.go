@@ -341,6 +341,53 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
+			"apm": schema.SingleNestedAttribute{
+				MarkdownDescription: "APM configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"data_dog": schema.SingleNestedAttribute{
+						MarkdownDescription: "DataDog configuration for the entity.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"monitors": schema.SetAttribute{
+								MarkdownDescription: "List of DataDog monitors for the entity.",
+								Optional:            true,
+								ElementType:         types.Int64Type,
+							},
+						},
+					},
+					"dynatrace": schema.SingleNestedAttribute{
+						MarkdownDescription: "Dynatrace configuration for the entity.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"entity_ids": schema.SetAttribute{
+								MarkdownDescription: "List of Dynatrace entity IDs for the entity.",
+								Optional:            true,
+								ElementType:         types.StringType,
+							},
+							"entity_name_matchers": schema.SetAttribute{
+								MarkdownDescription: "List of Dynatrace entity name matchers for the entity.",
+								Optional:            true,
+								ElementType:         types.StringType,
+							},
+						},
+					},
+					"new_relic": schema.SingleNestedAttribute{
+						MarkdownDescription: "NewRelic configuration for the entity.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"application_id": schema.Int64Attribute{
+								MarkdownDescription: "NewRelic application ID for the entity.",
+								Optional:            true,
+							},
+							"alias": schema.StringAttribute{
+								MarkdownDescription: "Alias for the service. Only used if opted into multi-account support in New Relic.",
+								Optional:            true,
+							},
+						},
+					},
+				},
+			},
 
 			// TODO: apm
 			// TODO: dashboards

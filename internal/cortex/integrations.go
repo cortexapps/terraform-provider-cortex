@@ -174,7 +174,7 @@ type CatalogEntityStaticAnalysisCodeCov struct {
  **********************************************************************************************************************/
 
 type CatalogEntityApmDataDog struct {
-	Monitors []int `json:"monitors" yaml:"monitors"`
+	Monitors []int64 `json:"monitors" yaml:"monitors"`
 }
 
 type CatalogEntitySLODataDog struct {
@@ -256,7 +256,7 @@ type CatalogEntitySLOLightstepTarget struct {
 
 type CatalogEntitySLOLightstepTargetLatency struct {
 	Percentile float64 `json:"percentile" yaml:"percentile"`
-	Target     int     `json:"target" yaml:"target"`
+	Target     int64   `json:"target" yaml:"target"`
 	SLO        float64 `json:"slo" yaml:"slo"`
 }
 
@@ -274,7 +274,7 @@ type CatalogEntityStaticAnalysisMend struct {
  **********************************************************************************************************************/
 
 type CatalogEntityApmNewRelic struct {
-	ApplicationID int    `json:"applicationId" yaml:"applicationId"`
+	ApplicationID int64  `json:"applicationId" yaml:"applicationId"`
 	Alias         string `json:"alias,omitempty" yaml:"alias,omitempty"`
 }
 
@@ -314,7 +314,7 @@ type CatalogEntityRollbar struct {
 type CatalogEntitySLOSignalFX struct {
 	Query     string `json:"query" yaml:"query"`
 	Rollup    string `json:"rollup" yaml:"rollup"`
-	Target    int    `json:"target" yaml:"target"`
+	Target    int64  `json:"target" yaml:"target"`
 	Lookback  string `json:"lookback" yaml:"lookback"`
 	Operation string `json:"operation" yaml:"operation"`
 }

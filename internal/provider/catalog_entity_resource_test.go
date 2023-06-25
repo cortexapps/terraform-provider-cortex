@@ -141,6 +141,20 @@ resource "cortex_catalog_entity" "test" {
     }
   ]
 
+  apm = {
+    data_dog = {
+      monitors = [123456, 123457]
+    }
+    dynatrace = {
+      entity_ids           = ["123456", "123457"]
+      entity_name_matchers = ["products-service", "products-service-2"]
+    }
+    newrelic = {
+      application_id = 123456
+      alias          = "products-service"
+    }
+  }
+
   git = {
     github = {
       repository = "cortexio/products-service"
