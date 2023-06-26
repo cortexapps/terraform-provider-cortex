@@ -20,15 +20,9 @@ var testDepartmentResponse = &cortex.Department{
 	},
 }
 
-var testGetDepartmentResponse = &cortex.DepartmentsResponse{
-	Departments: []cortex.Department{
-		*testDepartmentResponse,
-	},
-}
-
 func TestGetDepartment(t *testing.T) {
 	testDepartmentTag := "test-department"
-	c, teardown, err := setupClient(cortex.Route("departments", ""), testGetDepartmentResponse, AssertRequestMethod(t, "GET"))
+	c, teardown, err := setupClient(cortex.Route("departments", ""), testDepartmentResponse, AssertRequestMethod(t, "GET"))
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 

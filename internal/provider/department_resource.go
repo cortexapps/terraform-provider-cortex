@@ -21,30 +21,6 @@ func NewDepartmentResource() resource.Resource {
 }
 
 /***********************************************************************************************************************
- * Types
- **********************************************************************************************************************/
-
-// DepartmentResource defines the resource implementation.
-type DepartmentResource struct {
-	client *cortex.HttpClient
-}
-
-// DepartmentResourceModel describes the department data model within Terraform.
-type DepartmentResourceModel struct {
-	Id          types.String                    `tfsdk:"id"`
-	Tag         types.String                    `tfsdk:"tag"`
-	Name        types.String                    `tfsdk:"name"`
-	Description types.String                    `tfsdk:"description"`
-	Members     []DepartmentMemberResourceModel `tfsdk:"members"`
-}
-
-type DepartmentMemberResourceModel struct {
-	Name        types.String `tfsdk:"name"`
-	Email       types.String `tfsdk:"email"`
-	Description types.String `tfsdk:"description,omitempty"`
-}
-
-/***********************************************************************************************************************
  * Schema
  **********************************************************************************************************************/
 
@@ -72,19 +48,10 @@ func (r *DepartmentResource) Schema(ctx context.Context, req resource.SchemaRequ
 				MarkdownDescription: "Description of the team.",
 				Optional:            true,
 			},
-
-			// Computed attributes
-			"id": schema.StringAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-		},
-		Blocks: map[string]schema.Block{
-			"member": schema.ListNestedBlock{
+			"members": schema.ListNestedAttribute{
 				MarkdownDescription: "A list of additional members.",
-				NestedObject: schema.NestedBlockObject{
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
 							MarkdownDescription: "Name of the member.",
@@ -99,6 +66,14 @@ func (r *DepartmentResource) Schema(ctx context.Context, req resource.SchemaRequ
 							Required:            true,
 						},
 					},
+				},
+			},
+
+			// Computed attributes
+			"id": schema.StringAttribute{
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 		},
@@ -144,7 +119,7 @@ func (r *DepartmentResource) Read(ctx context.Context, req resource.ReadRequest,
 	}
 
 	// Issue API request
-	departmentResponse, err := r.client.Departments().Get(ctx, data.Tag.String())
+	departmentResponse, err := r.client.Departments().Get(ctx, data.Tag.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read department, got error: %s", err))
 		return
@@ -152,19 +127,7 @@ func (r *DepartmentResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	// Map data from the API response to the model
 	data.Id = types.StringValue(departmentResponse.Tag)
-	data.Tag = types.StringValue(departmentResponse.Tag)
-	data.Name = types.StringValue(departmentResponse.Name)
-	data.Description = types.StringValue(departmentResponse.Description)
-
-	var members []DepartmentMemberResourceModel
-	for _, member := range departmentResponse.Members {
-		members = append(members, DepartmentMemberResourceModel{
-			Name:        types.StringValue(member.Name),
-			Email:       types.StringValue(member.Email),
-			Description: types.StringValue(member.Description),
-		})
-	}
-	data.Members = members
+	data.Tag = data.Id
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -181,21 +144,7 @@ func (r *DepartmentResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	var members []cortex.DepartmentMember
-	for _, member := range data.Members {
-		members = append(members, cortex.DepartmentMember{
-			Name:        member.Name.String(),
-			Email:       member.Email.String(),
-			Description: member.Description.String(),
-		})
-	}
-
-	clientRequest := cortex.CreateDepartmentRequest{
-		Tag:         data.Tag.String(),
-		Name:        data.Name.String(),
-		Description: data.Description.String(),
-		Members:     members,
-	}
+	clientRequest := data.ToCreateRequest()
 	department, err := r.client.Departments().Create(ctx, clientRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create department, got error: %s", err))
@@ -203,14 +152,11 @@ func (r *DepartmentResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	// Set the ID in state based on the tag
-	data.Id = data.Tag
-	data.Tag = types.StringValue(department.Tag)
+	data.Id = types.StringValue(department.Tag)
+	data.Tag = data.Id
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-
-	//resp.State.SetAttribute(ctx, path.Root("id"), data.TeamTag)
-	//resp.State.SetAttribute(ctx, path.Root("team_tag"), data.TeamTag)
 }
 
 func (r *DepartmentResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -223,29 +169,16 @@ func (r *DepartmentResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	var members []cortex.DepartmentMember
-	for _, member := range data.Members {
-		members = append(members, cortex.DepartmentMember{
-			Name:        member.Name.String(),
-			Email:       member.Email.String(),
-			Description: member.Description.String(),
-		})
-	}
-
-	clientRequest := cortex.UpdateDepartmentRequest{
-		Name:        data.Name.String(),
-		Description: data.Description.String(),
-		Members:     members,
-	}
-	department, err := r.client.Departments().Update(ctx, data.Tag.String(), clientRequest)
+	clientRequest := data.ToUpdateRequest()
+	department, err := r.client.Departments().Update(ctx, data.Tag.ValueString(), clientRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update department, got error: %s", err))
 		return
 	}
 
 	// Set the ID in state based on the tag
-	data.Id = data.Tag
-	data.Tag = types.StringValue(department.Tag)
+	data.Id = types.StringValue(department.Tag)
+	data.Tag = data.Id
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -261,7 +194,7 @@ func (r *DepartmentResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	err := r.client.Departments().Delete(ctx, data.Tag.String())
+	err := r.client.Departments().Delete(ctx, data.Tag.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete department, got error: %s", err))
 		return

@@ -3,6 +3,7 @@ package cortex
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/dghubble/sling"
 )
 
@@ -29,9 +30,9 @@ func (c *DepartmentsClient) Client() *sling.Sling {
 
 // Department is the response from the GET /v1/teams/departments/ endpoint.
 type Department struct {
-	Tag         string             `json:"tag"`
+	Tag         string             `json:"departmentTag" url:"departmentTag"`
 	Name        string             `json:"name"`
-	Description string             `json:"description"`
+	Description string             `json:"description,omitempty"`
 	Members     []DepartmentMember `json:"members"`
 }
 
@@ -46,7 +47,7 @@ type DepartmentMember struct {
  **********************************************************************************************************************/
 
 type DepartmentGetParams struct {
-	DepartmentTag string `url:"departmentTag"`
+	DepartmentTag string `json:"departmentTag" url:"departmentTag"`
 }
 
 type DepartmentsResponse struct {
@@ -54,24 +55,22 @@ type DepartmentsResponse struct {
 }
 
 func (c *DepartmentsClient) Get(ctx context.Context, tag string) (*Department, error) {
-	response := &DepartmentsResponse{
-		Departments: []Department{},
-	}
-	apiError := &ApiError{}
 	department := &Department{}
+	apiError := &ApiError{}
+
 	params := &DepartmentGetParams{
 		DepartmentTag: tag,
 	}
-	body, err := c.Client().Get(Route("departments", "")).QueryStruct(params).Receive(response, apiError)
+	body, err := c.Client().Get(Route("departments", "")).QueryStruct(params).Receive(department, apiError)
 	if err != nil {
-		return department, errors.New("could not get department: " + err.Error())
+		return department, fmt.Errorf("failed getting department: %+v", err)
 	}
 
 	err = c.client.handleResponseStatus(body, apiError)
 	if err != nil {
-		return department, errors.Join(errors.New("Failed getting department: "), err)
+		return department, fmt.Errorf("failed getting department: %+v", err)
 	}
-	return &response.Departments[0], nil
+	return department, nil
 }
 
 /***********************************************************************************************************************
@@ -79,7 +78,7 @@ func (c *DepartmentsClient) Get(ctx context.Context, tag string) (*Department, e
  **********************************************************************************************************************/
 
 type CreateDepartmentRequest struct {
-	Tag         string             `json:"departmentTag"`
+	Tag         string             `json:"departmentTag" url:"departmentTag"`
 	Name        string             `json:"name"`
 	Description string             `json:"description,omitempty"`
 	Members     []DepartmentMember `json:"members"`
@@ -91,7 +90,7 @@ func (c *DepartmentsClient) Create(ctx context.Context, req CreateDepartmentRequ
 
 	body, err := c.Client().Post(Route("departments", "")).BodyJSON(&req).Receive(department, apiError)
 	if err != nil {
-		return department, errors.New("could not create department: " + err.Error())
+		return department, fmt.Errorf("failed creating department: %+v", err)
 	}
 
 	err = c.client.handleResponseStatus(body, apiError)
@@ -134,7 +133,7 @@ func (c *DepartmentsClient) Update(ctx context.Context, tag string, req UpdateDe
  **********************************************************************************************************************/
 
 type DeleteDepartmentRequest struct {
-	Tag string `json:"departmentTag"`
+	DepartmentTag string `json:"departmentTag" url:"departmentTag"`
 }
 type DeleteDepartmentResponse struct{}
 
@@ -142,7 +141,7 @@ func (c *DepartmentsClient) Delete(ctx context.Context, tag string) error {
 	response := &DeleteDepartmentResponse{}
 	apiError := &ApiError{}
 	params := &DeleteDepartmentRequest{
-		Tag: tag,
+		DepartmentTag: tag,
 	}
 
 	body, err := c.Client().Delete(Route("departments", "")).QueryStruct(params).Receive(response, apiError)
