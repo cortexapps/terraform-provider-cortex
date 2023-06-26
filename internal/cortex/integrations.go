@@ -347,6 +347,7 @@ type CatalogEntitySnykProject struct {
 
 type CatalogEntityStaticAnalysisSonarQube struct {
 	Project string `json:"project" yaml:"project"`
+	Alias   string `json:"alias,omitempty" yaml:"alias,omitempty"`
 }
 
 /***********************************************************************************************************************

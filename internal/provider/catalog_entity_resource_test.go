@@ -52,6 +52,17 @@ func TestAccCatalogEntityResource(t *testing.T) {
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "snyk.projects.0.organization", "cortexio"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "snyk.projects.0.project_id", "cortexio/products-service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "snyk.projects.0.source", "CODE"),
+
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.code_cov.repository", "cortexio/products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.code_cov.provider", "GITHUB"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.mend.application_ids.0", "123456"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.mend.application_ids.1", "123457"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.mend.project_ids.0", "123456"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.mend.project_ids.1", "123457"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.sonar_qube.project", "cortexio/products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.veracode.application_names.0", "products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.veracode.sandboxes.0.application_name", "products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.veracode.sandboxes.0.sandbox_name", "staging"),
 				),
 			},
 			// ImportState testing
@@ -146,7 +157,7 @@ resource "cortex_catalog_entity" "test" {
       monitors = [123456, 123457]
     }
     dynatrace = {
-      entity_ids           = ["123456", "123457"]
+      entity_ids           = ["mock-slo-id-1", "mock-slo-id-2"]
       entity_name_matchers = ["products-service", "products-service-2"]
     }
     newrelic = {
@@ -236,7 +247,6 @@ resource "cortex_catalog_entity" "test" {
         total_query = "sum(rate(http_requests_total{job=\"products-service\"}[5m]))"
         slo         = 0.999
         name        = "HTTP 5xx"
-        alias       = "http-5xx"
       }
     ]
     signal_fx = [
@@ -253,6 +263,29 @@ resource "cortex_catalog_entity" "test" {
         id = "123456"
       }
     ]
+  }
+
+  static_analysis = {
+    code_cov = {
+      repository = "cortexio/products-service"
+      provider   = "GITHUB"
+    }
+    mend = {
+      application_ids = ["123456", "123457"]
+      project_ids     = ["123456", "123457"]
+    }
+    sonar_qube = {
+      project = "cortexio/products-service"
+    }
+    veracode = {
+      application_names = ["products-service"]
+      sandboxes = [
+        {
+          application_name = "products-service"
+          sandbox_name     = "staging"
+        }
+      ]
+    }
   }
 
   sentry = {

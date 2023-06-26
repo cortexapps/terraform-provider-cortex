@@ -529,7 +529,7 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 										stringvalidator.OneOf("SUM", "AVERAGE"),
 									},
 								},
-								"target": schema.Float64Attribute{
+								"target": schema.Int64Attribute{
 									MarkdownDescription: "Target number for SLO.",
 									Required:            true,
 								},
@@ -561,7 +561,87 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
-			// TODO: static_analysis
+			"static_analysis": schema.SingleNestedAttribute{
+				MarkdownDescription: "Static analysis configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"code_cov": schema.SingleNestedAttribute{
+						MarkdownDescription: "Code coverage configuration.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"repository": schema.StringAttribute{
+								MarkdownDescription: "Git repository, in `organization/repository` format.",
+								Required:            true,
+							},
+							"provider": schema.StringAttribute{
+								MarkdownDescription: "Git provider. One of: `GITHUB`, `GITLAB`, or `BITBUCKET`.",
+								Required:            true,
+								Validators: []validator.String{
+									stringvalidator.OneOf("GITHUB", "GITLAB", "BITBUCKET"),
+								},
+							},
+						},
+					},
+					"mend": schema.SingleNestedAttribute{
+						MarkdownDescription: "Mend static analysis configuration.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"application_ids": schema.ListAttribute{
+								MarkdownDescription: "Mend application IDs, found in the Mend SAST web interface.",
+								Required:            true,
+								ElementType:         types.StringType,
+							},
+							"project_ids": schema.ListAttribute{
+								MarkdownDescription: "Mend project IDs, found in the Mend SCA web interface.",
+								Required:            true,
+								ElementType:         types.StringType,
+							},
+						},
+					},
+					"sonar_qube": schema.SingleNestedAttribute{
+						MarkdownDescription: "SonarQube static analysis configuration.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"project": schema.StringAttribute{
+								MarkdownDescription: "SonarQube project key.",
+								Required:            true,
+							},
+							"alias": schema.StringAttribute{
+								MarkdownDescription: "Ties the SonarQube registration to a SonarQube instance listed under Settings → SonarQube. The alias parameter is optional, but if not provided the SonarQube registration will use the default configuration under Settings → SonarQube.",
+								Optional:            true,
+							},
+						},
+					},
+					"veracode": schema.SingleNestedAttribute{
+						MarkdownDescription: "Veracode static analysis configuration.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"application_names": schema.ListAttribute{
+								MarkdownDescription: "Veracode application names.",
+								Required:            true,
+								ElementType:         types.StringType,
+							},
+							"sandboxes": schema.ListNestedAttribute{
+								MarkdownDescription: "Veracode sandboxes.",
+								Optional:            true,
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"application_name": schema.StringAttribute{
+											MarkdownDescription: "Veracode application name.",
+											Required:            true,
+										},
+										"sandbox_name": schema.StringAttribute{
+											MarkdownDescription: "Veracode sandbox name.",
+											Required:            true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+
 			// TODO: bugsnag
 			// TODO: checkmarx
 			// TODO: rollbar

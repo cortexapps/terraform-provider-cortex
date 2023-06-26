@@ -60,6 +60,10 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 		c.interpolateSLOs(entity, slosMap)
 	}
 
+	if info["x-cortex-static-analysis"] != nil {
+		c.interpolateStaticAnalysis(entity, info["x-cortex-static-analysis"].(map[string]interface{}))
+	}
+
 	if info["x-cortex-oncall"] != nil {
 		onCallMap := info["x-cortex-oncall"].(map[string]interface{})
 		c.interpolateOnCall(entity, onCallMap)
@@ -264,7 +268,7 @@ func (c *CatalogEntityParser) interpolatePrometheus(entity *CatalogEntityData, p
 		entity.SLOs.Prometheus = append(entity.SLOs.Prometheus, CatalogEntitySLOPrometheusQuery{
 			ErrorQuery: MapFetchToString(queryMap, "errorQuery"),
 			TotalQuery: MapFetchToString(queryMap, "totalQuery"),
-			SLO:        MapFetch(queryMap, "slo", 0.0).(float64),
+			SLO:        MapFetch(queryMap, "slo", "0.0").(float64),
 		})
 	}
 }
@@ -294,5 +298,67 @@ func (c *CatalogEntityParser) interpolateAlerts(entity *CatalogEntityData, alert
 			Tag:   MapFetchToString(alertMap, "tag"),
 			Value: MapFetchToString(alertMap, "value"),
 		})
+	}
+}
+
+func (c *CatalogEntityParser) interpolateStaticAnalysis(entity *CatalogEntityData, saMap map[string]interface{}) {
+	if saMap["code_cov"] != nil {
+		c.interpolateStaticAnalysisCodeCov(entity, saMap["code_cov"].(map[string]interface{}))
+	}
+	if saMap["mend"] != nil {
+		c.interpolateStaticAnalysisMend(entity, saMap["mend"].(map[string]interface{}))
+	}
+	if saMap["sonarqube"] != nil {
+		c.interpolateStaticAnalysisSonarQube(entity, saMap["sonarqube"].(map[string]interface{}))
+	}
+	if saMap["veracode"] != nil {
+		c.interpolateStaticAnalysisVeracode(entity, saMap["veracode"].(map[string]interface{}))
+	}
+}
+
+func (c *CatalogEntityParser) interpolateStaticAnalysisCodeCov(entity *CatalogEntityData, ccMap map[string]interface{}) {
+	entity.StaticAnalysis.CodeCov = CatalogEntityStaticAnalysisCodeCov{
+		Repository: ccMap["repository"].(string),
+		Provider:   ccMap["provider"].(string),
+	}
+}
+
+func (c *CatalogEntityParser) interpolateStaticAnalysisMend(entity *CatalogEntityData, mendMap map[string]interface{}) {
+	entity.StaticAnalysis.Mend = CatalogEntityStaticAnalysisMend{}
+	applicationIds := mendMap["applicationIds"].([]interface{})
+	for _, applicationId := range applicationIds {
+		entity.StaticAnalysis.Mend.ApplicationIDs = append(entity.StaticAnalysis.Mend.ApplicationIDs, applicationId.(string))
+	}
+	projectIds := mendMap["projectIds"].([]interface{})
+	for _, projectId := range projectIds {
+		entity.StaticAnalysis.Mend.ProjectIDs = append(entity.StaticAnalysis.Mend.ProjectIDs, projectId.(string))
+	}
+}
+
+func (c *CatalogEntityParser) interpolateStaticAnalysisSonarQube(entity *CatalogEntityData, mendMap map[string]interface{}) {
+	entity.StaticAnalysis.SonarQube = CatalogEntityStaticAnalysisSonarQube{
+		Project: mendMap["project"].(string),
+	}
+}
+
+func (c *CatalogEntityParser) interpolateStaticAnalysisVeracode(entity *CatalogEntityData, mendMap map[string]interface{}) {
+	entity.StaticAnalysis.Veracode = CatalogEntityStaticAnalysisVeracode{}
+	applicationNames := mendMap["applicationNames"].([]interface{})
+	for _, applicationName := range applicationNames {
+		entity.StaticAnalysis.Veracode.ApplicationNames = append(entity.StaticAnalysis.Veracode.ApplicationNames, applicationName.(string))
+	}
+	if mendMap["sandboxes"] != nil {
+		entity.StaticAnalysis.Veracode.Sandboxes = []CatalogEntityStaticAnalysisVeracodeSandbox{}
+		sandboxes := mendMap["sandboxes"].([]interface{})
+		for _, sandbox := range sandboxes {
+			sandboxMap := sandbox.(map[string]interface{})
+			if sandboxMap["applicationName"] != nil || sandboxMap["sandboxName"] != nil {
+				sandboxEntity := CatalogEntityStaticAnalysisVeracodeSandbox{
+					ApplicationName: sandboxMap["applicationName"].(string),
+					SandboxName:     sandboxMap["sandboxName"].(string),
+				}
+				entity.StaticAnalysis.Veracode.Sandboxes = append(entity.StaticAnalysis.Veracode.Sandboxes, sandboxEntity)
+			}
+		}
 	}
 }

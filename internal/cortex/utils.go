@@ -26,7 +26,7 @@ func (d jsonDecoder) Decode(resp *http.Response, v interface{}) error {
 
 func MapFetch(m map[string]interface{}, key string, defaultValue any) any {
 	if val, ok := m[key]; ok {
-		return val.(string)
+		return val
 	}
 	return defaultValue
 }

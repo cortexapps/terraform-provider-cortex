@@ -37,6 +37,7 @@ Catalog Entity
 - `sentry` (Attributes) Sentry configuration for the entity. (see [below for nested schema](#nestedatt--sentry))
 - `slos` (Attributes) Service-level Objectives configuration for the entity. (see [below for nested schema](#nestedatt--slos))
 - `snyk` (Attributes) Snyk configuration for the entity. (see [below for nested schema](#nestedatt--snyk))
+- `static_analysis` (Attributes) Static analysis configuration for the entity. (see [below for nested schema](#nestedatt--static_analysis))
 
 ### Read-Only
 
@@ -390,3 +391,64 @@ Required:
 - `organization` (String) Snyk organization ID.
 - `project_id` (String) Snyk project ID.
 - `source` (String) Type of Snyk product. Valid values are `CODE` or `OPEN_SOURCE`.
+
+
+
+<a id="nestedatt--static_analysis"></a>
+### Nested Schema for `static_analysis`
+
+Optional:
+
+- `code_cov` (Attributes) Code coverage configuration. (see [below for nested schema](#nestedatt--static_analysis--code_cov))
+- `mend` (Attributes) Mend static analysis configuration. (see [below for nested schema](#nestedatt--static_analysis--mend))
+- `sonar_qube` (Attributes) SonarQube static analysis configuration. (see [below for nested schema](#nestedatt--static_analysis--sonar_qube))
+- `veracode` (Attributes) Veracode static analysis configuration. (see [below for nested schema](#nestedatt--static_analysis--veracode))
+
+<a id="nestedatt--static_analysis--code_cov"></a>
+### Nested Schema for `static_analysis.code_cov`
+
+Required:
+
+- `provider` (String) Git provider. One of: `GITHUB`, `GITLAB`, or `BITBUCKET`.
+- `repository` (String) Git repository, in `organization/repository` format.
+
+
+<a id="nestedatt--static_analysis--mend"></a>
+### Nested Schema for `static_analysis.mend`
+
+Required:
+
+- `application_ids` (List of String) Mend application IDs, found in the Mend SAST web interface.
+- `project_ids` (List of String) Mend project IDs, found in the Mend SCA web interface.
+
+
+<a id="nestedatt--static_analysis--sonar_qube"></a>
+### Nested Schema for `static_analysis.sonar_qube`
+
+Required:
+
+- `project` (String) SonarQube project key.
+
+Optional:
+
+- `alias` (String) Ties the SonarQube registration to a SonarQube instance listed under Settings → SonarQube. The alias parameter is optional, but if not provided the SonarQube registration will use the default configuration under Settings → SonarQube.
+
+
+<a id="nestedatt--static_analysis--veracode"></a>
+### Nested Schema for `static_analysis.veracode`
+
+Required:
+
+- `application_names` (List of String) Veracode application names.
+
+Optional:
+
+- `sandboxes` (Attributes List) Veracode sandboxes. (see [below for nested schema](#nestedatt--static_analysis--veracode--sandboxes))
+
+<a id="nestedatt--static_analysis--veracode--sandboxes"></a>
+### Nested Schema for `static_analysis.veracode.sandboxes`
+
+Required:
+
+- `application_name` (String) Veracode application name.
+- `sandbox_name` (String) Veracode sandbox name.

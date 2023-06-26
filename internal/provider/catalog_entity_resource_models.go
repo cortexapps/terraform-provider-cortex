@@ -12,24 +12,25 @@ import (
 
 // CatalogEntityResourceModel describes the resource data model.
 type CatalogEntityResourceModel struct {
-	Id           types.String                           `tfsdk:"id"`
-	Tag          types.String                           `tfsdk:"tag"`
-	Name         types.String                           `tfsdk:"name"`
-	Description  types.String                           `tfsdk:"description"`
-	Owners       []CatalogEntityOwnerResourceModel      `tfsdk:"owners"`
-	Groups       []types.String                         `tfsdk:"groups"`
-	Links        []CatalogEntityLinkResourceModel       `tfsdk:"links"`
-	Metadata     types.String                           `tfsdk:"metadata"`
-	Dependencies []CatalogEntityDependencyResourceModel `tfsdk:"dependencies"`
-	Alerts       []CatalogEntityAlertResourceModel      `tfsdk:"alerts"`
-	Apm          types.Object                           `tfsdk:"apm"`
-	Dashboards   types.Object                           `tfsdk:"dashboards"`
-	Git          types.Object                           `tfsdk:"git"`
-	Issues       types.Object                           `tfsdk:"issues"`
-	OnCall       types.Object                           `tfsdk:"on_call"`
-	SLOs         types.Object                           `tfsdk:"slos"`
-	Sentry       types.Object                           `tfsdk:"sentry"`
-	Snyk         types.Object                           `tfsdk:"snyk"`
+	Id             types.String                           `tfsdk:"id"`
+	Tag            types.String                           `tfsdk:"tag"`
+	Name           types.String                           `tfsdk:"name"`
+	Description    types.String                           `tfsdk:"description"`
+	Owners         []CatalogEntityOwnerResourceModel      `tfsdk:"owners"`
+	Groups         []types.String                         `tfsdk:"groups"`
+	Links          []CatalogEntityLinkResourceModel       `tfsdk:"links"`
+	Metadata       types.String                           `tfsdk:"metadata"`
+	Dependencies   []CatalogEntityDependencyResourceModel `tfsdk:"dependencies"`
+	Alerts         []CatalogEntityAlertResourceModel      `tfsdk:"alerts"`
+	Apm            types.Object                           `tfsdk:"apm"`
+	Dashboards     types.Object                           `tfsdk:"dashboards"`
+	Git            types.Object                           `tfsdk:"git"`
+	Issues         types.Object                           `tfsdk:"issues"`
+	OnCall         types.Object                           `tfsdk:"on_call"`
+	SLOs           types.Object                           `tfsdk:"slos"`
+	StaticAnalysis types.Object                           `tfsdk:"static_analysis"`
+	Sentry         types.Object                           `tfsdk:"sentry"`
+	Snyk           types.Object                           `tfsdk:"snyk"`
 }
 
 func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityData {
@@ -51,7 +52,7 @@ func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Catal
 	if !o.Metadata.IsNull() && !o.Metadata.IsUnknown() && o.Metadata.ValueString() != "" {
 		err := json.Unmarshal([]byte(o.Metadata.ValueString()), &metadata)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("Error parsing custom metadata: ", err)
 			metadata = make(map[string]interface{})
 		}
 	}
@@ -66,56 +67,62 @@ func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Catal
 	apm := &CatalogEntityApmResourceModel{}
 	err := o.Apm.As(ctx, apm, defaultObjOptions)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error parsing APM configuration: ", err)
 	}
 	git := &CatalogEntityGitResourceModel{}
 	err = o.Git.As(ctx, git, defaultObjOptions)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error parsing Git configuration: ", err)
 	}
 	issues := &CatalogEntityIssuesResourceModel{}
 	err = o.Issues.As(ctx, issues, defaultObjOptions)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error parsing Issues configuration: ", err)
 	}
 	onCall := &CatalogEntityOnCallResourceModel{}
 	err = o.OnCall.As(ctx, onCall, defaultObjOptions)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error parsing On-Call configuration: ", err)
 	}
 	serviceLevelObjectives := &CatalogEntitySLOsResourceModel{}
 	err = o.SLOs.As(ctx, serviceLevelObjectives, defaultObjOptions)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error parsing SLO configuration: ", err)
+	}
+	staticAnalysis := &CatalogEntityStaticAnalysisResourceModel{}
+	err = o.StaticAnalysis.As(ctx, staticAnalysis, defaultObjOptions)
+	if err != nil {
+		fmt.Println("Error parsing Static Analysis configuration: ", err)
 	}
 	sentry := &CatalogEntitySentryResourceModel{}
 	err = o.Sentry.As(ctx, sentry, defaultObjOptions)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error parsing Sentry configuration: ", err)
 	}
 	snyk := &CatalogEntitySnykResourceModel{}
 	err = o.Snyk.As(ctx, snyk, defaultObjOptions)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error parsing Snyk configuration: ", err)
 	}
 
 	return cortex.CatalogEntityData{
-		Tag:          o.Tag.ValueString(),
-		Title:        o.Name.ValueString(),
-		Description:  o.Description.ValueString(),
-		Owners:       owners,
-		Groups:       groups,
-		Links:        links,
-		Metadata:     metadata,
-		Dependencies: dependencies,
-		Alerts:       alerts,
-		Apm:          apm.ToApiModel(ctx),
-		Git:          git.ToApiModel(),
-		Issues:       issues.ToApiModel(ctx),
-		OnCall:       onCall.ToApiModel(),
-		SLOs:         serviceLevelObjectives.ToApiModel(),
-		Sentry:       sentry.ToApiModel(),
-		Snyk:         snyk.ToApiModel(),
+		Tag:            o.Tag.ValueString(),
+		Title:          o.Name.ValueString(),
+		Description:    o.Description.ValueString(),
+		Owners:         owners,
+		Groups:         groups,
+		Links:          links,
+		Metadata:       metadata,
+		Dependencies:   dependencies,
+		Alerts:         alerts,
+		Apm:            apm.ToApiModel(),
+		Git:            git.ToApiModel(),
+		Issues:         issues.ToApiModel(),
+		OnCall:         onCall.ToApiModel(),
+		SLOs:           serviceLevelObjectives.ToApiModel(),
+		StaticAnalysis: staticAnalysis.ToApiModel(),
+		Sentry:         sentry.ToApiModel(),
+		Snyk:           snyk.ToApiModel(),
 	}
 }
 
@@ -169,7 +176,7 @@ func (o CatalogEntityDependencyResourceModel) ToApiModel() cortex.CatalogEntityD
 	if !o.Metadata.IsNull() && !o.Metadata.IsUnknown() && o.Metadata.ValueString() != "" {
 		err := json.Unmarshal([]byte(o.Metadata.ValueString()), &metadata)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("Error parsing Dependency configuration: ", err)
 			metadata = make(map[string]interface{})
 		}
 	}
@@ -293,9 +300,9 @@ type CatalogEntityIssuesResourceModel struct {
 	Jira CatalogEntityIssuesJiraResourceModel `tfsdk:"jira"`
 }
 
-func (o CatalogEntityIssuesResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityIssues {
+func (o CatalogEntityIssuesResourceModel) ToApiModel() cortex.CatalogEntityIssues {
 	return cortex.CatalogEntityIssues{
-		Jira: o.Jira.ToApiModel(ctx),
+		Jira: o.Jira.ToApiModel(),
 	}
 }
 
@@ -306,21 +313,18 @@ type CatalogEntityIssuesJiraResourceModel struct {
 	Components types.Set    `tfsdk:"components"`
 }
 
-func (o CatalogEntityIssuesJiraResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityIssuesJira {
+func (o CatalogEntityIssuesJiraResourceModel) ToApiModel() cortex.CatalogEntityIssuesJira {
 	var projects = make([]string, len(o.Projects.Elements()))
-	err := o.Labels.ElementsAs(ctx, projects, true)
-	if err != nil {
-		fmt.Println(err)
+	for i, e := range o.Projects.Elements() {
+		projects[i] = e.(types.String).ValueString()
 	}
 	var labels = make([]string, len(o.Labels.Elements()))
-	err = o.Labels.ElementsAs(ctx, labels, true)
-	if err != nil {
-		fmt.Println(err)
+	for i, e := range o.Labels.Elements() {
+		labels[i] = e.(types.String).ValueString()
 	}
 	var components = make([]string, len(o.Components.Elements()))
-	err = o.Components.ElementsAs(ctx, components, true)
-	if err != nil {
-		fmt.Println(err)
+	for i, e := range o.Components.Elements() {
+		components[i] = e.(types.String).ValueString()
 	}
 	return cortex.CatalogEntityIssuesJira{
 		DefaultJQL: o.DefaultJQL.ValueString(),
@@ -440,10 +444,10 @@ type CatalogEntityApmResourceModel struct {
 	NewRelic  CatalogEntityApmNewRelicResourceModel  `tfsdk:"new_relic"`
 }
 
-func (o CatalogEntityApmResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityApm {
+func (o CatalogEntityApmResourceModel) ToApiModel() cortex.CatalogEntityApm {
 	return cortex.CatalogEntityApm{
-		DataDog:   o.DataDog.ToApiModel(ctx),
-		Dynatrace: o.Dynatrace.ToApiModel(ctx),
+		DataDog:   o.DataDog.ToApiModel(),
+		Dynatrace: o.Dynatrace.ToApiModel(),
 		NewRelic:  o.NewRelic.ToApiModel(),
 	}
 }
@@ -452,13 +456,11 @@ type CatalogEntityApmDataDogResourceModel struct {
 	Monitors types.Set `tfsdk:"monitors"`
 }
 
-func (o CatalogEntityApmDataDogResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityApmDataDog {
+func (o CatalogEntityApmDataDogResourceModel) ToApiModel() cortex.CatalogEntityApmDataDog {
 	var monitors = make([]int64, len(o.Monitors.Elements()))
-	err := o.Monitors.ElementsAs(ctx, monitors, true)
-	if err != nil {
-		fmt.Println(err)
+	for i, e := range o.Monitors.Elements() {
+		monitors[i] = e.(types.Int64).ValueInt64()
 	}
-
 	return cortex.CatalogEntityApmDataDog{
 		Monitors: slices.Reject(monitors, func(i int64) bool { return i == 0 }),
 	}
@@ -469,16 +471,14 @@ type CatalogEntityApmDynatraceResourceModel struct {
 	EntityNameMatchers types.Set `tfsdk:"entity_name_matchers"`
 }
 
-func (o CatalogEntityApmDynatraceResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityApmDynatrace {
+func (o CatalogEntityApmDynatraceResourceModel) ToApiModel() cortex.CatalogEntityApmDynatrace {
 	var entityIds = make([]string, len(o.EntityIDs.Elements()))
-	err := o.EntityIDs.ElementsAs(ctx, entityIds, true)
-	if err != nil {
-		fmt.Println(err)
+	for i, e := range o.EntityIDs.Elements() {
+		entityIds[i] = e.(types.String).ValueString()
 	}
 	var entityNameMatchers = make([]string, len(o.EntityNameMatchers.Elements()))
-	err = o.EntityNameMatchers.ElementsAs(ctx, entityNameMatchers, true)
-	if err != nil {
-		fmt.Println(err)
+	for i, e := range o.EntityNameMatchers.Elements() {
+		entityNameMatchers[i] = e.(types.String).ValueString()
 	}
 	return cortex.CatalogEntityApmDynatrace{
 		EntityIDs:          slices.Reject(entityIds, func(i string) bool { return i == "" }),
@@ -689,5 +689,104 @@ type CatalogEntitySLOSumoLogicResourceModel struct {
 func (o CatalogEntitySLOSumoLogicResourceModel) ToApiModel() cortex.CatalogEntitySLOSumoLogic {
 	return cortex.CatalogEntitySLOSumoLogic{
 		ID: o.ID.ValueString(),
+	}
+}
+
+/***********************************************************************************************************************
+ * Static Analysis
+ **********************************************************************************************************************/
+
+type CatalogEntityStaticAnalysisResourceModel struct {
+	CodeCov   CatalogEntityStaticAnalysisCodeCovResourceModel   `tfsdk:"code_cov"`
+	Mend      CatalogEntityStaticAnalysisMendResourceModel      `tfsdk:"mend"`
+	SonarQube CatalogEntityStaticAnalysisSonarQubeResourceModel `tfsdk:"sonar_qube"`
+	Veracode  CatalogEntityStaticAnalysisVeracodeResourceModel  `tfsdk:"veracode"`
+}
+
+func (o CatalogEntityStaticAnalysisResourceModel) ToApiModel() cortex.CatalogEntityStaticAnalysis {
+	return cortex.CatalogEntityStaticAnalysis{
+		CodeCov:   o.CodeCov.ToApiModel(),
+		Mend:      o.Mend.ToApiModel(),
+		SonarQube: o.SonarQube.ToApiModel(),
+		Veracode:  o.Veracode.ToApiModel(),
+	}
+}
+
+type CatalogEntityStaticAnalysisCodeCovResourceModel struct {
+	Repository types.String `tfsdk:"repository"`
+	Provider   types.String `tfsdk:"provider"`
+}
+
+func (o CatalogEntityStaticAnalysisCodeCovResourceModel) ToApiModel() cortex.CatalogEntityStaticAnalysisCodeCov {
+	return cortex.CatalogEntityStaticAnalysisCodeCov{
+		Repository: o.Repository.ValueString(),
+		Provider:   o.Provider.ValueString(),
+	}
+}
+
+type CatalogEntityStaticAnalysisMendResourceModel struct {
+	ApplicationIDs []types.String `tfsdk:"application_ids"`
+	ProjectIDs     []types.String `tfsdk:"project_ids"`
+}
+
+func (o CatalogEntityStaticAnalysisMendResourceModel) ToApiModel() cortex.CatalogEntityStaticAnalysisMend {
+	applicationIds := make([]string, len(o.ApplicationIDs))
+	for i, e := range o.ApplicationIDs {
+		applicationIds[i] = e.ValueString()
+	}
+	projectIds := make([]string, len(o.ProjectIDs))
+	for i, e := range o.ProjectIDs {
+		projectIds[i] = e.ValueString()
+	}
+	return cortex.CatalogEntityStaticAnalysisMend{
+		ApplicationIDs: applicationIds,
+		ProjectIDs:     projectIds,
+	}
+}
+
+type CatalogEntityStaticAnalysisSonarQubeResourceModel struct {
+	Project types.String `tfsdk:"project"`
+	Alias   types.String `tfsdk:"alias"`
+}
+
+func (o CatalogEntityStaticAnalysisSonarQubeResourceModel) ToApiModel() cortex.CatalogEntityStaticAnalysisSonarQube {
+	entity := cortex.CatalogEntityStaticAnalysisSonarQube{
+		Project: o.Project.ValueString(),
+	}
+	if !o.Alias.IsNull() && !o.Alias.IsUnknown() && o.Alias.ValueString() != "" {
+		entity.Alias = o.Alias.ValueString()
+	}
+	return entity
+}
+
+type CatalogEntityStaticAnalysisVeracodeResourceModel struct {
+	ApplicationNames []types.String                                            `tfsdk:"application_names"`
+	Sandboxes        []CatalogEntityStaticAnalysisVeracodeSandboxResourceModel `tfsdk:"sandboxes"`
+}
+
+func (o CatalogEntityStaticAnalysisVeracodeResourceModel) ToApiModel() cortex.CatalogEntityStaticAnalysisVeracode {
+	var sandboxes = make([]cortex.CatalogEntityStaticAnalysisVeracodeSandbox, len(o.Sandboxes))
+	for i, e := range o.Sandboxes {
+		sandboxes[i] = e.ToApiModel()
+	}
+	applicationNames := make([]string, len(o.ApplicationNames))
+	for i, e := range o.ApplicationNames {
+		applicationNames[i] = e.ValueString()
+	}
+	return cortex.CatalogEntityStaticAnalysisVeracode{
+		ApplicationNames: applicationNames,
+		Sandboxes:        sandboxes,
+	}
+}
+
+type CatalogEntityStaticAnalysisVeracodeSandboxResourceModel struct {
+	ApplicationName types.String `tfsdk:"application_name"`
+	SandboxName     types.String `tfsdk:"sandbox_name"`
+}
+
+func (o CatalogEntityStaticAnalysisVeracodeSandboxResourceModel) ToApiModel() cortex.CatalogEntityStaticAnalysisVeracodeSandbox {
+	return cortex.CatalogEntityStaticAnalysisVeracodeSandbox{
+		ApplicationName: o.ApplicationName.ValueString(),
+		SandboxName:     o.SandboxName.ValueString(),
 	}
 }

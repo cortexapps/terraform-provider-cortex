@@ -212,7 +212,7 @@ resource "cortex_catalog_entity" "products-service" {
   static_analysis = {
     code_cov = {
       repository = "cortexio/products-service"
-      provider   = "github"
+      provider   = "GITHUB"
     }
     mend = {
       application_ids = ["123456", "123457"]
@@ -220,6 +220,7 @@ resource "cortex_catalog_entity" "products-service" {
     }
     sonar_qube = {
       project = "cortexio/products-service"
+      alias   = "products-service" # optional
     }
     veracode = {
       application_names = ["products-service"]
