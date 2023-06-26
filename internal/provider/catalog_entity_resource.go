@@ -126,10 +126,10 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 							Required:            true,
 						},
 						"type": schema.StringAttribute{
-							MarkdownDescription: "Type of the link. Valid values are `runbook`, `documentation`, `logs`, `dashboard`, `metrics`, `healthcheck`.",
+							MarkdownDescription: "Type of the link. Valid values are `runbook`, `documentation`, `logs`, `dashboard`, `metrics`, `healthcheck`, `OPENAPI`, `ASYNC_API`.",
 							Required:            true,
 							Validators: []validator.String{
-								stringvalidator.OneOf("runbook", "documentation", "logs", "dashboard", "metrics", "healthcheck"),
+								stringvalidator.OneOf("runbook", "documentation", "logs", "dashboard", "metrics", "healthcheck", "OPENAPI", "ASYNC_API"),
 							},
 						},
 						"url": schema.StringAttribute{
