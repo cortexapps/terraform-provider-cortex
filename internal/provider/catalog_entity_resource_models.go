@@ -31,6 +31,7 @@ type CatalogEntityResourceModel struct {
 	StaticAnalysis types.Object                           `tfsdk:"static_analysis"`
 	BugSnag        types.Object                           `tfsdk:"bug_snag"`
 	Checkmarx      types.Object                           `tfsdk:"checkmarx"`
+	Rollbar        types.Object                           `tfsdk:"rollbar"`
 	Sentry         types.Object                           `tfsdk:"sentry"`
 	Snyk           types.Object                           `tfsdk:"snyk"`
 }
@@ -106,6 +107,11 @@ func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Catal
 	if err != nil {
 		fmt.Println("Error parsing Checkmarx configuration: ", err)
 	}
+	rollbar := &CatalogEntityRollbarResourceModel{}
+	err = o.Rollbar.As(ctx, rollbar, defaultObjOptions)
+	if err != nil {
+		fmt.Println("Error parsing Rollbar configuration: ", err)
+	}
 	sentry := &CatalogEntitySentryResourceModel{}
 	err = o.Sentry.As(ctx, sentry, defaultObjOptions)
 	if err != nil {
@@ -133,6 +139,9 @@ func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Catal
 		OnCall:         onCall.ToApiModel(),
 		SLOs:           serviceLevelObjectives.ToApiModel(),
 		StaticAnalysis: staticAnalysis.ToApiModel(),
+		BugSnag:        bugSnag.ToApiModel(),
+		Checkmarx:      checkmarx.ToApiModel(),
+		Rollbar:        rollbar.ToApiModel(),
 		Sentry:         sentry.ToApiModel(),
 		Snyk:           snyk.ToApiModel(),
 	}
@@ -446,6 +455,20 @@ func (o CatalogEntityCheckmarxProjectResourceModel) ToApiModel() cortex.CatalogE
 		entity.Name = o.Name.ValueString()
 	}
 	return entity
+}
+
+/***********************************************************************************************************************
+ * Rollbar
+ **********************************************************************************************************************/
+
+type CatalogEntityRollbarResourceModel struct {
+	Project types.String `tfsdk:"project"`
+}
+
+func (o CatalogEntityRollbarResourceModel) ToApiModel() cortex.CatalogEntityRollbar {
+	return cortex.CatalogEntityRollbar{
+		Project: o.Project.ValueString(),
+	}
 }
 
 /***********************************************************************************************************************

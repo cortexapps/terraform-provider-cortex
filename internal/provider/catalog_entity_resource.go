@@ -673,10 +673,16 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
-
-			// TODO: checkmarx
-			// TODO: rollbar
-
+			"rollbar": schema.SingleNestedAttribute{
+				MarkdownDescription: "Rollbar configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"project": schema.StringAttribute{
+						MarkdownDescription: "Rollbar project ID for the entity.",
+						Required:            true,
+					},
+				},
+			},
 			"sentry": schema.SingleNestedAttribute{
 				MarkdownDescription: "Sentry configuration for the entity.",
 				Optional:            true,

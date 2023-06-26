@@ -48,12 +48,6 @@ func TestAccCatalogEntityResource(t *testing.T) {
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.azure.base_path", "/"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.bitbucket.repository", "cortexio/products-service"),
 
-					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "bug_snag.project", "cortexio/products-service"),
-					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "sentry.project", "cortexio/products-service"),
-					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "snyk.projects.0.organization", "cortexio"),
-					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "snyk.projects.0.project_id", "cortexio/products-service"),
-					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "snyk.projects.0.source", "CODE"),
-
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.code_cov.repository", "cortexio/products-service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.code_cov.provider", "GITHUB"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.mend.application_ids.0", "123456"),
@@ -64,6 +58,14 @@ func TestAccCatalogEntityResource(t *testing.T) {
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.veracode.application_names.0", "products-service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.veracode.sandboxes.0.application_name", "products-service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.veracode.sandboxes.0.sandbox_name", "staging"),
+
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "bug_snag.project", "cortexio/products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "sentry.project", "cortexio/products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "checkmarx.projects.0.name", "products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "rollbar.project", "products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "snyk.projects.0.organization", "cortexio"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "snyk.projects.0.project_id", "cortexio/products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "snyk.projects.0.source", "CODE"),
 				),
 			},
 			// ImportState testing
@@ -299,6 +301,10 @@ resource "cortex_catalog_entity" "test" {
         name = "products-service"
       }
     ]
+  }
+
+  rollbar = {
+    project = "products-service"
   }
 
   sentry = {

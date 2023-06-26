@@ -36,6 +36,7 @@ Catalog Entity
 - `name` (String) Human-readable name for the entity
 - `on_call` (Attributes) On-call configuration for the entity. (see [below for nested schema](#nestedatt--on_call))
 - `owners` (Attributes List) List of owners for the entity. Owners can be users, groups, or Slack channels. (see [below for nested schema](#nestedatt--owners))
+- `rollbar` (Attributes) Rollbar configuration for the entity. (see [below for nested schema](#nestedatt--rollbar))
 - `sentry` (Attributes) Sentry configuration for the entity. (see [below for nested schema](#nestedatt--sentry))
 - `slos` (Attributes) Service-level Objectives configuration for the entity. (see [below for nested schema](#nestedatt--slos))
 - `snyk` (Attributes) Snyk configuration for the entity. (see [below for nested schema](#nestedatt--snyk))
@@ -288,6 +289,14 @@ Optional:
 - `name` (String) Name of the owner. Only required for `user` or `group` types.
 - `notifications_enabled` (Boolean) Whether Slack notifications are enabled for all owners of this service. Only allowed if `type` is `slack`.
 - `provider` (String) Provider of the owner. Only allowed if `type` is `group`.
+
+
+<a id="nestedatt--rollbar"></a>
+### Nested Schema for `rollbar`
+
+Required:
+
+- `project` (String) Rollbar project ID for the entity.
 
 
 <a id="nestedatt--sentry"></a>
