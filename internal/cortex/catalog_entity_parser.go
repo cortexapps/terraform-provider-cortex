@@ -69,6 +69,10 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 		c.interpolateOnCall(entity, onCallMap)
 	}
 
+	if info["x-cortex-bugsnag"] != nil {
+		c.interpolateBugSnag(entity, info["x-cortex-bugsnag"].(map[string]interface{}))
+	}
+
 	if info["x-cortex-sentry"] != nil {
 		c.interpolateSentry(entity, info["x-cortex-sentry"].(map[string]interface{}))
 	}
@@ -275,6 +279,10 @@ func (c *CatalogEntityParser) interpolatePrometheus(entity *CatalogEntityData, p
 
 func (c *CatalogEntityParser) interpolateSentry(entity *CatalogEntityData, sentryMap map[string]interface{}) {
 	entity.Sentry.Project = MapFetchToString(sentryMap, "project")
+}
+
+func (c *CatalogEntityParser) interpolateBugSnag(entity *CatalogEntityData, bugSnagMap map[string]interface{}) {
+	entity.BugSnag.Project = MapFetchToString(bugSnagMap, "project")
 }
 
 func (c *CatalogEntityParser) interpolateSnyk(entity *CatalogEntityData, snykMap map[string]interface{}) {

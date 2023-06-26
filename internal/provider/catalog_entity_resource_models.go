@@ -29,6 +29,7 @@ type CatalogEntityResourceModel struct {
 	OnCall         types.Object                           `tfsdk:"on_call"`
 	SLOs           types.Object                           `tfsdk:"slos"`
 	StaticAnalysis types.Object                           `tfsdk:"static_analysis"`
+	BugSnag        types.Object                           `tfsdk:"bug_snag"`
 	Sentry         types.Object                           `tfsdk:"sentry"`
 	Snyk           types.Object                           `tfsdk:"snyk"`
 }
@@ -93,6 +94,11 @@ func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Catal
 	err = o.StaticAnalysis.As(ctx, staticAnalysis, defaultObjOptions)
 	if err != nil {
 		fmt.Println("Error parsing Static Analysis configuration: ", err)
+	}
+	bugSnag := &CatalogEntityBugSnagResourceModel{}
+	err = o.BugSnag.As(ctx, bugSnag, defaultObjOptions)
+	if err != nil {
+		fmt.Println("Error parsing BugSnag configuration: ", err)
 	}
 	sentry := &CatalogEntitySentryResourceModel{}
 	err = o.Sentry.As(ctx, sentry, defaultObjOptions)
@@ -385,6 +391,20 @@ func (o CatalogEntityOnCallVictorOpsResourceModel) ToApiModel() cortex.CatalogEn
 	return cortex.CatalogEntityOnCallVictorOps{
 		ID:   o.ID.ValueString(),
 		Type: o.Type.ValueString(),
+	}
+}
+
+/***********************************************************************************************************************
+ * BugSnag
+ **********************************************************************************************************************/
+
+type CatalogEntityBugSnagResourceModel struct {
+	Project types.String `tfsdk:"project"`
+}
+
+func (o CatalogEntityBugSnagResourceModel) ToApiModel() cortex.CatalogEntityBugSnag {
+	return cortex.CatalogEntityBugSnag{
+		Project: o.Project.ValueString(),
 	}
 }
 

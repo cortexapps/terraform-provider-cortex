@@ -23,6 +23,7 @@ Catalog Entity
 
 - `alerts` (Attributes List) List of alerts for the entity. (see [below for nested schema](#nestedatt--alerts))
 - `apm` (Attributes) APM configuration for the entity. (see [below for nested schema](#nestedatt--apm))
+- `bug_snag` (Attributes) BugSnag configuration for the entity. (see [below for nested schema](#nestedatt--bug_snag))
 - `dashboards` (Attributes) Dashboards configuration for the entity. (see [below for nested schema](#nestedatt--dashboards))
 - `dependencies` (Attributes List) List of dependencies for the entity. (see [below for nested schema](#nestedatt--dependencies))
 - `description` (String) Description of the entity visible in the Service or Resource Catalog. Markdown is supported.
@@ -90,6 +91,14 @@ Optional:
 - `alias` (String) Alias for the service. Only used if opted into multi-account support in New Relic.
 - `application_id` (Number) NewRelic application ID for the entity.
 
+
+
+<a id="nestedatt--bug_snag"></a>
+### Nested Schema for `bug_snag`
+
+Required:
+
+- `project` (String) BugSnag project ID for the entity.
 
 
 <a id="nestedatt--dashboards"></a>

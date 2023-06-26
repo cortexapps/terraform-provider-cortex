@@ -641,8 +641,17 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
+			"bug_snag": schema.SingleNestedAttribute{
+				MarkdownDescription: "BugSnag configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"project": schema.StringAttribute{
+						MarkdownDescription: "BugSnag project ID for the entity.",
+						Required:            true,
+					},
+				},
+			},
 
-			// TODO: bugsnag
 			// TODO: checkmarx
 			// TODO: rollbar
 
