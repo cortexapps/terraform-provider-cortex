@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -72,9 +71,6 @@ func (r *DepartmentResource) Schema(ctx context.Context, req resource.SchemaRequ
 			// Computed attributes
 			"id": schema.StringAttribute{
 				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
 			},
 		},
 	}
@@ -119,15 +115,14 @@ func (r *DepartmentResource) Read(ctx context.Context, req resource.ReadRequest,
 	}
 
 	// Issue API request
-	departmentResponse, err := r.client.Departments().Get(ctx, data.Tag.ValueString())
+	department, err := r.client.Departments().Get(ctx, data.Tag.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read department, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read department %s, got error: %s", data.Tag.ValueString(), err))
 		return
 	}
 
-	// Map data from the API response to the model
-	data.Id = types.StringValue(departmentResponse.Tag)
-	data.Tag = data.Id
+	// Map entity to resource model
+	data.FromApiModel(department)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -139,7 +134,6 @@ func (r *DepartmentResource) Create(ctx context.Context, req resource.CreateRequ
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -151,16 +145,15 @@ func (r *DepartmentResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	// Set the ID in state based on the tag
-	data.Id = types.StringValue(department.Tag)
-	data.Tag = data.Id
+	// Map entity to resource model
+	data.FromApiModel(department)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *DepartmentResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data *DepartmentResourceModel
+	var data DepartmentResourceModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -176,9 +169,8 @@ func (r *DepartmentResource) Update(ctx context.Context, req resource.UpdateRequ
 		return
 	}
 
-	// Set the ID in state based on the tag
-	data.Id = types.StringValue(department.Tag)
-	data.Tag = data.Id
+	// Map entity to resource model
+	data.FromApiModel(department)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

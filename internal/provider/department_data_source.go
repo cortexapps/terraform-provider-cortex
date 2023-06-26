@@ -6,7 +6,6 @@ import (
 	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -19,14 +18,6 @@ func NewDepartmentDataSource() datasource.DataSource {
 // DepartmentDataSource defines the data source implementation.
 type DepartmentDataSource struct {
 	client *cortex.HttpClient
-}
-
-// DepartmentDataSourceModel describes the data source data model.
-type DepartmentDataSourceModel struct {
-	Id          types.String `tfsdk:"id"`
-	Tag         types.String `tfsdk:"tag"`
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
 }
 
 func (d *DepartmentDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -89,15 +80,14 @@ func (d *DepartmentDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
-	department, err := d.client.Departments().Get(ctx, data.Tag.String())
+	department, err := d.client.Departments().Get(ctx, data.Tag.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read department, got error: %s", err))
 		return
 	}
-	data.Id = types.StringValue(department.Tag)
-	data.Tag = types.StringValue(department.Tag)
-	data.Name = types.StringValue(department.Name)
-	data.Description = types.StringValue(department.Description)
+
+	// Map entity to resource model
+	data.FromApiModel(department)
 
 	// Write to TF state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

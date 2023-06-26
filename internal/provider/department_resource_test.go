@@ -25,7 +25,7 @@ func TestAccDepartmentResource(t *testing.T) {
 			{
 				ResourceName:      "cortex_department.engineering",
 				ImportState:       true,
-				ImportStateVerify: false,
+				ImportStateVerify: true,
 			},
 			// Update and Read testing
 			{
