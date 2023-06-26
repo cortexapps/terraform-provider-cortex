@@ -233,7 +233,7 @@ Optional:
 Required:
 
 - `name` (String) Name of the link.
-- `type` (String) Type of the link. Valid values are `runbook`, `documentation`, `logs`, `dashboard`, `metrics`, `healthcheck`.
+- `type` (String) Type of the link. Valid values are `runbook`, `documentation`, `logs`, `dashboard`, `metrics`, `healthcheck`, `OPENAPI`, `ASYNC_API`.
 - `url` (String) URL of the link.
 
 

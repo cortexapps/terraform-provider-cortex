@@ -23,14 +23,14 @@ Department Entity
 ### Optional
 
 - `description` (String) Description of the team.
-- `member` (Block List) A list of additional members. (see [below for nested schema](#nestedblock--member))
+- `members` (Attributes List) A list of additional members. (see [below for nested schema](#nestedatt--members))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 
-<a id="nestedblock--member"></a>
-### Nested Schema for `member`
+<a id="nestedatt--members"></a>
+### Nested Schema for `members`
 
 Required:
 
