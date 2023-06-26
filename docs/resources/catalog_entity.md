@@ -24,6 +24,7 @@ Catalog Entity
 - `alerts` (Attributes List) List of alerts for the entity. (see [below for nested schema](#nestedatt--alerts))
 - `apm` (Attributes) APM configuration for the entity. (see [below for nested schema](#nestedatt--apm))
 - `bug_snag` (Attributes) BugSnag configuration for the entity. (see [below for nested schema](#nestedatt--bug_snag))
+- `checkmarx` (Attributes) Checkmarx configuration for the entity. (see [below for nested schema](#nestedatt--checkmarx))
 - `dashboards` (Attributes) Dashboards configuration for the entity. (see [below for nested schema](#nestedatt--dashboards))
 - `dependencies` (Attributes List) List of dependencies for the entity. (see [below for nested schema](#nestedatt--dependencies))
 - `description` (String) Description of the entity visible in the Service or Resource Catalog. Markdown is supported.
@@ -99,6 +100,23 @@ Optional:
 Required:
 
 - `project` (String) BugSnag project ID for the entity.
+
+
+<a id="nestedatt--checkmarx"></a>
+### Nested Schema for `checkmarx`
+
+Optional:
+
+- `projects` (Attributes List) List of Checkmarx projects for the entity. (see [below for nested schema](#nestedatt--checkmarx--projects))
+
+<a id="nestedatt--checkmarx--projects"></a>
+### Nested Schema for `checkmarx.projects`
+
+Optional:
+
+- `id` (Number) Checkmarx project ID. Required if Name is not set.
+- `name` (String) Checkmarx project name. Required if ID is not set.
+
 
 
 <a id="nestedatt--dashboards"></a>

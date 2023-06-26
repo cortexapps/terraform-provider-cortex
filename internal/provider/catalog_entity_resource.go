@@ -651,6 +651,28 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
+			"checkmarx": schema.SingleNestedAttribute{
+				MarkdownDescription: "Checkmarx configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"projects": schema.ListNestedAttribute{
+						MarkdownDescription: "List of Checkmarx projects for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"id": schema.Int64Attribute{
+									MarkdownDescription: "Checkmarx project ID. Required if Name is not set.",
+									Optional:            true,
+								},
+								"name": schema.StringAttribute{
+									MarkdownDescription: "Checkmarx project name. Required if ID is not set.",
+									Optional:            true,
+								},
+							},
+						},
+					},
+				},
+			},
 
 			// TODO: checkmarx
 			// TODO: rollbar

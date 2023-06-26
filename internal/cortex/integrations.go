@@ -152,12 +152,12 @@ type CatalogEntityBugSnag struct {
  **********************************************************************************************************************/
 
 type CatalogEntityCheckmarx struct {
-	Projects []string `json:"projects" yaml:"projects"`
+	Projects []CatalogEntityCheckmarxProject `json:"projects" yaml:"projects"`
 }
 
 type CatalogEntityCheckmarxProject struct {
-	ProjectID   string `json:"projectId,omitempty" yaml:"projectId,omitempty"`
-	ProjectName string `json:"projectName,omitempty" yaml:"projectName,omitempty"`
+	ID   int64  `json:"projectId,omitempty" yaml:"projectId,omitempty"`
+	Name string `json:"projectName,omitempty" yaml:"projectName,omitempty"`
 }
 
 /***********************************************************************************************************************

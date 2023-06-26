@@ -238,7 +238,11 @@ resource "cortex_catalog_entity" "products-service" {
   }
 
   checkmarx = {
-    projects = ["products-service"]
+    projects = [
+      {
+        id = "products-service"
+      }
+    ]
   }
 
   rollbar = {

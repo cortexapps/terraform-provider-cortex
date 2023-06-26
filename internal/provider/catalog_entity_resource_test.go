@@ -293,6 +293,14 @@ resource "cortex_catalog_entity" "test" {
     project = "cortexio/products-service"
   }
 
+  checkmarx = {
+    projects = [
+      {
+        name = "products-service"
+      }
+    ]
+  }
+
   sentry = {
     project = "cortexio/products-service"
   }

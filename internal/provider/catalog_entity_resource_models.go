@@ -30,6 +30,7 @@ type CatalogEntityResourceModel struct {
 	SLOs           types.Object                           `tfsdk:"slos"`
 	StaticAnalysis types.Object                           `tfsdk:"static_analysis"`
 	BugSnag        types.Object                           `tfsdk:"bug_snag"`
+	Checkmarx      types.Object                           `tfsdk:"checkmarx"`
 	Sentry         types.Object                           `tfsdk:"sentry"`
 	Snyk           types.Object                           `tfsdk:"snyk"`
 }
@@ -99,6 +100,11 @@ func (o CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Catal
 	err = o.BugSnag.As(ctx, bugSnag, defaultObjOptions)
 	if err != nil {
 		fmt.Println("Error parsing BugSnag configuration: ", err)
+	}
+	checkmarx := &CatalogEntityCheckmarxResourceModel{}
+	err = o.Checkmarx.As(ctx, checkmarx, defaultObjOptions)
+	if err != nil {
+		fmt.Println("Error parsing Checkmarx configuration: ", err)
 	}
 	sentry := &CatalogEntitySentryResourceModel{}
 	err = o.Sentry.As(ctx, sentry, defaultObjOptions)
@@ -406,6 +412,40 @@ func (o CatalogEntityBugSnagResourceModel) ToApiModel() cortex.CatalogEntityBugS
 	return cortex.CatalogEntityBugSnag{
 		Project: o.Project.ValueString(),
 	}
+}
+
+/***********************************************************************************************************************
+ * Checkmarx
+ **********************************************************************************************************************/
+
+type CatalogEntityCheckmarxResourceModel struct {
+	Projects []CatalogEntityCheckmarxProjectResourceModel `tfsdk:"projects"`
+}
+
+func (o CatalogEntityCheckmarxResourceModel) ToApiModel() cortex.CatalogEntityCheckmarx {
+	projects := make([]cortex.CatalogEntityCheckmarxProject, len(o.Projects))
+	for i, p := range o.Projects {
+		projects[i] = p.ToApiModel()
+	}
+	return cortex.CatalogEntityCheckmarx{
+		Projects: projects,
+	}
+}
+
+type CatalogEntityCheckmarxProjectResourceModel struct {
+	ID   types.Int64  `tfsdk:"id"`
+	Name types.String `tfsdk:"name"`
+}
+
+func (o CatalogEntityCheckmarxProjectResourceModel) ToApiModel() cortex.CatalogEntityCheckmarxProject {
+	entity := cortex.CatalogEntityCheckmarxProject{}
+	if o.ID.ValueInt64() > 0 {
+		entity.ID = o.ID.ValueInt64()
+	}
+	if o.Name.ValueString() != "" {
+		entity.Name = o.Name.ValueString()
+	}
+	return entity
 }
 
 /***********************************************************************************************************************

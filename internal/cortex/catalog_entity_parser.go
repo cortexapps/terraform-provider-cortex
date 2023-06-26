@@ -69,8 +69,16 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 		c.interpolateOnCall(entity, onCallMap)
 	}
 
+	if info["x-cortex-alerts"] != nil {
+		c.interpolateAlerts(entity, info["x-cortex-alerts"].([]interface{}))
+	}
+
 	if info["x-cortex-bugsnag"] != nil {
 		c.interpolateBugSnag(entity, info["x-cortex-bugsnag"].(map[string]interface{}))
+	}
+
+	if info["x-cortex-checkmarx"] != nil {
+		c.interpolateCheckmarx(entity, info["x-cortex-checkmarx"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-sentry"] != nil {
@@ -79,10 +87,6 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 
 	if info["x-cortex-snyk"] != nil {
 		c.interpolateSnyk(entity, info["x-cortex-snyk"].(map[string]interface{}))
-	}
-
-	if info["x-cortex-alerts"] != nil {
-		c.interpolateAlerts(entity, info["x-cortex-alerts"].([]interface{}))
 	}
 
 	return entity, nil
@@ -283,6 +287,26 @@ func (c *CatalogEntityParser) interpolateSentry(entity *CatalogEntityData, sentr
 
 func (c *CatalogEntityParser) interpolateBugSnag(entity *CatalogEntityData, bugSnagMap map[string]interface{}) {
 	entity.BugSnag.Project = MapFetchToString(bugSnagMap, "project")
+}
+
+func (c *CatalogEntityParser) interpolateCheckmarx(entity *CatalogEntityData, checkmarxMap map[string]interface{}) {
+	entity.Checkmarx = CatalogEntityCheckmarx{
+		Projects: []CatalogEntityCheckmarxProject{},
+	}
+	if checkmarxMap["projects"] != nil {
+		for _, project := range checkmarxMap["projects"].([]interface{}) {
+			projectMap := project.(map[string]interface{})
+			pe := CatalogEntityCheckmarxProject{}
+			if projectMap["projectId"] != nil {
+				pe.ID = MapFetch(projectMap, "projectId", 0).(int64)
+			} else if projectMap["projectName"] != nil {
+				pe.Name = MapFetchToString(projectMap, "projectName")
+			}
+			if pe.ID > 0 || pe.Name != "" {
+				entity.Checkmarx.Projects = append(entity.Checkmarx.Projects, pe)
+			}
+		}
+	}
 }
 
 func (c *CatalogEntityParser) interpolateSnyk(entity *CatalogEntityData, snykMap map[string]interface{}) {
