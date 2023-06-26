@@ -1,6 +1,12 @@
 
 General TODO file of things left to implement.
 
+### General
+
+- ImportState is unverified and likely doesn't work
+- Add more acceptance tests for various changing of elements
+- Ensure generated YAML in Cortex is valid, specifically with regards to empty attributes
+
 ### Catalog Entity
 
 Entities:
@@ -27,8 +33,3 @@ Get provider working, figure out acceptance tests.
 ### All Data Sources
 
 Connect to Cortex TF account, figure out how to test safely.
-
-### Other
-
-- Add more acceptance tests for various changing of elements. 
-- Ensure generated YAML in Cortex is valid, specifically with regards to empty attributes
