@@ -3,6 +3,7 @@ General TODO file of things left to implement.
 
 ### General
 
+- Verify we're actually writing data to state file
 - ImportState is unverified and likely doesn't work
 - Add more acceptance tests for various changing of elements
 - Ensure generated YAML in Cortex is valid, specifically with regards to empty attributes

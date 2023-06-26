@@ -6,9 +6,7 @@ import (
 	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -93,29 +91,19 @@ func (d *CatalogEntityDataSource) Read(ctx context.Context, req datasource.ReadR
 		return
 	}
 
-	// If applicable, this is a great opportunity to initialize any necessary
-	// provider client data and make a call using it.
-	// httpResp, err := d.client.Do(httpReq)
-	// if err != nil {
-	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read example, got error: %s", err))
-	//     return
-	// }
+	// Issue API request
+	entity, err := d.client.CatalogEntities().GetFromDescriptor(ctx, data.Tag.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read example, got error: %s", err))
+		return
+	}
 
-	// For the purposes of this example code, hardcoding a response value to
-	// save into the Terraform state.
-	data.Tag = types.StringValue("test")
-
-	// Write logs using the tflog package
-	// Documentation: https://terraform.io/plugin/log
-	tflog.Trace(ctx, "read a data source")
-
-	// Set the ID in state based on the tag
-	//data.Id = data.Tag
-	resp.State.SetAttribute(ctx, path.Root("id"), data.Tag)
-	resp.State.SetAttribute(ctx, path.Root("tag"), data.Tag)
-	resp.State.SetAttribute(ctx, path.Root("name"), data.Name)
-	resp.State.SetAttribute(ctx, path.Root("description"), data.Description)
+	// Map to state
+	data.Id = types.StringValue(entity.Tag)
+	data.Tag = types.StringValue(entity.Tag)
+	data.Name = types.StringValue(entity.Title)
+	data.Description = types.StringValue(entity.Description)
 
 	// Save data into Terraform state
-	//resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dghubble/sling"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"gopkg.in/yaml.v3"
-	"log"
 	"strings"
 )
 
@@ -128,7 +128,9 @@ func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag strin
 	if err != nil {
 		return entity, errors.Join(fmt.Errorf("failed handling response status for %s from %s", tag, uri), err)
 	}
-	log.Printf("body: %+v", entityDescriptorResponse)
+
+	tflog.Debug(ctx, fmt.Sprintf("body: %+v", entityDescriptorResponse))
+
 	cl.ResponseDecoder(jsonDecoder{})
 	return c.parser.YamlToEntity(entity, entityDescriptorResponse)
 }
@@ -197,7 +199,7 @@ func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEnt
 	}
 	body := strings.NewReader(string(bytes))
 
-	log.Printf("CREATE body: %+v", body)
+	tflog.Debug(ctx, fmt.Sprintf("CREATE body: %+v", body))
 	response, err := c.Client().
 		Set("Content-Type", "application/openapi;charset=UTF-8").
 		Set("Accept", "application/json").
@@ -211,7 +213,7 @@ func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEnt
 	err = c.client.handleResponseStatus(response, apiError)
 	if err != nil {
 		reqYaml, _ := yaml.Marshal(req)
-		log.Printf("Failed upserting catalog entity: %+v\n\nRequest:\n%+v\n%+v", err, string(reqYaml), apiError.String())
+		tflog.Error(ctx, fmt.Sprintf("Failed upserting catalog entity: %+v\n\nRequest:\n%+v\n%+v", err, string(reqYaml), apiError.String()))
 		return entity, err
 	}
 
