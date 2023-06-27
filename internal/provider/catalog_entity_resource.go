@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -588,12 +587,12 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 						Attributes: map[string]schema.Attribute{
 							"application_ids": schema.ListAttribute{
 								MarkdownDescription: "Mend application IDs, found in the Mend SAST web interface.",
-								Required:            true,
+								Optional:            true,
 								ElementType:         types.StringType,
 							},
 							"project_ids": schema.ListAttribute{
 								MarkdownDescription: "Mend project IDs, found in the Mend SCA web interface.",
-								Required:            true,
+								Optional:            true,
 								ElementType:         types.StringType,
 							},
 						},
@@ -618,7 +617,7 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 						Attributes: map[string]schema.Attribute{
 							"application_names": schema.ListAttribute{
 								MarkdownDescription: "Veracode application names.",
-								Required:            true,
+								Optional:            true,
 								ElementType:         types.StringType,
 							},
 							"sandboxes": schema.ListNestedAttribute{
@@ -766,16 +765,17 @@ func (r *CatalogEntityResource) Create(ctx context.Context, req resource.CreateR
 
 	// Issue API request
 	upsertRequest := r.toUpsertRequest(ctx, data)
-	ceResponse, err := r.client.CatalogEntities().Upsert(ctx, upsertRequest)
+	entity, err := r.client.CatalogEntities().Upsert(ctx, upsertRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read catalog entity, got error: %s", err))
 		return
 	}
 
 	// Set computed attributes
-	data.Id = types.StringValue(ceResponse.Tag)
-	data.Tag = types.StringValue(ceResponse.Tag)
-	// TODO: Add other attributes, consolidate this into a shared method
+	data.FromApiModel(ctx, &resp.Diagnostics, entity)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -800,37 +800,9 @@ func (r *CatalogEntityResource) Read(ctx context.Context, req resource.ReadReque
 	}
 
 	// Set attributes from API response
-	data.Id = types.StringValue(entity.Tag)
-	data.Tag = types.StringValue(entity.Tag)
-
-	// coerce map of unknown types into string
-	if entity.Metadata != nil {
-		metadata, err := json.Marshal(entity.Metadata)
-		if err != nil {
-			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read metadata, got error: %s", err))
-			return
-		}
-		data.Metadata = types.StringValue(string(metadata))
-	}
-
-	if data.Dependencies != nil {
-		for _, dependency := range entity.Dependencies {
-			depMetadata := []byte("")
-			if dependency.Metadata != nil {
-				depMetadata, err = json.Marshal(dependency.Metadata)
-				if err != nil {
-					resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read dependency metadata, got error: %s", err))
-					return
-				}
-			}
-			depResourceModel := CatalogEntityDependencyResourceModel{
-				Tag:      types.StringValue(dependency.Tag),
-				Method:   types.StringValue(dependency.Method),
-				Path:     types.StringValue(dependency.Path),
-				Metadata: types.StringValue(string(depMetadata)),
-			}
-			data.Dependencies = append(data.Dependencies, depResourceModel)
-		}
+	data.FromApiModel(ctx, &resp.Diagnostics, entity)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	// Save updated data into Terraform state
@@ -856,11 +828,10 @@ func (r *CatalogEntityResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	// Set computed attributes
-	data.Id = data.Tag
-	data.Tag = types.StringValue(entity.Tag)
-	data.Name = types.StringValue(entity.Title)
-	data.Description = types.StringValue(entity.Description)
-	// TODO: Add other attributes, consolidate this into a shared method
+	data.FromApiModel(ctx, &resp.Diagnostics, entity)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

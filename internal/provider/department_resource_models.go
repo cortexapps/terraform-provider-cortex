@@ -62,7 +62,6 @@ func (o *DepartmentResourceModel) FromApiModel(department *cortex.Department) {
 	}
 }
 
-// DepartmentMemberResourceModel describes the department member data model
 type DepartmentMemberResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Email       types.String `tfsdk:"email"`

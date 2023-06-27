@@ -452,7 +452,7 @@ Required:
 <a id="nestedatt--static_analysis--mend"></a>
 ### Nested Schema for `static_analysis.mend`
 
-Required:
+Optional:
 
 - `application_ids` (List of String) Mend application IDs, found in the Mend SAST web interface.
 - `project_ids` (List of String) Mend project IDs, found in the Mend SCA web interface.
@@ -473,12 +473,9 @@ Optional:
 <a id="nestedatt--static_analysis--veracode"></a>
 ### Nested Schema for `static_analysis.veracode`
 
-Required:
-
-- `application_names` (List of String) Veracode application names.
-
 Optional:
 
+- `application_names` (List of String) Veracode application names.
 - `sandboxes` (Attributes List) Veracode sandboxes. (see [below for nested schema](#nestedatt--static_analysis--veracode--sandboxes))
 
 <a id="nestedatt--static_analysis--veracode--sandboxes"></a>

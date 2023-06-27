@@ -72,12 +72,7 @@ func TestAccCatalogEntityResource(t *testing.T) {
 			{
 				ResourceName:      "cortex_catalog_entity.test",
 				ImportState:       true,
-				ImportStateVerify: false, // TODO: Fix this
-				// This is not normally necessary, but is here because this
-				// example code does not have an actual upstream service.
-				// Once the Read method is able to refresh information from
-				// the upstream service, this can be removed.
-				ImportStateVerifyIgnore: []string{"tag", "defaulted"},
+				ImportStateVerify: true,
 			},
 			// Update and Read testing
 			{
@@ -163,9 +158,8 @@ resource "cortex_catalog_entity" "test" {
       entity_ids           = ["mock-slo-id-1", "mock-slo-id-2"]
       entity_name_matchers = ["products-service", "products-service-2"]
     }
-    newrelic = {
+    new_relic = {
       application_id = 123456
-      alias          = "products-service"
     }
   }
 
@@ -249,7 +243,6 @@ resource "cortex_catalog_entity" "test" {
         error_query = "sum(rate(http_requests_total{job=\"products-service\", status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"products-service\"}[5m]))"
         total_query = "sum(rate(http_requests_total{job=\"products-service\"}[5m]))"
         slo         = 0.999
-        name        = "HTTP 5xx"
       }
     ]
     signal_fx = [

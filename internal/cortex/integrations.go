@@ -108,7 +108,7 @@ type CatalogEntityOwner struct {
 type CatalogEntitySLOs struct {
 	DataDog    []CatalogEntitySLODataDog         `json:"datadog,omitempty" yaml:"datadog,omitempty"`
 	Dynatrace  []CatalogEntitySLODynatrace       `json:"dynatrace,omitempty" yaml:"dynatrace,omitempty"`
-	Lightstep  CatalogEntitySLOLightstep         `json:"lightstep,omitempty" yaml:"lightstep,omitempty"`
+	Lightstep  []CatalogEntitySLOLightstepStream `json:"lightstep,omitempty" yaml:"lightstep,omitempty"`
 	Prometheus []CatalogEntitySLOPrometheusQuery `json:"prometheus,omitempty" yaml:"prometheus,omitempty"`
 	SignalFX   []CatalogEntitySLOSignalFX        `json:"signalfx,omitempty" yaml:"signalfx,omitempty"`
 	SumoLogic  []CatalogEntitySLOSumoLogic       `json:"sumologic,omitempty" yaml:"sumologic,omitempty"`
@@ -241,16 +241,12 @@ x-cortex-slos:
 			  slo: 0.9998
 */
 
-type CatalogEntitySLOLightstep struct {
-	Streams []CatalogEntitySLOLightstepStream `json:"stream" yaml:"stream"`
-}
-
 type CatalogEntitySLOLightstepStream struct {
-	StreamID string                          `json:"streamId" yaml:"streamId"`
-	Targets  CatalogEntitySLOLightstepTarget `json:"targets" yaml:"targets"`
+	StreamID string                           `json:"streamId" yaml:"streamId"`
+	Targets  CatalogEntitySLOLightstepTargets `json:"targets" yaml:"targets"`
 }
 
-type CatalogEntitySLOLightstepTarget struct {
+type CatalogEntitySLOLightstepTargets struct {
 	Latencies []CatalogEntitySLOLightstepTargetLatency `json:"latency" yaml:"latency"`
 }
 
@@ -377,8 +373,8 @@ type CatalogEntityStaticAnalysisVeracode struct {
 }
 
 type CatalogEntityStaticAnalysisVeracodeSandbox struct {
-	ApplicationName string `json:"applicationName" yaml:"applicationName"`
-	SandboxName     string `json:"sandboxName" yaml:"sandboxName"`
+	ApplicationName string `json:"applicationName,omitempty" yaml:"applicationName,omitempty"`
+	SandboxName     string `json:"sandboxName,omitempty" yaml:"sandboxName,omitempty"`
 }
 
 /***********************************************************************************************************************

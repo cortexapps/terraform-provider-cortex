@@ -15,6 +15,8 @@ Entities:
 - x-cortex-k8s
 - OpenAPI docs?
 - Packages?
+- `x-cortex-domain-parents`:
+    tag: domain-iam
 
 ### Scorecards
 

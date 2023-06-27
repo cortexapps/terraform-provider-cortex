@@ -48,16 +48,16 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 	}
 
 	if info["x-cortex-issues"] != nil {
-		entity.Issues = CatalogEntityIssues{}
-		issuesMap := info["x-cortex-issues"].(map[string]interface{})
-		if issuesMap["jira"] != nil {
-			c.interpolateJira(entity, issuesMap["jira"].(map[string]interface{}))
-		}
+		c.interpolateIssues(entity, info["x-cortex-issues"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-slos"] != nil {
 		slosMap := info["x-cortex-slos"].(map[string]interface{})
 		c.interpolateSLOs(entity, slosMap)
+	}
+
+	if info["x-cortex-apm"] != nil {
+		c.interpolateApm(entity, info["x-cortex-apm"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-static-analysis"] != nil {
@@ -83,6 +83,10 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 
 	if info["x-cortex-sentry"] != nil {
 		c.interpolateSentry(entity, info["x-cortex-sentry"].(map[string]interface{}))
+	}
+
+	if info["x-cortex-rollbar"] != nil {
+		c.interpolateRollbar(entity, info["x-cortex-rollbar"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-snyk"] != nil {
@@ -147,6 +151,8 @@ func (c *CatalogEntityParser) interpolateDashboards(entity *CatalogEntityData, d
 	}
 }
 
+// OnCall
+
 func (c *CatalogEntityParser) interpolateOnCall(entity *CatalogEntityData, onCallMap map[string]interface{}) {
 	entity.OnCall = CatalogEntityOnCall{}
 	if onCallMap["pagerduty"] != nil {
@@ -171,6 +177,8 @@ func (c *CatalogEntityParser) interpolateOnCall(entity *CatalogEntityData, onCal
 		}
 	}
 }
+
+// Git
 
 func (c *CatalogEntityParser) interpolateGit(entity *CatalogEntityData, gitMap map[string]interface{}) {
 	if gitMap["github"] != nil {
@@ -203,9 +211,21 @@ func (c *CatalogEntityParser) interpolateGit(entity *CatalogEntityData, gitMap m
 	}
 }
 
+// Issues
+
+func (c *CatalogEntityParser) interpolateIssues(entity *CatalogEntityData, issuesMap map[string]interface{}) {
+	entity.Issues = CatalogEntityIssues{}
+	if issuesMap["jira"] != nil {
+		c.interpolateJira(entity, issuesMap["jira"].(map[string]interface{}))
+	}
+}
+
 func (c *CatalogEntityParser) interpolateJira(entity *CatalogEntityData, jiraMap map[string]interface{}) {
 	if jiraMap["defaultJql"] != nil {
-		entity.Issues.Jira.DefaultJQL = MapFetchToString(jiraMap, "defaultJQL")
+		jql := MapFetchToString(jiraMap, "defaultJql")
+		if jql != "" {
+			entity.Issues.Jira.DefaultJQL = jql
+		}
 	}
 	if jiraMap["projects"] != nil {
 		projects := jiraMap["projects"].([]interface{})
@@ -216,60 +236,80 @@ func (c *CatalogEntityParser) interpolateJira(entity *CatalogEntityData, jiraMap
 	if jiraMap["labels"] != nil {
 		labels := jiraMap["labels"].([]interface{})
 		for _, label := range labels {
-			entity.Issues.Jira.Projects = append(entity.Issues.Jira.Labels, label.(string))
+			entity.Issues.Jira.Labels = append(entity.Issues.Jira.Labels, label.(string))
 		}
 	}
 	if jiraMap["components"] != nil {
 		components := jiraMap["components"].([]interface{})
 		for _, component := range components {
-			entity.Issues.Jira.Projects = append(entity.Issues.Jira.Components, component.(string))
+			entity.Issues.Jira.Components = append(entity.Issues.Jira.Components, component.(string))
 		}
 	}
 }
 
 func (c *CatalogEntityParser) interpolateSLOs(entity *CatalogEntityData, slosMap map[string]interface{}) {
 	entity.SLOs = CatalogEntitySLOs{}
+	if slosMap["datadog"] != nil {
+		c.interpolateDataDogSLOs(entity, slosMap["datadog"].([]interface{}))
+	}
+	if slosMap["dynatrace"] != nil {
+		c.interpolateDynatraceSLOs(entity, slosMap["dynatrace"].([]interface{}))
+	}
 	if slosMap["lightstep"] != nil {
-		c.interpolateLightstep(entity, slosMap["lightstep"].(map[string]interface{}))
+		c.interpolateLightstepSLOs(entity, slosMap["lightstep"].([]interface{}))
 	}
 	if slosMap["prometheus"] != nil {
-		c.interpolatePrometheus(entity, slosMap["prometheus"].([]interface{}))
+		c.interpolatePrometheusSLOs(entity, slosMap["prometheus"].([]interface{}))
 	}
-	// TODO: SignalFX, DataDog, DynaTrace, SumoLogic
+	if slosMap["signalfx"] != nil {
+		c.interpolateSignalFXSLOs(entity, slosMap["signalfx"].([]interface{}))
+	}
+	if slosMap["sumologic"] != nil {
+		c.interpolateSumoLogicSLOs(entity, slosMap["sumologic"].([]interface{}))
+	}
 }
 
-func (c *CatalogEntityParser) interpolateLightstep(entity *CatalogEntityData, lightstepMap map[string]interface{}) {
-	entity.SLOs.Lightstep = CatalogEntitySLOLightstep{
-		Streams: []CatalogEntitySLOLightstepStream{},
+func (c *CatalogEntityParser) interpolateLightstepSLOs(entity *CatalogEntityData, streams []interface{}) {
+	if len(streams) == 0 {
+		return
 	}
-	if lightstepMap["streams"] != nil {
-		streams := lightstepMap["streams"].([]interface{})
-		for _, stream := range streams {
-			streamMap := stream.(map[string]interface{})
-			streamSLO := CatalogEntitySLOLightstepStream{
-				StreamID: MapFetchToString(streamMap, "streamId"),
-				Targets:  CatalogEntitySLOLightstepTarget{},
-			}
-			if streamMap["targets"] != nil {
-				streamTargetMap := streamMap["targets"].(map[string]interface{})
-				if streamTargetMap["latency"] != nil {
-					latencies := streamTargetMap["latency"].([]interface{})
-					for _, latency := range latencies {
-						latencyMap := latency.(map[string]interface{})
-						streamSLO.Targets.Latencies = append(streamSLO.Targets.Latencies, CatalogEntitySLOLightstepTargetLatency{
-							Percentile: MapFetch(latencyMap, "percentile", 0.0).(float64),
-							Target:     MapFetch(latencyMap, "target", 0).(int64),
-							SLO:        MapFetch(latencyMap, "slo", 0.0).(float64),
-						})
-					}
+
+	entity.SLOs.Lightstep = make([]CatalogEntitySLOLightstepStream, len(streams))
+	for i, stream := range streams {
+		streamMap := stream.(map[string]interface{})
+		streamSLO := CatalogEntitySLOLightstepStream{
+			StreamID: MapFetchToString(streamMap, "streamId"),
+			Targets:  CatalogEntitySLOLightstepTargets{},
+		}
+		if streamMap["targets"] != nil {
+			streamTargetMap := streamMap["targets"].(map[string]interface{})
+			if streamTargetMap["latency"] != nil {
+				latencies := streamTargetMap["latency"].([]interface{})
+				for _, latency := range latencies {
+					latencyMap := latency.(map[string]interface{})
+					streamSLO.Targets.Latencies = append(streamSLO.Targets.Latencies, CatalogEntitySLOLightstepTargetLatency{
+						Percentile: MapFetch(latencyMap, "percentile", 0.0).(float64),
+						Target:     int64(MapFetch(latencyMap, "target", 0).(int)),
+						SLO:        MapFetch(latencyMap, "slo", 0.0).(float64),
+					})
 				}
 			}
-			entity.SLOs.Lightstep.Streams = append(entity.SLOs.Lightstep.Streams, streamSLO)
 		}
+		entity.SLOs.Lightstep[i] = streamSLO
 	}
 }
 
-func (c *CatalogEntityParser) interpolatePrometheus(entity *CatalogEntityData, prometheusQueries []interface{}) {
+func (c *CatalogEntityParser) interpolateDataDogSLOs(entity *CatalogEntityData, slos []interface{}) {
+	entity.SLOs.DataDog = []CatalogEntitySLODataDog{}
+	for _, slo := range slos {
+		sloMap := slo.(map[string]interface{})
+		entity.SLOs.DataDog = append(entity.SLOs.DataDog, CatalogEntitySLODataDog{
+			ID: MapFetchToString(sloMap, "id"),
+		})
+	}
+}
+
+func (c *CatalogEntityParser) interpolatePrometheusSLOs(entity *CatalogEntityData, prometheusQueries []interface{}) {
 	entity.SLOs.Prometheus = []CatalogEntitySLOPrometheusQuery{}
 	for _, query := range prometheusQueries {
 		queryMap := query.(map[string]interface{})
@@ -281,8 +321,100 @@ func (c *CatalogEntityParser) interpolatePrometheus(entity *CatalogEntityData, p
 	}
 }
 
+func (c *CatalogEntityParser) interpolateSignalFXSLOs(entity *CatalogEntityData, signalFxSLOs []interface{}) {
+	entity.SLOs.SignalFX = []CatalogEntitySLOSignalFX{}
+	for _, slo := range signalFxSLOs {
+		sloMap := slo.(map[string]interface{})
+		entity.SLOs.SignalFX = append(entity.SLOs.SignalFX, CatalogEntitySLOSignalFX{
+			Query:     MapFetchToString(sloMap, "query"),
+			Rollup:    MapFetchToString(sloMap, "rollup"),
+			Target:    int64(MapFetch(sloMap, "target", 0).(int)),
+			Lookback:  MapFetchToString(sloMap, "lookback"),
+			Operation: MapFetchToString(sloMap, "operation"),
+		})
+	}
+}
+
+func (c *CatalogEntityParser) interpolateDynatraceSLOs(entity *CatalogEntityData, slos []interface{}) {
+	entity.SLOs.Dynatrace = []CatalogEntitySLODynatrace{}
+	for _, slo := range slos {
+		sloMap := slo.(map[string]interface{})
+		entity.SLOs.Dynatrace = append(entity.SLOs.Dynatrace, CatalogEntitySLODynatrace{
+			ID: MapFetchToString(sloMap, "id"),
+		})
+	}
+}
+
+func (c *CatalogEntityParser) interpolateSumoLogicSLOs(entity *CatalogEntityData, slos []interface{}) {
+	entity.SLOs.SumoLogic = []CatalogEntitySLOSumoLogic{}
+	for _, slo := range slos {
+		sloMap := slo.(map[string]interface{})
+		entity.SLOs.SumoLogic = append(entity.SLOs.SumoLogic, CatalogEntitySLOSumoLogic{
+			ID: MapFetchToString(sloMap, "id"),
+		})
+	}
+}
+
+// APM
+
+func (c *CatalogEntityParser) interpolateApm(entity *CatalogEntityData, apm map[string]interface{}) {
+	entity.Apm = CatalogEntityApm{}
+
+	if apm["datadog"] != nil {
+		c.interpolateDataDogApm(entity, apm["datadog"].(map[string]interface{}))
+	}
+	if apm["dynatrace"] != nil {
+		c.interpolateDynatraceApm(entity, apm["dynatrace"].(map[string]interface{}))
+	}
+	if apm["newrelic"] != nil {
+		c.interpolateNewRelicApm(entity, apm["newrelic"].(map[string]interface{}))
+	}
+}
+
+func (c *CatalogEntityParser) interpolateDataDogApm(entity *CatalogEntityData, apm map[string]interface{}) {
+	entity.Apm.DataDog = CatalogEntityApmDataDog{}
+	if apm["monitors"] != nil {
+		entity.Apm.DataDog.Monitors = make([]int64, len(apm["monitors"].([]interface{})))
+		for i, monitor := range apm["monitors"].([]interface{}) {
+			entity.Apm.DataDog.Monitors[i] = int64(monitor.(int))
+		}
+	}
+}
+
+func (c *CatalogEntityParser) interpolateDynatraceApm(entity *CatalogEntityData, apm map[string]interface{}) {
+	entity.Apm.Dynatrace = CatalogEntityApmDynatrace{}
+	if apm["entityIds"] != nil {
+		entity.Apm.Dynatrace.EntityIDs = make([]string, len(apm["entityIds"].([]interface{})))
+		for i, group := range apm["entityIds"].([]interface{}) {
+			entity.Apm.Dynatrace.EntityIDs[i] = group.(string)
+		}
+	}
+	if apm["entityNameMatchers"] != nil {
+		entity.Apm.Dynatrace.EntityNameMatchers = make([]string, len(apm["entityNameMatchers"].([]interface{})))
+		for i, group := range apm["entityNameMatchers"].([]interface{}) {
+			entity.Apm.Dynatrace.EntityNameMatchers[i] = group.(string)
+		}
+	}
+}
+
+func (c *CatalogEntityParser) interpolateNewRelicApm(entity *CatalogEntityData, apm map[string]interface{}) {
+	entity.Apm.NewRelic = CatalogEntityApmNewRelic{}
+	if apm["applicationId"] != nil {
+		entity.Apm.NewRelic.ApplicationID = int64(apm["applicationId"].(int))
+	}
+	if apm["alias"] != nil {
+		entity.Apm.NewRelic.Alias = apm["alias"].(string)
+	}
+}
+
+// Integrations
+
 func (c *CatalogEntityParser) interpolateSentry(entity *CatalogEntityData, sentryMap map[string]interface{}) {
 	entity.Sentry.Project = MapFetchToString(sentryMap, "project")
+}
+
+func (c *CatalogEntityParser) interpolateRollbar(entity *CatalogEntityData, rollbarMap map[string]interface{}) {
+	entity.Rollbar.Project = MapFetchToString(rollbarMap, "project")
 }
 
 func (c *CatalogEntityParser) interpolateBugSnag(entity *CatalogEntityData, bugSnagMap map[string]interface{}) {
@@ -317,6 +449,7 @@ func (c *CatalogEntityParser) interpolateSnyk(entity *CatalogEntityData, snykMap
 			entity.Snyk.Projects = append(entity.Snyk.Projects, CatalogEntitySnykProject{
 				ProjectID:    MapFetchToString(projectMap, "projectId"),
 				Organization: MapFetchToString(projectMap, "organizationId"),
+				Source:       MapFetchToString(projectMap, "source"),
 			})
 		}
 	}
@@ -334,8 +467,8 @@ func (c *CatalogEntityParser) interpolateAlerts(entity *CatalogEntityData, alert
 }
 
 func (c *CatalogEntityParser) interpolateStaticAnalysis(entity *CatalogEntityData, saMap map[string]interface{}) {
-	if saMap["code_cov"] != nil {
-		c.interpolateStaticAnalysisCodeCov(entity, saMap["code_cov"].(map[string]interface{}))
+	if saMap["codecov"] != nil {
+		c.interpolateStaticAnalysisCodeCov(entity, saMap["codecov"].(map[string]interface{}))
 	}
 	if saMap["mend"] != nil {
 		c.interpolateStaticAnalysisMend(entity, saMap["mend"].(map[string]interface{}))
@@ -350,32 +483,40 @@ func (c *CatalogEntityParser) interpolateStaticAnalysis(entity *CatalogEntityDat
 
 func (c *CatalogEntityParser) interpolateStaticAnalysisCodeCov(entity *CatalogEntityData, ccMap map[string]interface{}) {
 	entity.StaticAnalysis.CodeCov = CatalogEntityStaticAnalysisCodeCov{
-		Repository: ccMap["repository"].(string),
-		Provider:   ccMap["provider"].(string),
+		Repository: MapFetchToString(ccMap, "repo"),
+		Provider:   MapFetchToString(ccMap, "provider"),
 	}
 }
 
-func (c *CatalogEntityParser) interpolateStaticAnalysisMend(entity *CatalogEntityData, mendMap map[string]interface{}) {
+func (c *CatalogEntityParser) interpolateStaticAnalysisMend(entity *CatalogEntityData, data map[string]interface{}) {
 	entity.StaticAnalysis.Mend = CatalogEntityStaticAnalysisMend{}
-	applicationIds := mendMap["applicationIds"].([]interface{})
+	applicationIds := data["applicationIds"].([]interface{})
 	for _, applicationId := range applicationIds {
-		entity.StaticAnalysis.Mend.ApplicationIDs = append(entity.StaticAnalysis.Mend.ApplicationIDs, applicationId.(string))
+		if applicationId.(string) != "" {
+			entity.StaticAnalysis.Mend.ApplicationIDs = append(entity.StaticAnalysis.Mend.ApplicationIDs, applicationId.(string))
+		}
 	}
-	projectIds := mendMap["projectIds"].([]interface{})
+	projectIds := data["projectIds"].([]interface{})
 	for _, projectId := range projectIds {
-		entity.StaticAnalysis.Mend.ProjectIDs = append(entity.StaticAnalysis.Mend.ProjectIDs, projectId.(string))
+		if projectId.(string) != "" {
+			entity.StaticAnalysis.Mend.ProjectIDs = append(entity.StaticAnalysis.Mend.ProjectIDs, projectId.(string))
+		}
 	}
 }
 
-func (c *CatalogEntityParser) interpolateStaticAnalysisSonarQube(entity *CatalogEntityData, mendMap map[string]interface{}) {
+func (c *CatalogEntityParser) interpolateStaticAnalysisSonarQube(entity *CatalogEntityData, data map[string]interface{}) {
 	entity.StaticAnalysis.SonarQube = CatalogEntityStaticAnalysisSonarQube{
-		Project: mendMap["project"].(string),
+		Project: data["project"].(string),
 	}
 }
 
 func (c *CatalogEntityParser) interpolateStaticAnalysisVeracode(entity *CatalogEntityData, mendMap map[string]interface{}) {
-	entity.StaticAnalysis.Veracode = CatalogEntityStaticAnalysisVeracode{}
 	applicationNames := mendMap["applicationNames"].([]interface{})
+	if len(applicationNames) == 0 && mendMap["sandboxes"] == nil {
+		return
+	}
+
+	entity.StaticAnalysis.Veracode = CatalogEntityStaticAnalysisVeracode{}
 	for _, applicationName := range applicationNames {
 		entity.StaticAnalysis.Veracode.ApplicationNames = append(entity.StaticAnalysis.Veracode.ApplicationNames, applicationName.(string))
 	}
@@ -385,9 +526,12 @@ func (c *CatalogEntityParser) interpolateStaticAnalysisVeracode(entity *CatalogE
 		for _, sandbox := range sandboxes {
 			sandboxMap := sandbox.(map[string]interface{})
 			if sandboxMap["applicationName"] != nil || sandboxMap["sandboxName"] != nil {
-				sandboxEntity := CatalogEntityStaticAnalysisVeracodeSandbox{
-					ApplicationName: sandboxMap["applicationName"].(string),
-					SandboxName:     sandboxMap["sandboxName"].(string),
+				sandboxEntity := CatalogEntityStaticAnalysisVeracodeSandbox{}
+				if sandboxMap["applicationName"] != nil {
+					sandboxEntity.ApplicationName = sandboxMap["applicationName"].(string)
+				}
+				if sandboxMap["sandboxName"] != nil {
+					sandboxEntity.SandboxName = sandboxMap["sandboxName"].(string)
 				}
 				entity.StaticAnalysis.Veracode.Sandboxes = append(entity.StaticAnalysis.Veracode.Sandboxes, sandboxEntity)
 			}

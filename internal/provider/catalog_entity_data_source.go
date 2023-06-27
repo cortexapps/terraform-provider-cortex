@@ -29,6 +29,13 @@ type CatalogEntityDataSourceModel struct {
 	Description types.String `tfsdk:"description"`
 }
 
+func (o *CatalogEntityDataSourceModel) FromApiModel(entity *cortex.CatalogEntityData) {
+	o.Id = types.StringValue(entity.Tag)
+	o.Tag = types.StringValue(entity.Tag)
+	o.Name = types.StringValue(entity.Title)
+	o.Description = types.StringValue(entity.Description)
+}
+
 func (d *CatalogEntityDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_catalog_entity"
 }
@@ -99,10 +106,7 @@ func (d *CatalogEntityDataSource) Read(ctx context.Context, req datasource.ReadR
 	}
 
 	// Map to state
-	data.Id = types.StringValue(entity.Tag)
-	data.Tag = types.StringValue(entity.Tag)
-	data.Name = types.StringValue(entity.Title)
-	data.Description = types.StringValue(entity.Description)
+	data.FromApiModel(entity)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
