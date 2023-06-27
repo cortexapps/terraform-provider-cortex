@@ -54,10 +54,9 @@ func (o *DepartmentResourceModel) FromApiModel(department *cortex.Department) {
 	o.Description = types.StringValue(department.Description)
 	if department.Members != nil {
 		o.Members = make([]DepartmentMemberResourceModel, len(department.Members))
-		for _, member := range department.Members {
+		for i, member := range department.Members {
 			m := DepartmentMemberResourceModel{}
-			m.FromApiModel(&member)
-			o.Members = append(o.Members, m)
+			o.Members[i] = m.FromApiModel(&member)
 		}
 	}
 }
@@ -76,10 +75,12 @@ func (o *DepartmentMemberResourceModel) ToApiModel() cortex.DepartmentMember {
 	}
 }
 
-func (o *DepartmentMemberResourceModel) FromApiModel(member *cortex.DepartmentMember) {
-	o.Name = types.StringValue(member.Name)
-	o.Email = types.StringValue(member.Email)
-	o.Description = types.StringValue(member.Description)
+func (o *DepartmentMemberResourceModel) FromApiModel(member *cortex.DepartmentMember) DepartmentMemberResourceModel {
+	return DepartmentMemberResourceModel{
+		Name:        types.StringValue(member.Name),
+		Email:       types.StringValue(member.Email),
+		Description: types.StringValue(member.Description),
+	}
 }
 
 // DepartmentDataSourceModel describes the data source data model.
