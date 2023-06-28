@@ -53,7 +53,7 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 		Attributes: map[string]schema.Attribute{
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Human-readable name for the entity",
-				Optional:            true,
+				Required:            true,
 			},
 			"description": schema.StringAttribute{
 				MarkdownDescription: "Description of the entity visible in the Service or Resource Catalog. Markdown is supported.",
@@ -264,17 +264,17 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 								MarkdownDescription: "Default JQL to surface issues for the entity.",
 								Optional:            true,
 							},
-							"projects": schema.SetAttribute{
+							"projects": schema.ListAttribute{
 								MarkdownDescription: "List of Jira projects for the entity.",
 								Optional:            true,
 								ElementType:         types.StringType,
 							},
-							"components": schema.SetAttribute{
+							"components": schema.ListAttribute{
 								MarkdownDescription: "List of Jira components for the entity.",
 								Optional:            true,
 								ElementType:         types.StringType,
 							},
-							"labels": schema.SetAttribute{
+							"labels": schema.ListAttribute{
 								MarkdownDescription: "List of Jira labels for the entity.",
 								Optional:            true,
 								ElementType:         types.StringType,
@@ -348,7 +348,7 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 						MarkdownDescription: "DataDog configuration for the entity.",
 						Optional:            true,
 						Attributes: map[string]schema.Attribute{
-							"monitors": schema.SetAttribute{
+							"monitors": schema.ListAttribute{
 								MarkdownDescription: "List of DataDog monitors for the entity.",
 								Optional:            true,
 								ElementType:         types.Int64Type,
@@ -359,12 +359,12 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 						MarkdownDescription: "Dynatrace configuration for the entity.",
 						Optional:            true,
 						Attributes: map[string]schema.Attribute{
-							"entity_ids": schema.SetAttribute{
+							"entity_ids": schema.ListAttribute{
 								MarkdownDescription: "List of Dynatrace entity IDs for the entity.",
 								Optional:            true,
 								ElementType:         types.StringType,
 							},
-							"entity_name_matchers": schema.SetAttribute{
+							"entity_name_matchers": schema.ListAttribute{
 								MarkdownDescription: "List of Dynatrace entity name matchers for the entity.",
 								Optional:            true,
 								ElementType:         types.StringType,

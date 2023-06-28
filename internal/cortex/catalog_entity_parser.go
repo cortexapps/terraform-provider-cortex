@@ -187,6 +187,8 @@ func (c *CatalogEntityParser) interpolateGit(entity *CatalogEntityData, gitMap m
 			Repository: MapFetchToString(githubMap, "repository"),
 			BasePath:   MapFetchToString(githubMap, "basePath"),
 		}
+	} else {
+		entity.Git.Github = CatalogEntityGitGithub{}
 	}
 	if gitMap["gitlab"] != nil {
 		gitlabMap := gitMap["gitlab"].(map[string]interface{})
@@ -194,6 +196,8 @@ func (c *CatalogEntityParser) interpolateGit(entity *CatalogEntityData, gitMap m
 			Repository: MapFetchToString(gitlabMap, "repository"),
 			BasePath:   MapFetchToString(gitlabMap, "basePath"),
 		}
+	} else {
+		entity.Git.Gitlab = CatalogEntityGitGitlab{}
 	}
 	if gitMap["azure"] != nil {
 		azureMap := gitMap["azure"].(map[string]interface{})
@@ -202,12 +206,16 @@ func (c *CatalogEntityParser) interpolateGit(entity *CatalogEntityData, gitMap m
 			Repository: MapFetchToString(azureMap, "repository"),
 			BasePath:   MapFetchToString(azureMap, "basePath"),
 		}
+	} else {
+		entity.Git.Azure = CatalogEntityGitAzureDevOps{}
 	}
 	if gitMap["bitbucket"] != nil {
 		bitbucketMap := gitMap["bitbucket"].(map[string]interface{})
 		entity.Git.BitBucket = CatalogEntityGitBitBucket{
 			Repository: MapFetchToString(bitbucketMap, "repository"),
 		}
+	} else {
+		entity.Git.BitBucket = CatalogEntityGitBitBucket{}
 	}
 }
 

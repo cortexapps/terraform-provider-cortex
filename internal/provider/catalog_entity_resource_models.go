@@ -40,8 +40,12 @@ type CatalogEntityResourceModel struct {
 	Snyk           types.Object                      `tfsdk:"snyk"`
 }
 
+func getDefaultObjectOptions() basetypes.ObjectAsOptions {
+	return basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true}
+}
+
 func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityData {
-	defaultObjOptions := basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true}
+	defaultObjOptions := getDefaultObjectOptions()
 
 	owners := make([]cortex.CatalogEntityOwner, len(o.Owners))
 	for i, owner := range o.Owners {
@@ -62,6 +66,8 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 			fmt.Println("Error parsing custom metadata: ", err)
 			metadata = make(map[string]interface{})
 		}
+	} else {
+		metadata = make(map[string]interface{})
 	}
 	dependencies := make([]cortex.CatalogEntityDependency, len(o.Dependencies))
 	for i, dependency := range o.Dependencies {
@@ -149,7 +155,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		Alerts:         alerts,
 		Dashboards:     dashboards.ToApiModel(),
 		Apm:            apm.ToApiModel(),
-		Git:            git.ToApiModel(),
+		Git:            git.ToApiModel(ctx),
 		Issues:         issues.ToApiModel(),
 		OnCall:         onCall.ToApiModel(),
 		SLOs:           serviceLevelObjectives.ToApiModel(),
@@ -167,25 +173,37 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 	o.Name = types.StringValue(entity.Title)
 	o.Description = types.StringValue(entity.Description)
 
-	o.Owners = make([]CatalogEntityOwnerResourceModel, len(entity.Owners))
-	for i, owner := range entity.Owners {
-		m := CatalogEntityOwnerResourceModel{}
-		o.Owners[i] = m.FromApiModel(&owner)
+	if len(entity.Owners) > 0 {
+		o.Owners = make([]CatalogEntityOwnerResourceModel, len(entity.Owners))
+		for i, owner := range entity.Owners {
+			m := CatalogEntityOwnerResourceModel{}
+			o.Owners[i] = m.FromApiModel(&owner)
+		}
+	} else {
+		o.Owners = nil
 	}
 
-	o.Groups = make([]types.String, len(entity.Groups))
-	for i, group := range entity.Groups {
-		o.Groups[i] = types.StringValue(group)
+	if len(entity.Groups) > 0 {
+		o.Groups = make([]types.String, len(entity.Groups))
+		for i, group := range entity.Groups {
+			o.Groups[i] = types.StringValue(group)
+		}
+	} else {
+		o.Groups = nil
 	}
 
-	o.Links = make([]CatalogEntityLinkResourceModel, len(entity.Links))
-	for i, link := range entity.Links {
-		m := CatalogEntityLinkResourceModel{}
-		o.Links[i] = m.FromApiModel(&link)
+	if len(entity.Links) > 0 {
+		o.Links = make([]CatalogEntityLinkResourceModel, len(entity.Links))
+		for i, link := range entity.Links {
+			m := CatalogEntityLinkResourceModel{}
+			o.Links[i] = m.FromApiModel(&link)
+		}
+	} else {
+		o.Links = nil
 	}
 
 	// coerce map of unknown types into string
-	if entity.Metadata != nil {
+	if entity.Metadata != nil && len(entity.Metadata) > 0 {
 		metadata, err := json.Marshal(entity.Metadata)
 		if err != nil {
 			diagnostics.AddError("Error parsing metadata: %s", err.Error())
@@ -206,10 +224,14 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 		o.Dependencies = nil
 	}
 
-	o.Alerts = make([]CatalogEntityAlertResourceModel, len(entity.Alerts))
-	for i, alert := range entity.Alerts {
-		m := CatalogEntityAlertResourceModel{}
-		o.Alerts[i] = m.FromApiModel(&alert)
+	if len(entity.Alerts) > 0 {
+		o.Alerts = make([]CatalogEntityAlertResourceModel, len(entity.Alerts))
+		for i, alert := range entity.Alerts {
+			m := CatalogEntityAlertResourceModel{}
+			o.Alerts[i] = m.FromApiModel(&alert)
+		}
+	} else {
+		o.Alerts = nil
 	}
 
 	dashboards := CatalogEntityDashboardResourceModel{}
@@ -425,45 +447,76 @@ func (o *CatalogEntityAlertResourceModel) FromApiModel(alert *cortex.CatalogEnti
  ***********************************************************************************************************************/
 
 type CatalogEntityGitResourceModel struct {
-	Github    CatalogEntityGithubResourceModel    `tfsdk:"github"`
-	Gitlab    CatalogEntityGitlabResourceModel    `tfsdk:"gitlab"`
-	Azure     CatalogEntityAzureResourceModel     `tfsdk:"azure"`
-	Bitbucket CatalogEntityBitbucketResourceModel `tfsdk:"bitbucket"`
+	Github    types.Object `tfsdk:"github"`
+	Gitlab    types.Object `tfsdk:"gitlab"`
+	Azure     types.Object `tfsdk:"azure"`
+	Bitbucket types.Object `tfsdk:"bitbucket"`
 }
 
 func (o *CatalogEntityGitResourceModel) AttrTypes() map[string]attr.Type {
+	gh := CatalogEntityGithubResourceModel{}
+	gl := CatalogEntityGitlabResourceModel{}
+	az := CatalogEntityAzureResourceModel{}
+	bb := CatalogEntityBitbucketResourceModel{}
 	return map[string]attr.Type{
-		"github":    types.ObjectType{AttrTypes: o.Github.AttrTypes()},
-		"gitlab":    types.ObjectType{AttrTypes: o.Gitlab.AttrTypes()},
-		"azure":     types.ObjectType{AttrTypes: o.Azure.AttrTypes()},
-		"bitbucket": types.ObjectType{AttrTypes: o.Bitbucket.AttrTypes()},
+		"github":    types.ObjectType{AttrTypes: gh.AttrTypes()},
+		"gitlab":    types.ObjectType{AttrTypes: gl.AttrTypes()},
+		"azure":     types.ObjectType{AttrTypes: az.AttrTypes()},
+		"bitbucket": types.ObjectType{AttrTypes: bb.AttrTypes()},
 	}
 }
 
-func (o *CatalogEntityGitResourceModel) ToApiModel() cortex.CatalogEntityGit {
+func (o *CatalogEntityGitResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityGit {
 	git := cortex.CatalogEntityGit{}
-	if o.Github.Repository.ValueString() != "" {
-		git.Github = o.Github.ToApiModel()
+	defaultObjOptions := getDefaultObjectOptions()
+
+	if !o.Github.IsNull() {
+		om := CatalogEntityGithubResourceModel{}
+		o.Github.As(ctx, &om, defaultObjOptions)
+		git.Github = om.ToApiModel()
 	}
-	if o.Gitlab.Repository.ValueString() != "" {
-		git.Gitlab = o.Gitlab.ToApiModel()
+	if !o.Gitlab.IsNull() {
+		om := CatalogEntityGitlabResourceModel{}
+		o.Github.As(ctx, &om, defaultObjOptions)
+		git.Gitlab = om.ToApiModel()
 	}
-	if o.Azure.Repository.ValueString() != "" {
-		git.Azure = o.Azure.ToApiModel()
+	if !o.Azure.IsNull() {
+		om := CatalogEntityAzureResourceModel{}
+		o.Azure.As(ctx, &om, defaultObjOptions)
+		git.Azure = om.ToApiModel()
 	}
-	if o.Bitbucket.Repository.ValueString() != "" {
-		git.BitBucket = o.Bitbucket.ToApiModel()
+	if !o.Bitbucket.IsNull() {
+		om := CatalogEntityBitbucketResourceModel{}
+		o.Bitbucket.As(ctx, &om, defaultObjOptions)
+		git.BitBucket = om.ToApiModel()
 	}
 	return git
 }
 
 func (o *CatalogEntityGitResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityGit) types.Object {
-	git := CatalogEntityGitResourceModel{
-		Github:    o.Github.FromApiModel(&entity.Github),
-		Gitlab:    o.Gitlab.FromApiModel(&entity.Gitlab),
-		Azure:     o.Azure.FromApiModel(&entity.Azure),
-		Bitbucket: o.Bitbucket.FromApiModel(&entity.BitBucket),
+	git := CatalogEntityGitResourceModel{}
+	if !entity.Enabled() {
+		return types.ObjectNull(git.AttrTypes())
 	}
+
+	defaultObjOptions := getDefaultObjectOptions()
+
+	ghm := CatalogEntityGithubResourceModel{}
+	o.Github.As(ctx, &ghm, defaultObjOptions)
+	git.Github = ghm.FromApiModel(ctx, diagnostics, &entity.Github)
+
+	glm := CatalogEntityGitlabResourceModel{}
+	o.Gitlab.As(ctx, &glm, defaultObjOptions)
+	git.Gitlab = glm.FromApiModel(ctx, diagnostics, &entity.Gitlab)
+
+	azm := CatalogEntityAzureResourceModel{}
+	o.Azure.As(ctx, &azm, defaultObjOptions)
+	git.Azure = azm.FromApiModel(ctx, diagnostics, &entity.Azure)
+
+	bbm := CatalogEntityBitbucketResourceModel{}
+	o.Bitbucket.As(ctx, &bbm, defaultObjOptions)
+	git.Bitbucket = bbm.FromApiModel(ctx, diagnostics, &entity.BitBucket)
+
 	obj, d := types.ObjectValueFrom(ctx, git.AttrTypes(), &git)
 	diagnostics.Append(d...)
 	return obj
@@ -484,25 +537,27 @@ func (o *CatalogEntityGithubResourceModel) AttrTypes() map[string]attr.Type {
 }
 
 func (o *CatalogEntityGithubResourceModel) ToApiModel() cortex.CatalogEntityGitGithub {
-	basePath := o.BasePath.ValueString()
-	if basePath == "" {
-		basePath = "/"
-	}
 	return cortex.CatalogEntityGitGithub{
 		Repository: o.Repository.ValueString(),
-		BasePath:   basePath,
+		BasePath:   o.BasePath.ValueString(),
 	}
 }
 
-func (o *CatalogEntityGithubResourceModel) FromApiModel(entity *cortex.CatalogEntityGitGithub) CatalogEntityGithubResourceModel {
-	basePath := entity.BasePath
-	if basePath == "" {
-		basePath = "/"
+func (o *CatalogEntityGithubResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityGitGithub) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
 	}
-	return CatalogEntityGithubResourceModel{
+	basePath := types.StringValue(entity.BasePath)
+	if entity.BasePath == "" {
+		basePath = types.StringNull()
+	}
+	ghm := CatalogEntityGithubResourceModel{
 		Repository: types.StringValue(entity.Repository),
-		BasePath:   types.StringValue(basePath),
+		BasePath:   basePath,
 	}
+	obj, d := types.ObjectValueFrom(ctx, ghm.AttrTypes(), &ghm)
+	diagnostics.Append(d...)
+	return obj
 }
 
 // Gitlab
@@ -520,25 +575,28 @@ func (o *CatalogEntityGitlabResourceModel) AttrTypes() map[string]attr.Type {
 }
 
 func (o *CatalogEntityGitlabResourceModel) ToApiModel() cortex.CatalogEntityGitGitlab {
-	basePath := o.BasePath.ValueString()
-	if basePath == "" {
-		basePath = "/"
-	}
 	return cortex.CatalogEntityGitGitlab{
 		Repository: o.Repository.ValueString(),
-		BasePath:   basePath,
+		BasePath:   o.BasePath.ValueString(),
 	}
 }
 
-func (o *CatalogEntityGitlabResourceModel) FromApiModel(entity *cortex.CatalogEntityGitGitlab) CatalogEntityGitlabResourceModel {
-	basePath := entity.BasePath
-	if basePath == "" {
-		basePath = "/"
+func (o *CatalogEntityGitlabResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityGitGitlab) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
 	}
-	return CatalogEntityGitlabResourceModel{
+
+	basePath := types.StringValue(entity.BasePath)
+	if entity.BasePath == "" {
+		basePath = types.StringNull()
+	}
+	ob := CatalogEntityGitlabResourceModel{
 		Repository: types.StringValue(entity.Repository),
-		BasePath:   types.StringValue(basePath),
+		BasePath:   basePath,
 	}
+	obj, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return obj
 }
 
 // AzureOps
@@ -558,27 +616,30 @@ func (o *CatalogEntityAzureResourceModel) AttrTypes() map[string]attr.Type {
 }
 
 func (o *CatalogEntityAzureResourceModel) ToApiModel() cortex.CatalogEntityGitAzureDevOps {
-	basePath := o.BasePath.ValueString()
-	if basePath == "" {
-		basePath = "/"
-	}
 	return cortex.CatalogEntityGitAzureDevOps{
 		Project:    o.Project.ValueString(),
 		Repository: o.Repository.ValueString(),
-		BasePath:   basePath,
+		BasePath:   o.BasePath.ValueString(),
 	}
 }
 
-func (o *CatalogEntityAzureResourceModel) FromApiModel(entity *cortex.CatalogEntityGitAzureDevOps) CatalogEntityAzureResourceModel {
-	basePath := entity.BasePath
-	if basePath == "" {
-		basePath = "/"
+func (o *CatalogEntityAzureResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityGitAzureDevOps) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
 	}
-	return CatalogEntityAzureResourceModel{
+
+	basePath := types.StringValue(entity.BasePath)
+	if entity.BasePath == "" {
+		basePath = types.StringNull()
+	}
+	ob := CatalogEntityAzureResourceModel{
 		Project:    types.StringValue(entity.Project),
 		Repository: types.StringValue(entity.Repository),
-		BasePath:   types.StringValue(basePath),
+		BasePath:   basePath,
 	}
+	obj, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return obj
 }
 
 // Bitbucket
@@ -599,10 +660,17 @@ func (o *CatalogEntityBitbucketResourceModel) ToApiModel() cortex.CatalogEntityG
 	}
 }
 
-func (o *CatalogEntityBitbucketResourceModel) FromApiModel(entity *cortex.CatalogEntityGitBitBucket) CatalogEntityBitbucketResourceModel {
-	return CatalogEntityBitbucketResourceModel{
+func (o *CatalogEntityBitbucketResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityGitBitBucket) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
+	ob := CatalogEntityBitbucketResourceModel{
 		Repository: types.StringValue(entity.Repository),
 	}
+	obj, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return obj
 }
 
 /***********************************************************************************************************************
@@ -626,9 +694,14 @@ func (o *CatalogEntityIssuesResourceModel) ToApiModel() cortex.CatalogEntityIssu
 }
 
 func (o *CatalogEntityIssuesResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityIssues) types.Object {
-	iss := CatalogEntityIssuesResourceModel{
-		Jira: o.Jira.FromApiModel(ctx, diagnostics, &entity.Jira),
+	iss := CatalogEntityIssuesResourceModel{}
+	if !entity.Enabled() {
+		return types.ObjectNull(iss.AttrTypes())
 	}
+
+	jira := CatalogEntityIssuesJiraResourceModel{}
+	iss.Jira = jira.FromApiModel(ctx, diagnostics, &entity.Jira)
+
 	obj, d := types.ObjectValueFrom(ctx, iss.AttrTypes(), &iss)
 	diagnostics.Append(d...)
 	return obj
@@ -638,17 +711,17 @@ func (o *CatalogEntityIssuesResourceModel) FromApiModel(ctx context.Context, dia
 
 type CatalogEntityIssuesJiraResourceModel struct {
 	DefaultJQL types.String `tfsdk:"default_jql"`
-	Projects   types.Set    `tfsdk:"projects"`
-	Labels     types.Set    `tfsdk:"labels"`
-	Components types.Set    `tfsdk:"components"`
+	Projects   types.List   `tfsdk:"projects"`
+	Labels     types.List   `tfsdk:"labels"`
+	Components types.List   `tfsdk:"components"`
 }
 
 func (o *CatalogEntityIssuesJiraResourceModel) AttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"default_jql": types.StringType,
-		"projects":    types.SetType{ElemType: types.StringType},
-		"labels":      types.SetType{ElemType: types.StringType},
-		"components":  types.SetType{ElemType: types.StringType},
+		"projects":    types.ListType{ElemType: types.StringType},
+		"labels":      types.ListType{ElemType: types.StringType},
+		"components":  types.ListType{ElemType: types.StringType},
 	}
 }
 
@@ -681,25 +754,25 @@ func (o *CatalogEntityIssuesJiraResourceModel) FromApiModel(ctx context.Context,
 		obj.DefaultJQL = types.StringNull()
 	}
 	if len(entity.Projects) > 0 {
-		projects, d := types.SetValueFrom(ctx, types.StringType, slices.Reject(entity.Projects, func(i string) bool { return i == "" }))
+		projects, d := types.ListValueFrom(ctx, types.StringType, slices.Reject(entity.Projects, func(i string) bool { return i == "" }))
 		diagnostics.Append(d...)
 		obj.Projects = projects
 	} else {
-		obj.Projects = types.SetNull(types.StringType)
+		obj.Projects = types.ListNull(types.StringType)
 	}
 	if len(entity.Labels) > 0 {
-		labels, d := types.SetValueFrom(ctx, types.StringType, slices.Reject(entity.Labels, func(i string) bool { return i == "" }))
+		labels, d := types.ListValueFrom(ctx, types.StringType, slices.Reject(entity.Labels, func(i string) bool { return i == "" }))
 		diagnostics.Append(d...)
 		obj.Labels = labels
 	} else {
-		obj.Labels = types.SetNull(types.StringType)
+		obj.Labels = types.ListNull(types.StringType)
 	}
 	if len(entity.Components) > 0 {
-		components, d := types.SetValueFrom(ctx, types.StringType, slices.Reject(entity.Components, func(i string) bool { return i == "" }))
+		components, d := types.ListValueFrom(ctx, types.StringType, slices.Reject(entity.Components, func(i string) bool { return i == "" }))
 		diagnostics.Append(d...)
 		obj.Components = components
 	} else {
-		obj.Components = types.SetNull(types.StringType)
+		obj.Components = types.ListNull(types.StringType)
 	}
 	return obj
 }
@@ -734,7 +807,7 @@ func (o *CatalogEntityOnCallResourceModel) ToApiModel() cortex.CatalogEntityOnCa
 }
 
 func (o *CatalogEntityOnCallResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, onCall *cortex.CatalogEntityOnCall) types.Object {
-	if onCall.PagerDuty.ID == "" && onCall.OpsGenie.ID == "" && onCall.VictorOps.ID == "" {
+	if !onCall.Enabled() {
 		return types.ObjectNull(o.AttrTypes())
 	}
 
@@ -862,6 +935,10 @@ func (o *CatalogEntityBugSnagResourceModel) ToApiModel() cortex.CatalogEntityBug
 }
 
 func (o *CatalogEntityBugSnagResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityBugSnag) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
 	ob := &CatalogEntityBugSnagResourceModel{
 		Project: types.StringValue(entity.Project),
 	}
@@ -896,17 +973,21 @@ func (o *CatalogEntityCheckmarxResourceModel) ToApiModel() cortex.CatalogEntityC
 }
 
 func (o *CatalogEntityCheckmarxResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityCheckmarx) types.Object {
+	obj := CatalogEntityCheckmarxResourceModel{}
+	if !entity.Enabled() {
+		return types.ObjectNull(obj.AttrTypes())
+	}
+
 	projects := make([]CatalogEntityCheckmarxProjectResourceModel, len(entity.Projects))
 	for i, p := range entity.Projects {
 		po := CatalogEntityCheckmarxProjectResourceModel{}
 		projects[i] = po.FromApiModel(p)
 	}
+	obj.Projects = projects
 
-	obj, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &CatalogEntityCheckmarxResourceModel{
-		Projects: projects,
-	})
+	objectValue, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &obj)
 	diagnostics.Append(d...)
-	return obj
+	return objectValue
 
 }
 
@@ -972,6 +1053,10 @@ func (o *CatalogEntityRollbarResourceModel) ToApiModel() cortex.CatalogEntityRol
 
 func (o *CatalogEntityRollbarResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityRollbar) types.Object {
 	ob := CatalogEntityRollbarResourceModel{}
+	if !entity.Enabled() {
+		return types.ObjectNull(ob.AttrTypes())
+	}
+
 	if entity.Project != "" {
 		ob.Project = types.StringValue(entity.Project)
 	} else {
@@ -1004,6 +1089,10 @@ func (o *CatalogEntitySentryResourceModel) ToApiModel() cortex.CatalogEntitySent
 
 func (o *CatalogEntitySentryResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntitySentry) types.Object {
 	ob := CatalogEntitySentryResourceModel{}
+	if !entity.Enabled() {
+		return types.ObjectNull(ob.AttrTypes())
+	}
+
 	ob.Project = types.StringValue(entity.Project)
 	obj, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &ob)
 	diagnostics.Append(d...)
@@ -1038,17 +1127,21 @@ func (o *CatalogEntitySnykResourceModel) ToApiModel() cortex.CatalogEntitySnyk {
 }
 
 func (o *CatalogEntitySnykResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntitySnyk) types.Object {
+	obj := &CatalogEntitySnykResourceModel{}
+	if !entity.Enabled() {
+		return types.ObjectNull(obj.AttrTypes())
+	}
+
 	var projects = make([]CatalogEntitySnykProjectResourceModel, len(entity.Projects))
 	for i, e := range entity.Projects {
 		ob := CatalogEntitySnykProjectResourceModel{}
 		projects[i] = ob.FromApiModel(&e)
 	}
+	obj.Projects = projects
 
-	obj, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &CatalogEntitySnykResourceModel{
-		Projects: projects,
-	})
+	objectValue, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &obj)
 	diagnostics.Append(d...)
-	return obj
+	return objectValue
 }
 
 type CatalogEntitySnykProjectResourceModel struct {
@@ -1118,9 +1211,19 @@ func (o *CatalogEntityApmResourceModel) ToApiModel() cortex.CatalogEntityApm {
 
 func (o *CatalogEntityApmResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityApm) types.Object {
 	obj := CatalogEntityApmResourceModel{}
-	obj.DataDog = o.DataDog.FromApiModel(ctx, diagnostics, &entity.DataDog)
-	obj.Dynatrace = o.Dynatrace.FromApiModel(ctx, diagnostics, &entity.Dynatrace)
-	obj.NewRelic = o.NewRelic.FromApiModel(&entity.NewRelic)
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
+	if entity.DataDog.Enabled() {
+		obj.DataDog = o.DataDog.FromApiModel(ctx, diagnostics, &entity.DataDog)
+	}
+	if entity.Dynatrace.Enabled() {
+		obj.Dynatrace = o.Dynatrace.FromApiModel(ctx, diagnostics, &entity.Dynatrace)
+	}
+	if entity.NewRelic.Enabled() {
+		obj.NewRelic = o.NewRelic.FromApiModel(&entity.NewRelic)
+	}
 
 	objectValue, d := types.ObjectValueFrom(ctx, obj.AttrTypes(), &obj)
 	diagnostics.Append(d...)
@@ -1130,12 +1233,12 @@ func (o *CatalogEntityApmResourceModel) FromApiModel(ctx context.Context, diagno
 // DataDog
 
 type CatalogEntityApmDataDogResourceModel struct {
-	Monitors types.Set `tfsdk:"monitors"`
+	Monitors types.List `tfsdk:"monitors"`
 }
 
 func (o *CatalogEntityApmDataDogResourceModel) AttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"monitors": types.SetType{ElemType: types.Int64Type},
+		"monitors": types.ListType{ElemType: types.Int64Type},
 	}
 }
 
@@ -1152,21 +1255,23 @@ func (o *CatalogEntityApmDataDogResourceModel) ToApiModel() cortex.CatalogEntity
 func (o *CatalogEntityApmDataDogResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityApmDataDog) CatalogEntityApmDataDogResourceModel {
 	obj := CatalogEntityApmDataDogResourceModel{}
 	monitors := slices.Reject(entity.Monitors, func(i int64) bool { return i == 0 })
-	obj.Monitors, _ = types.SetValueFrom(ctx, types.Int64Type, monitors)
+	monitorList, d := types.ListValueFrom(ctx, types.Int64Type, monitors)
+	diagnostics.Append(d...)
+	obj.Monitors = monitorList
 	return obj
 }
 
 // Dynatrace
 
 type CatalogEntityApmDynatraceResourceModel struct {
-	EntityIDs          types.Set `tfsdk:"entity_ids"`
-	EntityNameMatchers types.Set `tfsdk:"entity_name_matchers"`
+	EntityIDs          types.List `tfsdk:"entity_ids"`
+	EntityNameMatchers types.List `tfsdk:"entity_name_matchers"`
 }
 
 func (o *CatalogEntityApmDynatraceResourceModel) AttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
-		"entity_ids":           types.SetType{ElemType: types.StringType},
-		"entity_name_matchers": types.SetType{ElemType: types.StringType},
+		"entity_ids":           types.ListType{ElemType: types.StringType},
+		"entity_name_matchers": types.ListType{ElemType: types.StringType},
 	}
 }
 
@@ -1188,11 +1293,23 @@ func (o *CatalogEntityApmDynatraceResourceModel) ToApiModel() cortex.CatalogEnti
 func (o *CatalogEntityApmDynatraceResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityApmDynatrace) CatalogEntityApmDynatraceResourceModel {
 	obj := CatalogEntityApmDynatraceResourceModel{}
 
-	entityIds := slices.Reject(entity.EntityIDs, func(i string) bool { return i == "" })
-	obj.EntityIDs, _ = types.SetValueFrom(ctx, types.StringType, entityIds)
+	if len(entity.EntityIDs) > 0 {
+		entityIds := slices.Reject(entity.EntityIDs, func(i string) bool { return i == "" })
+		eis, d := types.ListValueFrom(ctx, types.StringType, entityIds)
+		diagnostics.Append(d...)
+		obj.EntityIDs = eis
+	} else {
+		obj.EntityIDs = types.ListNull(o.AttrTypes()["entity_ids"])
+	}
 
-	entityNameMatchers := slices.Reject(entity.EntityNameMatchers, func(i string) bool { return i == "" })
-	obj.EntityNameMatchers, _ = types.SetValueFrom(ctx, types.StringType, entityNameMatchers)
+	if len(entity.EntityNameMatchers) > 0 {
+		entityNameMatchers := slices.Reject(entity.EntityNameMatchers, func(i string) bool { return i == "" })
+		ems, d := types.ListValueFrom(ctx, types.StringType, entityNameMatchers)
+		diagnostics.Append(d...)
+		obj.EntityNameMatchers = ems
+	} else {
+		obj.EntityNameMatchers = types.ListNull(o.AttrTypes()["entity_name_matchers"])
+	}
 
 	return obj
 }
@@ -1263,6 +1380,10 @@ func (o *CatalogEntityDashboardResourceModel) ToApiModel() cortex.CatalogEntityD
 
 func (o *CatalogEntityDashboardResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityDashboards) types.Object {
 	obj := CatalogEntityDashboardResourceModel{}
+	if !entity.Enabled() {
+		return types.ObjectNull(obj.AttrTypes())
+	}
+
 	var embeds = make([]CatalogEntityDashboardEmbedResourceModel, len(entity.Embeds))
 	for i, e := range entity.Embeds {
 		em := CatalogEntityDashboardEmbedResourceModel{}
@@ -1363,6 +1484,10 @@ func (o *CatalogEntitySLOsResourceModel) ToApiModel() cortex.CatalogEntitySLOs {
 
 func (o *CatalogEntitySLOsResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntitySLOs) types.Object {
 	obj := CatalogEntitySLOsResourceModel{}
+	if !entity.Enabled() {
+		return types.ObjectNull(obj.AttrTypes())
+	}
+
 	if len(entity.DataDog) > 0 {
 		obj.DataDog = make([]CatalogEntitySLODataDogResourceModel, len(entity.DataDog))
 		for i, e := range entity.DataDog {
@@ -1727,18 +1852,29 @@ func (o *CatalogEntityStaticAnalysisResourceModel) ToApiModel() cortex.CatalogEn
 
 func (o *CatalogEntityStaticAnalysisResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityStaticAnalysis) types.Object {
 	ob := CatalogEntityStaticAnalysisResourceModel{}
+	if !entity.Enabled() {
+		return types.ObjectNull(ob.AttrTypes())
+	}
 
-	cc := CatalogEntityStaticAnalysisCodeCovResourceModel{}
-	ob.CodeCov = cc.FromApiModel(&entity.CodeCov)
+	if entity.CodeCov.Enabled() {
+		cc := CatalogEntityStaticAnalysisCodeCovResourceModel{}
+		ob.CodeCov = cc.FromApiModel(&entity.CodeCov)
+	}
 
-	me := CatalogEntityStaticAnalysisMendResourceModel{}
-	ob.Mend = me.FromApiModel(&entity.Mend)
+	if entity.Mend.Enabled() {
+		me := CatalogEntityStaticAnalysisMendResourceModel{}
+		ob.Mend = me.FromApiModel(&entity.Mend)
+	}
 
-	sq := CatalogEntityStaticAnalysisSonarQubeResourceModel{}
-	ob.SonarQube = sq.FromApiModel(&entity.SonarQube)
+	if entity.SonarQube.Enabled() {
+		sq := CatalogEntityStaticAnalysisSonarQubeResourceModel{}
+		ob.SonarQube = sq.FromApiModel(&entity.SonarQube)
+	}
 
-	vc := CatalogEntityStaticAnalysisVeracodeResourceModel{}
-	ob.Veracode = vc.FromApiModel(&entity.Veracode)
+	if entity.Veracode.Enabled() {
+		vc := CatalogEntityStaticAnalysisVeracodeResourceModel{}
+		ob.Veracode = vc.FromApiModel(&entity.Veracode)
+	}
 
 	obj, d := types.ObjectValueFrom(ctx, o.AttrTypes(), ob)
 	diagnostics.Append(d...)

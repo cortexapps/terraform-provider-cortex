@@ -67,8 +67,16 @@ type CatalogEntityApm struct {
 	NewRelic  CatalogEntityApmNewRelic  `json:"newrelic,omitempty" yaml:"newrelic,omitempty"`
 }
 
+func (c *CatalogEntityApm) Enabled() bool {
+	return c.DataDog.Enabled() || c.Dynatrace.Enabled() || c.NewRelic.Enabled()
+}
+
 type CatalogEntityDashboards struct {
 	Embeds []CatalogEntityDashboardsEmbed `json:"embeds,omitempty" yaml:"embeds,omitempty"`
+}
+
+func (c *CatalogEntityDashboards) Enabled() bool {
+	return len(c.Embeds) > 0
 }
 
 type CatalogEntityDashboardsEmbed struct {
@@ -85,14 +93,26 @@ type CatalogEntityGit struct {
 	BitBucket CatalogEntityGitBitBucket   `json:"bitbucket,omitempty" yaml:"bitbucket,omitempty"`
 }
 
+func (o *CatalogEntityGit) Enabled() bool {
+	return o.Github.Enabled() || o.Gitlab.Enabled() || o.Azure.Enabled() || o.BitBucket.Enabled()
+}
+
 type CatalogEntityIssues struct {
 	Jira CatalogEntityIssuesJira `json:"jira,omitempty" yaml:"jira,omitempty"`
+}
+
+func (c *CatalogEntityIssues) Enabled() bool {
+	return c.Jira.Enabled()
 }
 
 type CatalogEntityOnCall struct {
 	PagerDuty CatalogEntityOnCallPagerDuty `json:"pagerduty,omitempty" yaml:"pagerduty,omitempty"`
 	OpsGenie  CatalogEntityOnCallOpsGenie  `json:"opsgenie,omitempty" yaml:"opsgenie,omitempty"`
 	VictorOps CatalogEntityOnCallVictorOps `json:"victorops,omitempty" yaml:"victorops,omitempty"`
+}
+
+func (c *CatalogEntityOnCall) Enabled() bool {
+	return c.PagerDuty.Enabled() || c.OpsGenie.Enabled() || c.VictorOps.Enabled()
 }
 
 type CatalogEntityOwner struct {
@@ -114,11 +134,19 @@ type CatalogEntitySLOs struct {
 	SumoLogic  []CatalogEntitySLOSumoLogic       `json:"sumologic,omitempty" yaml:"sumologic,omitempty"`
 }
 
+func (c *CatalogEntitySLOs) Enabled() bool {
+	return len(c.DataDog) > 0 || len(c.Dynatrace) > 0 || len(c.Lightstep) > 0 || len(c.Prometheus) > 0 || len(c.SignalFX) > 0 || len(c.SumoLogic) > 0
+}
+
 type CatalogEntityStaticAnalysis struct {
 	CodeCov   CatalogEntityStaticAnalysisCodeCov   `json:"codecov,omitempty" yaml:"codecov,omitempty"`
 	Mend      CatalogEntityStaticAnalysisMend      `json:"mend,omitempty" yaml:"mend,omitempty"`
 	SonarQube CatalogEntityStaticAnalysisSonarQube `json:"sonarqube,omitempty" yaml:"sonarqube,omitempty"`
 	Veracode  CatalogEntityStaticAnalysisVeracode  `json:"veracode,omitempty" yaml:"veracode,omitempty"`
+}
+
+func (c *CatalogEntityStaticAnalysis) Enabled() bool {
+	return c.CodeCov.Enabled() || c.Mend.Enabled() || c.SonarQube.Enabled() || c.Veracode.Enabled()
 }
 
 /***********************************************************************************************************************
@@ -131,6 +159,10 @@ type CatalogEntityGitAzureDevOps struct {
 	BasePath   string `json:"basepath,omitempty" yaml:"basepath,omitempty"`
 }
 
+func (o *CatalogEntityGitAzureDevOps) Enabled() bool {
+	return o.Repository != ""
+}
+
 /***********************************************************************************************************************
  * BitBucket - https://docs.cortex.io/docs/reference/integrations/bitbucket
  **********************************************************************************************************************/
@@ -139,12 +171,20 @@ type CatalogEntityGitBitBucket struct {
 	Repository string `json:"repository" yaml:"repository"`
 }
 
+func (o *CatalogEntityGitBitBucket) Enabled() bool {
+	return o.Repository != ""
+}
+
 /***********************************************************************************************************************
  * BugSnag - https://docs.cortex.io/docs/reference/integrations/bugsnag
  **********************************************************************************************************************/
 
 type CatalogEntityBugSnag struct {
 	Project string `json:"project" yaml:"project"`
+}
+
+func (o *CatalogEntityBugSnag) Enabled() bool {
+	return o.Project != ""
 }
 
 /***********************************************************************************************************************
@@ -160,6 +200,10 @@ type CatalogEntityCheckmarxProject struct {
 	Name string `json:"projectName,omitempty" yaml:"projectName,omitempty"`
 }
 
+func (o *CatalogEntityCheckmarx) Enabled() bool {
+	return len(o.Projects) > 0
+}
+
 /***********************************************************************************************************************
  * CodeCov - https://docs.cortex.io/docs/reference/integrations/codecov
  **********************************************************************************************************************/
@@ -167,6 +211,10 @@ type CatalogEntityCheckmarxProject struct {
 type CatalogEntityStaticAnalysisCodeCov struct {
 	Repository string `json:"repo" yaml:"repo"`
 	Provider   string `json:"provider" yaml:"provider"`
+}
+
+func (o *CatalogEntityStaticAnalysisCodeCov) Enabled() bool {
+	return o.Repository != ""
 }
 
 /***********************************************************************************************************************
@@ -177,8 +225,16 @@ type CatalogEntityApmDataDog struct {
 	Monitors []int64 `json:"monitors" yaml:"monitors"`
 }
 
+func (o *CatalogEntityApmDataDog) Enabled() bool {
+	return len(o.Monitors) > 0
+}
+
 type CatalogEntitySLODataDog struct {
 	ID string `json:"id" yaml:"id"`
+}
+
+func (o *CatalogEntitySLODataDog) Enabled() bool {
+	return o.ID != ""
 }
 
 /***********************************************************************************************************************
@@ -190,8 +246,16 @@ type CatalogEntityApmDynatrace struct {
 	EntityNameMatchers []string `json:"entityNameMatchers,omitempty" yaml:"entityNameMatchers,omitempty"`
 }
 
+func (o *CatalogEntityApmDynatrace) Enabled() bool {
+	return len(o.EntityIDs) > 0 || len(o.EntityNameMatchers) > 0
+}
+
 type CatalogEntitySLODynatrace struct {
 	ID string `json:"id" yaml:"id"`
+}
+
+func (o *CatalogEntitySLODynatrace) Enabled() bool {
+	return o.ID != ""
 }
 
 /***********************************************************************************************************************
@@ -203,6 +267,10 @@ type CatalogEntityGitGithub struct {
 	BasePath   string `json:"basepath,omitempty" yaml:"basepath,omitempty"`
 }
 
+func (o *CatalogEntityGitGithub) Enabled() bool {
+	return o.Repository != ""
+}
+
 /***********************************************************************************************************************
  * GitLab - https://docs.cortex.io/docs/reference/integrations/gitlab
  **********************************************************************************************************************/
@@ -210,6 +278,10 @@ type CatalogEntityGitGithub struct {
 type CatalogEntityGitGitlab struct {
 	Repository string `json:"repository" yaml:"repository"`
 	BasePath   string `json:"basepath,omitempty" yaml:"basepath,omitempty"`
+}
+
+func (o *CatalogEntityGitGitlab) Enabled() bool {
+	return o.Repository != ""
 }
 
 /***********************************************************************************************************************
@@ -221,6 +293,10 @@ type CatalogEntityIssuesJira struct {
 	Projects   []string `json:"projects,omitempty" yaml:"projects,omitempty"`
 	Labels     []string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Components []string `json:"components,omitempty" yaml:"components,omitempty"`
+}
+
+func (o *CatalogEntityIssuesJira) Enabled() bool {
+	return len(o.Projects) > 0 || len(o.Labels) > 0 || len(o.Components) > 0 || o.DefaultJQL != ""
 }
 
 /***********************************************************************************************************************
@@ -265,6 +341,10 @@ type CatalogEntityStaticAnalysisMend struct {
 	ProjectIDs     []string `json:"projectIds,omitempty" yaml:"projectIds,omitempty"`
 }
 
+func (o *CatalogEntityStaticAnalysisMend) Enabled() bool {
+	return len(o.ApplicationIDs) > 0 || len(o.ProjectIDs) > 0
+}
+
 /***********************************************************************************************************************
  * New Relic - https://docs.cortex.io/docs/reference/integrations/newrelic
  **********************************************************************************************************************/
@@ -274,6 +354,10 @@ type CatalogEntityApmNewRelic struct {
 	Alias         string `json:"alias,omitempty" yaml:"alias,omitempty"`
 }
 
+func (o *CatalogEntityApmNewRelic) Enabled() bool {
+	return o.ApplicationID > 0 || o.Alias != ""
+}
+
 /***********************************************************************************************************************
  * PagerDuty - https://docs.cortex.io/docs/reference/integrations/pagerduty
  **********************************************************************************************************************/
@@ -281,6 +365,10 @@ type CatalogEntityApmNewRelic struct {
 type CatalogEntityOnCallPagerDuty struct {
 	ID   string `json:"id" yaml:"id"`
 	Type string `json:"type" yaml:"type"`
+}
+
+func (o *CatalogEntityOnCallPagerDuty) Enabled() bool {
+	return o.ID != ""
 }
 
 /***********************************************************************************************************************
@@ -303,6 +391,10 @@ type CatalogEntityRollbar struct {
 	Project string `json:"project" yaml:"project"`
 }
 
+func (o *CatalogEntityRollbar) Enabled() bool {
+	return o.Project != ""
+}
+
 /***********************************************************************************************************************
  * SignalFX - https://docs.cortex.io/docs/reference/integrations/signalfx
  **********************************************************************************************************************/
@@ -323,12 +415,20 @@ type CatalogEntitySentry struct {
 	Project string `json:"project" yaml:"project"`
 }
 
+func (o *CatalogEntitySentry) Enabled() bool {
+	return o.Project != ""
+}
+
 /***********************************************************************************************************************
  * Snyk - https://docs.cortex.io/docs/reference/integrations/snyk
  **********************************************************************************************************************/
 
 type CatalogEntitySnyk struct {
 	Projects []CatalogEntitySnykProject `json:"projects,omitempty" yaml:"projects,omitempty"`
+}
+
+func (o *CatalogEntitySnyk) Enabled() bool {
+	return len(o.Projects) > 0
 }
 
 type CatalogEntitySnykProject struct {
@@ -346,12 +446,20 @@ type CatalogEntityStaticAnalysisSonarQube struct {
 	Alias   string `json:"alias,omitempty" yaml:"alias,omitempty"`
 }
 
+func (o *CatalogEntityStaticAnalysisSonarQube) Enabled() bool {
+	return o.Project != ""
+}
+
 /***********************************************************************************************************************
  * SumoLogic - https://docs.cortex.io/docs/reference/integrations/sumologic
  **********************************************************************************************************************/
 
 type CatalogEntitySLOSumoLogic struct {
 	ID string `json:"id" yaml:"id"`
+}
+
+func (o *CatalogEntitySLOSumoLogic) Enabled() bool {
+	return o.ID != ""
 }
 
 /***********************************************************************************************************************
@@ -363,6 +471,10 @@ type CatalogEntityOnCallOpsGenie struct {
 	Type string `json:"type" yaml:"type"`
 }
 
+func (o *CatalogEntityOnCallOpsGenie) Enabled() bool {
+	return o.ID != ""
+}
+
 /***********************************************************************************************************************
  * Veracode -  https://docs.cortex.io/docs/reference/integrations/veracode
  **********************************************************************************************************************/
@@ -370,6 +482,10 @@ type CatalogEntityOnCallOpsGenie struct {
 type CatalogEntityStaticAnalysisVeracode struct {
 	ApplicationNames []string                                     `json:"applicationNames,omitempty" yaml:"applicationNames,omitempty"`
 	Sandboxes        []CatalogEntityStaticAnalysisVeracodeSandbox `json:"sandboxes,omitempty" yaml:"sandboxes,omitempty"`
+}
+
+func (o *CatalogEntityStaticAnalysisVeracode) Enabled() bool {
+	return len(o.ApplicationNames) > 0 || len(o.Sandboxes) > 0
 }
 
 type CatalogEntityStaticAnalysisVeracodeSandbox struct {
@@ -384,4 +500,8 @@ type CatalogEntityStaticAnalysisVeracodeSandbox struct {
 type CatalogEntityOnCallVictorOps struct {
 	ID   string `json:"id" yaml:"id"`
 	Type string `json:"type" yaml:"type"`
+}
+
+func (o *CatalogEntityOnCallVictorOps) Enabled() bool {
+	return o.ID != ""
 }
