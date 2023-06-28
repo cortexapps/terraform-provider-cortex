@@ -17,6 +17,7 @@ Catalog Entity
 
 ### Required
 
+- `name` (String) Human-readable name for the entity
 - `tag` (String) Unique identifier for the entity. Corresponds to the x-cortex-tag field in the entity descriptor.
 
 ### Optional
@@ -33,7 +34,6 @@ Catalog Entity
 - `issues` (Attributes) Issue tracking configuration for the entity. (see [below for nested schema](#nestedatt--issues))
 - `links` (Attributes List) List of links related to the entity. (see [below for nested schema](#nestedatt--links))
 - `metadata` (String) Custom metadata for the entity, in JSON format in a string. (Use the `jsonencode` function to convert a JSON object to a string.)
-- `name` (String) Human-readable name for the entity
 - `on_call` (Attributes) On-call configuration for the entity. (see [below for nested schema](#nestedatt--on_call))
 - `owners` (Attributes List) List of owners for the entity. Owners can be users, groups, or Slack channels. (see [below for nested schema](#nestedatt--owners))
 - `rollbar` (Attributes) Rollbar configuration for the entity. (see [below for nested schema](#nestedatt--rollbar))
@@ -73,7 +73,7 @@ Optional:
 
 Optional:
 
-- `monitors` (Set of Number) List of DataDog monitors for the entity.
+- `monitors` (List of Number) List of DataDog monitors for the entity.
 
 
 <a id="nestedatt--apm--dynatrace"></a>
@@ -81,8 +81,8 @@ Optional:
 
 Optional:
 
-- `entity_ids` (Set of String) List of Dynatrace entity IDs for the entity.
-- `entity_name_matchers` (Set of String) List of Dynatrace entity name matchers for the entity.
+- `entity_ids` (List of String) List of Dynatrace entity IDs for the entity.
+- `entity_name_matchers` (List of String) List of Dynatrace entity name matchers for the entity.
 
 
 <a id="nestedatt--apm--new_relic"></a>
@@ -220,10 +220,10 @@ Optional:
 
 Optional:
 
-- `components` (Set of String) List of Jira components for the entity.
+- `components` (List of String) List of Jira components for the entity.
 - `default_jql` (String) Default JQL to surface issues for the entity.
-- `labels` (Set of String) List of Jira labels for the entity.
-- `projects` (Set of String) List of Jira projects for the entity.
+- `labels` (List of String) List of Jira labels for the entity.
+- `projects` (List of String) List of Jira projects for the entity.
 
 
 
