@@ -71,8 +71,8 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 	}
 	dependencies := make([]cortex.CatalogEntityDependency, len(o.Dependencies))
 	for i, dependency := range o.Dependencies {
-		dep := &CatalogEntityDependencyResourceModel{}
-		err := dependency.As(ctx, dep, defaultObjOptions)
+		dep := CatalogEntityDependencyResourceModel{}
+		err := dependency.As(ctx, &dep, defaultObjOptions)
 		if err != nil {
 			fmt.Println("Error parsing dependency: ", err)
 		}
@@ -80,70 +80,70 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 	}
 	alerts := make([]cortex.CatalogEntityAlert, len(o.Alerts))
 	for i, alert := range o.Alerts {
-		al := &CatalogEntityAlertResourceModel{}
-		err := alert.As(ctx, al, defaultObjOptions)
+		al := CatalogEntityAlertResourceModel{}
+		err := alert.As(ctx, &al, defaultObjOptions)
 		if err != nil {
 			fmt.Println("Error parsing alert: ", err)
 		}
 		alerts[i] = al.ToApiModel()
 	}
-	dashboards := &CatalogEntityDashboardResourceModel{}
-	err := o.Dashboards.As(ctx, dashboards, defaultObjOptions)
+	dashboards := CatalogEntityDashboardResourceModel{}
+	err := o.Dashboards.As(ctx, &dashboards, defaultObjOptions)
 	if err != nil {
 		fmt.Println("Error parsing Dashboards configuration: ", err)
 	}
-	apm := &CatalogEntityApmResourceModel{}
-	err = o.Apm.As(ctx, apm, defaultObjOptions)
+	apm := CatalogEntityApmResourceModel{}
+	err = o.Apm.As(ctx, &apm, defaultObjOptions)
 	if err != nil {
 		fmt.Println("Error parsing APM configuration: ", err)
 	}
-	git := &CatalogEntityGitResourceModel{}
-	err = o.Git.As(ctx, git, defaultObjOptions)
+	git := CatalogEntityGitResourceModel{}
+	err = o.Git.As(ctx, &git, defaultObjOptions)
 	if err != nil {
 		fmt.Println("Error parsing Git configuration: ", err)
 	}
-	issues := &CatalogEntityIssuesResourceModel{}
-	err = o.Issues.As(ctx, issues, defaultObjOptions)
+	issues := CatalogEntityIssuesResourceModel{}
+	err = o.Issues.As(ctx, &issues, defaultObjOptions)
 	if err != nil {
 		fmt.Println("Error parsing Issues configuration: ", err)
 	}
-	onCall := &CatalogEntityOnCallResourceModel{}
-	err = o.OnCall.As(ctx, onCall, defaultObjOptions)
+	onCall := CatalogEntityOnCallResourceModel{}
+	err = o.OnCall.As(ctx, &onCall, defaultObjOptions)
 	if err != nil {
 		fmt.Println("Error parsing On-Call configuration: ", err)
 	}
-	serviceLevelObjectives := &CatalogEntitySLOsResourceModel{}
-	err = o.SLOs.As(ctx, serviceLevelObjectives, defaultObjOptions)
+	serviceLevelObjectives := CatalogEntitySLOsResourceModel{}
+	err = o.SLOs.As(ctx, &serviceLevelObjectives, defaultObjOptions)
 	if err != nil {
 		fmt.Println("Error parsing SLO configuration: ", err)
 	}
-	staticAnalysis := &CatalogEntityStaticAnalysisResourceModel{}
-	err = o.StaticAnalysis.As(ctx, staticAnalysis, defaultObjOptions)
+	staticAnalysis := CatalogEntityStaticAnalysisResourceModel{}
+	err = o.StaticAnalysis.As(ctx, &staticAnalysis, defaultObjOptions)
 	if err != nil {
 		fmt.Println("Error parsing Static Analysis configuration: ", err)
 	}
-	bugSnag := &CatalogEntityBugSnagResourceModel{}
-	err = o.BugSnag.As(ctx, bugSnag, defaultObjOptions)
+	bugSnag := CatalogEntityBugSnagResourceModel{}
+	err = o.BugSnag.As(ctx, &bugSnag, defaultObjOptions)
 	if err != nil {
 		fmt.Println("Error parsing BugSnag configuration: ", err)
 	}
-	checkmarx := &CatalogEntityCheckmarxResourceModel{}
-	err = o.Checkmarx.As(ctx, checkmarx, defaultObjOptions)
+	checkmarx := CatalogEntityCheckmarxResourceModel{}
+	err = o.Checkmarx.As(ctx, &checkmarx, defaultObjOptions)
 	if err != nil {
 		fmt.Println("Error parsing Checkmarx configuration: ", err)
 	}
-	rollbar := &CatalogEntityRollbarResourceModel{}
-	err = o.Rollbar.As(ctx, rollbar, defaultObjOptions)
+	rollbar := CatalogEntityRollbarResourceModel{}
+	err = o.Rollbar.As(ctx, &rollbar, defaultObjOptions)
 	if err != nil {
 		fmt.Println("Error parsing Rollbar configuration: ", err)
 	}
-	sentry := &CatalogEntitySentryResourceModel{}
-	err = o.Sentry.As(ctx, sentry, defaultObjOptions)
+	sentry := CatalogEntitySentryResourceModel{}
+	err = o.Sentry.As(ctx, &sentry, defaultObjOptions)
 	if err != nil {
 		fmt.Println("Error parsing Sentry configuration: ", err)
 	}
-	snyk := &CatalogEntitySnykResourceModel{}
-	err = o.Snyk.As(ctx, snyk, defaultObjOptions)
+	snyk := CatalogEntitySnykResourceModel{}
+	err = o.Snyk.As(ctx, &snyk, defaultObjOptions)
 	if err != nil {
 		fmt.Println("Error parsing Snyk configuration: ", err)
 	}
@@ -159,12 +159,12 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		Dependencies:   dependencies,
 		Alerts:         alerts,
 		Dashboards:     dashboards.ToApiModel(),
-		Apm:            apm.ToApiModel(),
+		Apm:            apm.ToApiModel(ctx),
 		Git:            git.ToApiModel(ctx),
 		Issues:         issues.ToApiModel(ctx),
 		OnCall:         onCall.ToApiModel(),
-		SLOs:           serviceLevelObjectives.ToApiModel(),
-		StaticAnalysis: staticAnalysis.ToApiModel(),
+		SLOs:           serviceLevelObjectives.ToApiModel(ctx),
+		StaticAnalysis: staticAnalysis.ToApiModel(ctx),
 		BugSnag:        bugSnag.ToApiModel(),
 		Checkmarx:      checkmarx.ToApiModel(),
 		Rollbar:        rollbar.ToApiModel(),
@@ -1240,41 +1240,55 @@ func (o *CatalogEntitySnykProjectResourceModel) FromApiModel(entity *cortex.Cata
  **********************************************************************************************************************/
 
 type CatalogEntityApmResourceModel struct {
-	DataDog   CatalogEntityApmDataDogResourceModel   `tfsdk:"data_dog"`
-	Dynatrace CatalogEntityApmDynatraceResourceModel `tfsdk:"dynatrace"`
-	NewRelic  CatalogEntityApmNewRelicResourceModel  `tfsdk:"new_relic"`
+	DataDog   types.Object `tfsdk:"data_dog"`
+	Dynatrace types.Object `tfsdk:"dynatrace"`
+	NewRelic  types.Object `tfsdk:"new_relic"`
 }
 
 func (o *CatalogEntityApmResourceModel) AttrTypes() map[string]attr.Type {
+	dd := CatalogEntityApmDataDogResourceModel{}
+	dt := CatalogEntityApmDynatraceResourceModel{}
+	nr := CatalogEntityApmNewRelicResourceModel{}
+
 	return map[string]attr.Type{
-		"data_dog":  types.ObjectType{AttrTypes: o.DataDog.AttrTypes()},
-		"dynatrace": types.ObjectType{AttrTypes: o.Dynatrace.AttrTypes()},
-		"new_relic": types.ObjectType{AttrTypes: o.NewRelic.AttrTypes()},
+		"data_dog":  types.ObjectType{AttrTypes: dd.AttrTypes()},
+		"dynatrace": types.ObjectType{AttrTypes: dt.AttrTypes()},
+		"new_relic": types.ObjectType{AttrTypes: nr.AttrTypes()},
 	}
 }
 
-func (o *CatalogEntityApmResourceModel) ToApiModel() cortex.CatalogEntityApm {
+func (o *CatalogEntityApmResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityApm {
+	defaultObjOptions := getDefaultObjectOptions()
+
+	dd := CatalogEntityApmDataDogResourceModel{}
+	o.DataDog.As(ctx, &dd, defaultObjOptions)
+
+	dt := CatalogEntityApmDynatraceResourceModel{}
+	o.Dynatrace.As(ctx, &dt, defaultObjOptions)
+
+	nr := CatalogEntityApmNewRelicResourceModel{}
+	o.NewRelic.As(ctx, &nr, defaultObjOptions)
+
 	return cortex.CatalogEntityApm{
-		DataDog:   o.DataDog.ToApiModel(),
-		Dynatrace: o.Dynatrace.ToApiModel(),
-		NewRelic:  o.NewRelic.ToApiModel(),
+		DataDog:   dd.ToApiModel(),
+		Dynatrace: dt.ToApiModel(),
+		NewRelic:  nr.ToApiModel(),
 	}
 }
 
 func (o *CatalogEntityApmResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityApm) types.Object {
-	obj := CatalogEntityApmResourceModel{}
 	if !entity.Enabled() {
 		return types.ObjectNull(o.AttrTypes())
 	}
 
-	if entity.DataDog.Enabled() {
-		obj.DataDog = o.DataDog.FromApiModel(ctx, diagnostics, &entity.DataDog)
-	}
-	if entity.Dynatrace.Enabled() {
-		obj.Dynatrace = o.Dynatrace.FromApiModel(ctx, diagnostics, &entity.Dynatrace)
-	}
-	if entity.NewRelic.Enabled() {
-		obj.NewRelic = o.NewRelic.FromApiModel(&entity.NewRelic)
+	dd := CatalogEntityApmDataDogResourceModel{}
+	dt := CatalogEntityApmDynatraceResourceModel{}
+	nr := CatalogEntityApmNewRelicResourceModel{}
+
+	obj := CatalogEntityApmResourceModel{
+		DataDog:   dd.FromApiModel(ctx, diagnostics, &entity.DataDog),
+		Dynatrace: dt.FromApiModel(ctx, diagnostics, &entity.Dynatrace),
+		NewRelic:  nr.FromApiModel(ctx, diagnostics, &entity.NewRelic),
 	}
 
 	objectValue, d := types.ObjectValueFrom(ctx, obj.AttrTypes(), &obj)
@@ -1304,13 +1318,21 @@ func (o *CatalogEntityApmDataDogResourceModel) ToApiModel() cortex.CatalogEntity
 	}
 }
 
-func (o *CatalogEntityApmDataDogResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityApmDataDog) CatalogEntityApmDataDogResourceModel {
-	obj := CatalogEntityApmDataDogResourceModel{}
+func (o *CatalogEntityApmDataDogResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityApmDataDog) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
 	monitors := slices.Reject(entity.Monitors, func(i int64) bool { return i == 0 })
 	monitorList, d := types.ListValueFrom(ctx, types.Int64Type, monitors)
 	diagnostics.Append(d...)
-	obj.Monitors = monitorList
-	return obj
+
+	obj := CatalogEntityApmDataDogResourceModel{
+		Monitors: monitorList,
+	}
+	objectValue, d := types.ObjectValueFrom(ctx, obj.AttrTypes(), &obj)
+	diagnostics.Append(d...)
+	return objectValue
 }
 
 // Dynatrace
@@ -1342,7 +1364,11 @@ func (o *CatalogEntityApmDynatraceResourceModel) ToApiModel() cortex.CatalogEnti
 	}
 }
 
-func (o *CatalogEntityApmDynatraceResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityApmDynatrace) CatalogEntityApmDynatraceResourceModel {
+func (o *CatalogEntityApmDynatraceResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityApmDynatrace) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
 	obj := CatalogEntityApmDynatraceResourceModel{}
 
 	if len(entity.EntityIDs) > 0 {
@@ -1363,7 +1389,9 @@ func (o *CatalogEntityApmDynatraceResourceModel) FromApiModel(ctx context.Contex
 		obj.EntityNameMatchers = types.ListNull(o.AttrTypes()["entity_name_matchers"])
 	}
 
-	return obj
+	objectValue, d := types.ObjectValueFrom(ctx, obj.AttrTypes(), &obj)
+	diagnostics.Append(d...)
+	return objectValue
 }
 
 // New Relic
@@ -1390,7 +1418,11 @@ func (o *CatalogEntityApmNewRelicResourceModel) ToApiModel() cortex.CatalogEntit
 	return ob
 }
 
-func (o *CatalogEntityApmNewRelicResourceModel) FromApiModel(entity *cortex.CatalogEntityApmNewRelic) CatalogEntityApmNewRelicResourceModel {
+func (o *CatalogEntityApmNewRelicResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityApmNewRelic) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
 	obj := CatalogEntityApmNewRelicResourceModel{}
 	if entity.ApplicationID > 0 {
 		obj.ApplicationID = types.Int64Value(entity.ApplicationID)
@@ -1402,7 +1434,10 @@ func (o *CatalogEntityApmNewRelicResourceModel) FromApiModel(entity *cortex.Cata
 	} else {
 		obj.Alias = types.StringNull()
 	}
-	return obj
+
+	objectValue, d := types.ObjectValueFrom(ctx, obj.AttrTypes(), &obj)
+	diagnostics.Append(d...)
+	return objectValue
 }
 
 /***********************************************************************************************************************
@@ -1480,7 +1515,7 @@ func (o *CatalogEntityDashboardEmbedResourceModel) FromApiModel(entity *cortex.C
 type CatalogEntitySLOsResourceModel struct {
 	DataDog    []CatalogEntitySLODataDogResourceModel    `tfsdk:"data_dog"`
 	Dynatrace  []CatalogEntitySLODynatraceResourceModel  `tfsdk:"dynatrace"`
-	Lightstep  CatalogEntitySLOLightstepResourceModel    `tfsdk:"lightstep"`
+	Lightstep  types.Object                              `tfsdk:"lightstep"`
 	Prometheus []CatalogEntitySLOPrometheusResourceModel `tfsdk:"prometheus"`
 	SignalFX   []CatalogEntitySLOSignalFxResourceModel   `tfsdk:"signal_fx"`
 	SumoLogic  []CatalogEntitySLOSumoLogicResourceModel  `tfsdk:"sumo_logic"`
@@ -1503,7 +1538,7 @@ func (o *CatalogEntitySLOsResourceModel) AttrTypes() map[string]attr.Type {
 	}
 }
 
-func (o *CatalogEntitySLOsResourceModel) ToApiModel() cortex.CatalogEntitySLOs {
+func (o *CatalogEntitySLOsResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntitySLOs {
 	var dataDog = make([]cortex.CatalogEntitySLODataDog, len(o.DataDog))
 	for i, e := range o.DataDog {
 		dataDog[i] = e.ToApiModel()
@@ -1512,6 +1547,10 @@ func (o *CatalogEntitySLOsResourceModel) ToApiModel() cortex.CatalogEntitySLOs {
 	for i, e := range o.Dynatrace {
 		dynatrace[i] = e.ToApiModel()
 	}
+
+	lightstep := CatalogEntitySLOLightstepResourceModel{}
+	o.Lightstep.As(ctx, &lightstep, getDefaultObjectOptions())
+
 	var prometheusQueries = make([]cortex.CatalogEntitySLOPrometheusQuery, len(o.Prometheus))
 	for i, e := range o.Prometheus {
 		prometheusQueries[i] = e.ToApiModel()
@@ -1527,7 +1566,7 @@ func (o *CatalogEntitySLOsResourceModel) ToApiModel() cortex.CatalogEntitySLOs {
 	return cortex.CatalogEntitySLOs{
 		DataDog:    dataDog,
 		Dynatrace:  dynatrace,
-		Lightstep:  o.Lightstep.ToApiModel(),
+		Lightstep:  lightstep.ToApiModel(ctx),
 		Prometheus: prometheusQueries,
 		SignalFX:   signalFx,
 		SumoLogic:  sumoLogic,
@@ -1535,11 +1574,11 @@ func (o *CatalogEntitySLOsResourceModel) ToApiModel() cortex.CatalogEntitySLOs {
 }
 
 func (o *CatalogEntitySLOsResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntitySLOs) types.Object {
-	obj := CatalogEntitySLOsResourceModel{}
 	if !entity.Enabled() {
-		return types.ObjectNull(obj.AttrTypes())
+		return types.ObjectNull(o.AttrTypes())
 	}
 
+	obj := CatalogEntitySLOsResourceModel{}
 	if len(entity.DataDog) > 0 {
 		obj.DataDog = make([]CatalogEntitySLODataDogResourceModel, len(entity.DataDog))
 		for i, e := range entity.DataDog {
@@ -1554,7 +1593,10 @@ func (o *CatalogEntitySLOsResourceModel) FromApiModel(ctx context.Context, diagn
 			obj.Dynatrace[i] = m.FromApiModel(&e)
 		}
 	}
-	obj.Lightstep = obj.Lightstep.FromApiModel(entity.Lightstep)
+
+	ls := CatalogEntitySLOLightstepResourceModel{}
+	obj.Lightstep = ls.FromApiModel(ctx, diagnostics, entity.Lightstep)
+
 	if len(entity.Prometheus) > 0 {
 		obj.Prometheus = make([]CatalogEntitySLOPrometheusResourceModel, len(entity.Prometheus))
 		for i, e := range entity.Prometheus {
@@ -1632,7 +1674,7 @@ func (o *CatalogEntitySLODynatraceResourceModel) FromApiModel(entity *cortex.Cat
 // LightStep
 
 type CatalogEntitySLOLightstepResourceModel struct {
-	Streams []CatalogEntitySLOLightstepStreamResourceModel `tfsdk:"streams"`
+	Streams []types.Object `tfsdk:"streams"`
 }
 
 func (o *CatalogEntitySLOLightstepResourceModel) AttrTypes() map[string]attr.Type {
@@ -1642,28 +1684,38 @@ func (o *CatalogEntitySLOLightstepResourceModel) AttrTypes() map[string]attr.Typ
 	}
 }
 
-func (o *CatalogEntitySLOLightstepResourceModel) ToApiModel() []cortex.CatalogEntitySLOLightstepStream {
+func (o *CatalogEntitySLOLightstepResourceModel) ToApiModel(ctx context.Context) []cortex.CatalogEntitySLOLightstepStream {
+	defaultObjectOptions := getDefaultObjectOptions()
 	var arr = make([]cortex.CatalogEntitySLOLightstepStream, len(o.Streams))
-	for i, e := range o.Streams {
-		arr[i] = e.ToApiModel()
+	for i, stream := range o.Streams {
+		lsr := CatalogEntitySLOLightstepStreamResourceModel{}
+		stream.As(ctx, &lsr, defaultObjectOptions)
+		arr[i] = lsr.ToApiModel(ctx)
 	}
 	return arr
 }
 
-func (o *CatalogEntitySLOLightstepResourceModel) FromApiModel(streams []cortex.CatalogEntitySLOLightstepStream) CatalogEntitySLOLightstepResourceModel {
-	var arr = make([]CatalogEntitySLOLightstepStreamResourceModel, len(streams))
+func (o *CatalogEntitySLOLightstepResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, streams []cortex.CatalogEntitySLOLightstepStream) types.Object {
+	if len(streams) == 0 {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
+	var arr = make([]types.Object, len(streams))
 	for i, e := range streams {
 		m := CatalogEntitySLOLightstepStreamResourceModel{}
-		arr[i] = m.FromApiModel(&e)
+		arr[i] = m.FromApiModel(ctx, diagnostics, &e)
 	}
-	return CatalogEntitySLOLightstepResourceModel{
+	obj := CatalogEntitySLOLightstepResourceModel{
 		Streams: arr,
 	}
+	objectValue, d := types.ObjectValueFrom(ctx, obj.AttrTypes(), &obj)
+	diagnostics.Append(d...)
+	return objectValue
 }
 
 type CatalogEntitySLOLightstepStreamResourceModel struct {
-	StreamID types.String                                       `tfsdk:"stream_id"`
-	Targets  CatalogEntitySLOLightstepStreamTargetResourceModel `tfsdk:"targets"`
+	StreamID types.String `tfsdk:"stream_id"`
+	Targets  types.Object `tfsdk:"targets"`
 }
 
 func (o *CatalogEntitySLOLightstepStreamResourceModel) AttrTypes() map[string]attr.Type {
@@ -1674,23 +1726,30 @@ func (o *CatalogEntitySLOLightstepStreamResourceModel) AttrTypes() map[string]at
 	}
 }
 
-func (o *CatalogEntitySLOLightstepStreamResourceModel) ToApiModel() cortex.CatalogEntitySLOLightstepStream {
+func (o *CatalogEntitySLOLightstepStreamResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntitySLOLightstepStream {
+	ts := CatalogEntitySLOLightstepStreamTargetResourceModel{}
+	o.Targets.As(ctx, &ts, getDefaultObjectOptions())
+
 	return cortex.CatalogEntitySLOLightstepStream{
 		StreamID: o.StreamID.ValueString(),
-		Targets:  o.Targets.ToApiModel(),
+		Targets:  ts.ToApiModel(ctx),
 	}
 }
 
-func (o *CatalogEntitySLOLightstepStreamResourceModel) FromApiModel(entity *cortex.CatalogEntitySLOLightstepStream) CatalogEntitySLOLightstepStreamResourceModel {
-	targets := CatalogEntitySLOLightstepStreamTargetResourceModel{}
-	return CatalogEntitySLOLightstepStreamResourceModel{
+func (o *CatalogEntitySLOLightstepStreamResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntitySLOLightstepStream) types.Object {
+	ts := CatalogEntitySLOLightstepStreamTargetResourceModel{}
+
+	ob := CatalogEntitySLOLightstepStreamResourceModel{
 		StreamID: types.StringValue(entity.StreamID),
-		Targets:  targets.FromApiModel(&entity.Targets),
+		Targets:  ts.FromApiModel(ctx, diagnostics, &entity.Targets),
 	}
+	objectType, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return objectType
 }
 
 type CatalogEntitySLOLightstepStreamTargetResourceModel struct {
-	Latencies []CatalogEntitySLOLightstepStreamTargetLatencyResourceModel `tfsdk:"latencies"`
+	Latencies []types.Object `tfsdk:"latencies"`
 }
 
 func (o *CatalogEntitySLOLightstepStreamTargetResourceModel) AttrTypes() map[string]attr.Type {
@@ -1700,25 +1759,33 @@ func (o *CatalogEntitySLOLightstepStreamTargetResourceModel) AttrTypes() map[str
 	}
 }
 
-func (o *CatalogEntitySLOLightstepStreamTargetResourceModel) ToApiModel() cortex.CatalogEntitySLOLightstepTargets {
+func (o *CatalogEntitySLOLightstepStreamTargetResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntitySLOLightstepTargets {
+	defaultObjectOptions := getDefaultObjectOptions()
+
 	var latencies = make([]cortex.CatalogEntitySLOLightstepTargetLatency, len(o.Latencies))
 	for i, e := range o.Latencies {
-		latencies[i] = e.ToApiModel()
+		ob := CatalogEntitySLOLightstepStreamTargetLatencyResourceModel{}
+		e.As(ctx, &ob, defaultObjectOptions)
+		latencies[i] = ob.ToApiModel()
 	}
+
 	return cortex.CatalogEntitySLOLightstepTargets{
 		Latencies: latencies,
 	}
 }
 
-func (o *CatalogEntitySLOLightstepStreamTargetResourceModel) FromApiModel(entity *cortex.CatalogEntitySLOLightstepTargets) CatalogEntitySLOLightstepStreamTargetResourceModel {
-	latencies := make([]CatalogEntitySLOLightstepStreamTargetLatencyResourceModel, len(entity.Latencies))
+func (o *CatalogEntitySLOLightstepStreamTargetResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntitySLOLightstepTargets) types.Object {
+	latencies := make([]types.Object, len(entity.Latencies))
 	for i, e := range entity.Latencies {
 		m := CatalogEntitySLOLightstepStreamTargetLatencyResourceModel{}
-		latencies[i] = m.FromApiModel(&e)
+		latencies[i] = m.FromApiModel(ctx, diagnostics, &e)
 	}
-	return CatalogEntitySLOLightstepStreamTargetResourceModel{
+	ob := CatalogEntitySLOLightstepStreamTargetResourceModel{
 		Latencies: latencies,
 	}
+	objectValue, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return objectValue
 }
 
 type CatalogEntitySLOLightstepStreamTargetLatencyResourceModel struct {
@@ -1743,12 +1810,15 @@ func (o *CatalogEntitySLOLightstepStreamTargetLatencyResourceModel) ToApiModel()
 	}
 }
 
-func (o *CatalogEntitySLOLightstepStreamTargetLatencyResourceModel) FromApiModel(entity *cortex.CatalogEntitySLOLightstepTargetLatency) CatalogEntitySLOLightstepStreamTargetLatencyResourceModel {
-	return CatalogEntitySLOLightstepStreamTargetLatencyResourceModel{
+func (o *CatalogEntitySLOLightstepStreamTargetLatencyResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntitySLOLightstepTargetLatency) types.Object {
+	ob := CatalogEntitySLOLightstepStreamTargetLatencyResourceModel{
 		Percentile: types.Float64Value(entity.Percentile),
 		Target:     types.Int64Value(entity.Target),
 		SLO:        types.Float64Value(entity.SLO),
 	}
+	objectType, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return objectType
 }
 
 // Prometheus
@@ -1874,10 +1944,10 @@ func (o *CatalogEntitySLOSumoLogicResourceModel) FromApiModel(entity *cortex.Cat
  **********************************************************************************************************************/
 
 type CatalogEntityStaticAnalysisResourceModel struct {
-	CodeCov   CatalogEntityStaticAnalysisCodeCovResourceModel   `tfsdk:"code_cov"`
-	Mend      CatalogEntityStaticAnalysisMendResourceModel      `tfsdk:"mend"`
-	SonarQube CatalogEntityStaticAnalysisSonarQubeResourceModel `tfsdk:"sonar_qube"`
-	Veracode  CatalogEntityStaticAnalysisVeracodeResourceModel  `tfsdk:"veracode"`
+	CodeCov   types.Object `tfsdk:"code_cov"`
+	Mend      types.Object `tfsdk:"mend"`
+	SonarQube types.Object `tfsdk:"sonar_qube"`
+	Veracode  types.Object `tfsdk:"veracode"`
 }
 
 func (o *CatalogEntityStaticAnalysisResourceModel) AttrTypes() map[string]attr.Type {
@@ -1893,42 +1963,46 @@ func (o *CatalogEntityStaticAnalysisResourceModel) AttrTypes() map[string]attr.T
 	}
 }
 
-func (o *CatalogEntityStaticAnalysisResourceModel) ToApiModel() cortex.CatalogEntityStaticAnalysis {
+func (o *CatalogEntityStaticAnalysisResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityStaticAnalysis {
+	doo := getDefaultObjectOptions()
+
+	cc := CatalogEntityStaticAnalysisCodeCovResourceModel{}
+	o.CodeCov.As(ctx, &cc, doo)
+
+	me := CatalogEntityStaticAnalysisMendResourceModel{}
+	o.Mend.As(ctx, &me, doo)
+
+	sq := CatalogEntityStaticAnalysisSonarQubeResourceModel{}
+	o.SonarQube.As(ctx, &sq, doo)
+
+	vc := CatalogEntityStaticAnalysisVeracodeResourceModel{}
+	o.Veracode.As(ctx, &vc, doo)
+
 	return cortex.CatalogEntityStaticAnalysis{
-		CodeCov:   o.CodeCov.ToApiModel(),
-		Mend:      o.Mend.ToApiModel(),
-		SonarQube: o.SonarQube.ToApiModel(),
-		Veracode:  o.Veracode.ToApiModel(),
+		CodeCov:   cc.ToApiModel(),
+		Mend:      me.ToApiModel(),
+		SonarQube: sq.ToApiModel(),
+		Veracode:  vc.ToApiModel(),
 	}
 }
 
 func (o *CatalogEntityStaticAnalysisResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityStaticAnalysis) types.Object {
-	ob := CatalogEntityStaticAnalysisResourceModel{}
 	if !entity.Enabled() {
-		return types.ObjectNull(ob.AttrTypes())
+		return types.ObjectNull(o.AttrTypes())
 	}
 
-	if entity.CodeCov.Enabled() {
-		cc := CatalogEntityStaticAnalysisCodeCovResourceModel{}
-		ob.CodeCov = cc.FromApiModel(&entity.CodeCov)
-	}
+	cc := CatalogEntityStaticAnalysisCodeCovResourceModel{}
+	me := CatalogEntityStaticAnalysisMendResourceModel{}
+	sq := CatalogEntityStaticAnalysisSonarQubeResourceModel{}
+	vc := CatalogEntityStaticAnalysisVeracodeResourceModel{}
 
-	if entity.Mend.Enabled() {
-		me := CatalogEntityStaticAnalysisMendResourceModel{}
-		ob.Mend = me.FromApiModel(&entity.Mend)
+	ob := CatalogEntityStaticAnalysisResourceModel{
+		CodeCov:   cc.FromApiModel(ctx, diagnostics, &entity.CodeCov),
+		Mend:      me.FromApiModel(ctx, diagnostics, &entity.Mend),
+		SonarQube: sq.FromApiModel(ctx, diagnostics, &entity.SonarQube),
+		Veracode:  vc.FromApiModel(ctx, diagnostics, &entity.Veracode),
 	}
-
-	if entity.SonarQube.Enabled() {
-		sq := CatalogEntityStaticAnalysisSonarQubeResourceModel{}
-		ob.SonarQube = sq.FromApiModel(&entity.SonarQube)
-	}
-
-	if entity.Veracode.Enabled() {
-		vc := CatalogEntityStaticAnalysisVeracodeResourceModel{}
-		ob.Veracode = vc.FromApiModel(&entity.Veracode)
-	}
-
-	obj, d := types.ObjectValueFrom(ctx, o.AttrTypes(), ob)
+	obj, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), ob)
 	diagnostics.Append(d...)
 	return obj
 }
@@ -1954,11 +2028,18 @@ func (o *CatalogEntityStaticAnalysisCodeCovResourceModel) ToApiModel() cortex.Ca
 	}
 }
 
-func (o *CatalogEntityStaticAnalysisCodeCovResourceModel) FromApiModel(cov *cortex.CatalogEntityStaticAnalysisCodeCov) CatalogEntityStaticAnalysisCodeCovResourceModel {
-	return CatalogEntityStaticAnalysisCodeCovResourceModel{
+func (o *CatalogEntityStaticAnalysisCodeCovResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, cov *cortex.CatalogEntityStaticAnalysisCodeCov) types.Object {
+	if !cov.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
+	ob := CatalogEntityStaticAnalysisCodeCovResourceModel{
 		Repository: types.StringValue(cov.Repository),
 		Provider:   types.StringValue(cov.Provider),
 	}
+	objectValue, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return objectValue
 }
 
 // Mend
@@ -1990,7 +2071,7 @@ func (o *CatalogEntityStaticAnalysisMendResourceModel) ToApiModel() cortex.Catal
 	}
 }
 
-func (o *CatalogEntityStaticAnalysisMendResourceModel) FromApiModel(entity *cortex.CatalogEntityStaticAnalysisMend) CatalogEntityStaticAnalysisMendResourceModel {
+func (o *CatalogEntityStaticAnalysisMendResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityStaticAnalysisMend) types.Object {
 	applicationIds := make([]types.String, len(entity.ApplicationIDs))
 	for i, e := range entity.ApplicationIDs {
 		applicationIds[i] = types.StringValue(e)
@@ -1999,10 +2080,15 @@ func (o *CatalogEntityStaticAnalysisMendResourceModel) FromApiModel(entity *cort
 	for i, e := range entity.ProjectIDs {
 		projectIds[i] = types.StringValue(e)
 	}
-	return CatalogEntityStaticAnalysisMendResourceModel{
+
+	ob := CatalogEntityStaticAnalysisMendResourceModel{
 		ApplicationIDs: applicationIds,
 		ProjectIDs:     projectIds,
 	}
+	objectValue, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return objectValue
+
 }
 
 // SonarQube
@@ -2029,7 +2115,11 @@ func (o *CatalogEntityStaticAnalysisSonarQubeResourceModel) ToApiModel() cortex.
 	return entity
 }
 
-func (o *CatalogEntityStaticAnalysisSonarQubeResourceModel) FromApiModel(entity *cortex.CatalogEntityStaticAnalysisSonarQube) CatalogEntityStaticAnalysisSonarQubeResourceModel {
+func (o *CatalogEntityStaticAnalysisSonarQubeResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityStaticAnalysisSonarQube) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
 	ob := CatalogEntityStaticAnalysisSonarQubeResourceModel{
 		Project: types.StringValue(entity.Project),
 	}
@@ -2038,7 +2128,9 @@ func (o *CatalogEntityStaticAnalysisSonarQubeResourceModel) FromApiModel(entity 
 	} else {
 		ob.Alias = types.StringNull()
 	}
-	return ob
+	objectValue, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return objectValue
 }
 
 // Veracode
@@ -2071,7 +2163,11 @@ func (o *CatalogEntityStaticAnalysisVeracodeResourceModel) ToApiModel() cortex.C
 	}
 }
 
-func (o *CatalogEntityStaticAnalysisVeracodeResourceModel) FromApiModel(entity *cortex.CatalogEntityStaticAnalysisVeracode) CatalogEntityStaticAnalysisVeracodeResourceModel {
+func (o *CatalogEntityStaticAnalysisVeracodeResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityStaticAnalysisVeracode) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
 	var sandboxes = make([]CatalogEntityStaticAnalysisVeracodeSandboxResourceModel, len(entity.Sandboxes))
 	for i, e := range entity.Sandboxes {
 		ob := CatalogEntityStaticAnalysisVeracodeSandboxResourceModel{}
@@ -2081,10 +2177,13 @@ func (o *CatalogEntityStaticAnalysisVeracodeResourceModel) FromApiModel(entity *
 	for i, e := range entity.ApplicationNames {
 		applicationNames[i] = types.StringValue(e)
 	}
-	return CatalogEntityStaticAnalysisVeracodeResourceModel{
+	ob := CatalogEntityStaticAnalysisVeracodeResourceModel{
 		ApplicationNames: applicationNames,
 		Sandboxes:        sandboxes,
 	}
+	objectValue, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return objectValue
 }
 
 type CatalogEntityStaticAnalysisVeracodeSandboxResourceModel struct {
