@@ -148,10 +148,6 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		fmt.Println("Error parsing Snyk configuration: ", err)
 	}
 
-	fmt.Println("TOAPIMODEL TF MODEL: ", o.OnCall)
-	fmt.Println("TOAPIMODEL NOT FUNC: ", onCall)
-	fmt.Println("TOAPIMODEL ENTITY: ", onCall.ToApiModel(ctx))
-
 	return cortex.CatalogEntityData{
 		Tag:            o.Tag.ValueString(),
 		Title:          o.Name.ValueString(),

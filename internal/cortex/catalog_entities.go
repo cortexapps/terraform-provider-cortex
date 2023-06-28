@@ -200,7 +200,6 @@ func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEnt
 	body := strings.NewReader(string(bytes))
 
 	tflog.Debug(ctx, fmt.Sprintf("CREATE body: %+v", body))
-	fmt.Println(fmt.Sprintf("CREATE body: %+v", body))
 	response, err := c.Client().
 		Set("Content-Type", "application/openapi;charset=UTF-8").
 		Set("Accept", "application/json").
