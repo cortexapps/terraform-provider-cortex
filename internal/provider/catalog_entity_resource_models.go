@@ -161,7 +161,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		Dashboards:     dashboards.ToApiModel(),
 		Apm:            apm.ToApiModel(),
 		Git:            git.ToApiModel(ctx),
-		Issues:         issues.ToApiModel(),
+		Issues:         issues.ToApiModel(ctx),
 		OnCall:         onCall.ToApiModel(),
 		SLOs:           serviceLevelObjectives.ToApiModel(),
 		StaticAnalysis: staticAnalysis.ToApiModel(),
@@ -699,18 +699,21 @@ func (o *CatalogEntityBitbucketResourceModel) FromApiModel(ctx context.Context, 
  ***********************************************************************************************************************/
 
 type CatalogEntityIssuesResourceModel struct {
-	Jira CatalogEntityIssuesJiraResourceModel `tfsdk:"jira"`
+	Jira types.Object `tfsdk:"jira"`
 }
 
 func (o *CatalogEntityIssuesResourceModel) AttrTypes() map[string]attr.Type {
+	ob := CatalogEntityIssuesJiraResourceModel{}
 	return map[string]attr.Type{
-		"jira": types.ObjectType{AttrTypes: o.Jira.AttrTypes()},
+		"jira": types.ObjectType{AttrTypes: ob.AttrTypes()},
 	}
 }
 
-func (o *CatalogEntityIssuesResourceModel) ToApiModel() cortex.CatalogEntityIssues {
+func (o *CatalogEntityIssuesResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityIssues {
+	ob := CatalogEntityIssuesJiraResourceModel{}
+	o.Jira.As(ctx, &ob, getDefaultObjectOptions())
 	return cortex.CatalogEntityIssues{
-		Jira: o.Jira.ToApiModel(),
+		Jira: ob.ToApiModel(),
 	}
 }
 
@@ -767,8 +770,13 @@ func (o *CatalogEntityIssuesJiraResourceModel) ToApiModel() cortex.CatalogEntity
 	}
 }
 
-func (o *CatalogEntityIssuesJiraResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityIssuesJira) CatalogEntityIssuesJiraResourceModel {
+func (o *CatalogEntityIssuesJiraResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityIssuesJira) types.Object {
 	obj := CatalogEntityIssuesJiraResourceModel{}
+
+	if !entity.Enabled() {
+		return types.ObjectNull(obj.AttrTypes())
+	}
+
 	if entity.DefaultJQL != "" {
 		obj.DefaultJQL = types.StringValue(entity.DefaultJQL)
 	} else {
@@ -795,7 +803,10 @@ func (o *CatalogEntityIssuesJiraResourceModel) FromApiModel(ctx context.Context,
 	} else {
 		obj.Components = types.ListNull(types.StringType)
 	}
-	return obj
+
+	objectValue, d := types.ObjectValueFrom(ctx, obj.AttrTypes(), &obj)
+	diagnostics.Append(d...)
+	return objectValue
 }
 
 /***********************************************************************************************************************
