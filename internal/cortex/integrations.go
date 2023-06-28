@@ -126,7 +126,7 @@ type CatalogEntityOwner struct {
 	Description          string `json:"description,omitempty" yaml:"description,omitempty"`
 	Provider             string `json:"provider,omitempty" yaml:"provider,omitempty"`
 	Channel              string `json:"channel,omitempty" yaml:"channel,omitempty"` // for slack, do not add # to beginning
-	NotificationsEnabled bool   `json:"notificationsEnabled,omitempty" yaml:"notificationsEnabled,omitempty"`
+	NotificationsEnabled bool   `json:"notificationsEnabled" yaml:"notificationsEnabled"`
 }
 
 type CatalogEntitySLOs struct {

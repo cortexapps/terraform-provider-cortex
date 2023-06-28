@@ -157,7 +157,7 @@ func TestAccCatalogEntityResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "name", "A Test Service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "description", "A test service for the Terraform provider"),
 
-					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.#", "3"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.#", "4"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.0.type", "EMAIL"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.0.name", "John Doe"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.0.email", "john.doe@cortex.io"),
@@ -167,6 +167,9 @@ func TestAccCatalogEntityResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.2.type", "SLACK"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.2.channel", "engineering"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.2.notifications_enabled", "false"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.3.type", "SLACK"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.3.channel", "platform-engineering"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.3.notifications_enabled", "true"),
 
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "groups.#", "2"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "groups.0", "test"),
@@ -216,7 +219,7 @@ func TestAccCatalogEntityResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "tag", "test"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "name", "A Test Service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "description", "A test service for the Terraform provider 2"),
-					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.#", "3"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "owners.#", "4"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "groups.#", "2"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "links.#", "1"),
 				),
@@ -248,6 +251,11 @@ resource "cortex_catalog_entity" "test" {
       type                  = "SLACK"
       channel               = "engineering"
       notifications_enabled = false
+    },
+    {
+      type                  = "SLACK"
+      channel               = "platform-engineering"
+      notifications_enabled = true
     }
  ]
 
