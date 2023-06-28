@@ -148,6 +148,10 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		fmt.Println("Error parsing Snyk configuration: ", err)
 	}
 
+	fmt.Println("TOAPIMODEL TF MODEL: ", o.OnCall)
+	fmt.Println("TOAPIMODEL NOT FUNC: ", onCall)
+	fmt.Println("TOAPIMODEL ENTITY: ", onCall.ToApiModel(ctx))
+
 	return cortex.CatalogEntityData{
 		Tag:            o.Tag.ValueString(),
 		Title:          o.Name.ValueString(),
@@ -162,7 +166,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		Apm:            apm.ToApiModel(ctx),
 		Git:            git.ToApiModel(ctx),
 		Issues:         issues.ToApiModel(ctx),
-		OnCall:         onCall.ToApiModel(),
+		OnCall:         onCall.ToApiModel(ctx),
 		SLOs:           serviceLevelObjectives.ToApiModel(ctx),
 		StaticAnalysis: staticAnalysis.ToApiModel(ctx),
 		BugSnag:        bugSnag.ToApiModel(),
@@ -830,10 +834,18 @@ func (o *CatalogEntityOnCallResourceModel) AttrTypes() map[string]attr.Type {
 	}
 }
 
-func (o *CatalogEntityOnCallResourceModel) ToApiModel() cortex.CatalogEntityOnCall {
+func (o *CatalogEntityOnCallResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityOnCall {
+	defaultObjOptions := getDefaultObjectOptions()
+
 	pd := CatalogEntityOnCallPagerDutyResourceModel{}
+	o.PagerDuty.As(ctx, &pd, defaultObjOptions)
+
 	og := CatalogEntityOnCallOpsGenieResourceModel{}
+	o.OpsGenie.As(ctx, &og, defaultObjOptions)
+
 	vo := CatalogEntityOnCallVictorOpsResourceModel{}
+	o.VictorOps.As(ctx, &vo, defaultObjOptions)
+
 	return cortex.CatalogEntityOnCall{
 		PagerDuty: pd.ToApiModel(),
 		OpsGenie:  og.ToApiModel(),
