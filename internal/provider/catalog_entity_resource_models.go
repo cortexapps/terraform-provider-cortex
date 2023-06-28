@@ -25,7 +25,7 @@ type CatalogEntityResourceModel struct {
 	Links          []CatalogEntityLinkResourceModel  `tfsdk:"links"`
 	Metadata       types.String                      `tfsdk:"metadata"`
 	Dependencies   []types.Object                    `tfsdk:"dependencies"`
-	Alerts         []CatalogEntityAlertResourceModel `tfsdk:"alerts"`
+	Alerts         []types.Object                    `tfsdk:"alerts"`
 	Apm            types.Object                      `tfsdk:"apm"`
 	Dashboards     types.Object                      `tfsdk:"dashboards"`
 	Git            types.Object                      `tfsdk:"git"`
@@ -80,7 +80,12 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 	}
 	alerts := make([]cortex.CatalogEntityAlert, len(o.Alerts))
 	for i, alert := range o.Alerts {
-		alerts[i] = alert.ToApiModel()
+		al := &CatalogEntityAlertResourceModel{}
+		err := alert.As(ctx, al, defaultObjOptions)
+		if err != nil {
+			fmt.Println("Error parsing alert: ", err)
+		}
+		alerts[i] = al.ToApiModel()
 	}
 	dashboards := &CatalogEntityDashboardResourceModel{}
 	err := o.Dashboards.As(ctx, dashboards, defaultObjOptions)
@@ -225,10 +230,10 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 	}
 
 	if len(entity.Alerts) > 0 {
-		o.Alerts = make([]CatalogEntityAlertResourceModel, len(entity.Alerts))
+		o.Alerts = make([]types.Object, len(entity.Alerts))
 		for i, alert := range entity.Alerts {
 			m := CatalogEntityAlertResourceModel{}
-			o.Alerts[i] = m.FromApiModel(&alert)
+			o.Alerts[i] = m.FromApiModel(ctx, diagnostics, &alert)
 		}
 	} else {
 		o.Alerts = nil
@@ -427,6 +432,14 @@ type CatalogEntityAlertResourceModel struct {
 	Value types.String `tfsdk:"value"`
 }
 
+func (o *CatalogEntityAlertResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"type":  types.StringType,
+		"tag":   types.StringType,
+		"value": types.StringType,
+	}
+}
+
 func (o *CatalogEntityAlertResourceModel) ToApiModel() cortex.CatalogEntityAlert {
 	return cortex.CatalogEntityAlert{
 		Type:  o.Type.ValueString(),
@@ -434,12 +447,20 @@ func (o *CatalogEntityAlertResourceModel) ToApiModel() cortex.CatalogEntityAlert
 		Value: o.Value.ValueString(),
 	}
 }
-func (o *CatalogEntityAlertResourceModel) FromApiModel(alert *cortex.CatalogEntityAlert) CatalogEntityAlertResourceModel {
-	return CatalogEntityAlertResourceModel{
+
+func (o *CatalogEntityAlertResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, alert *cortex.CatalogEntityAlert) types.Object {
+	if !alert.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
+	ob := CatalogEntityAlertResourceModel{
 		Type:  types.StringValue(alert.Type),
 		Tag:   types.StringValue(alert.Tag),
 		Value: types.StringValue(alert.Value),
 	}
+	obj, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return obj
 }
 
 /***********************************************************************************************************************
@@ -782,9 +803,9 @@ func (o *CatalogEntityIssuesJiraResourceModel) FromApiModel(ctx context.Context,
  ***********************************************************************************************************************/
 
 type CatalogEntityOnCallResourceModel struct {
-	PagerDuty CatalogEntityOnCallPagerDutyResourceModel `tfsdk:"pager_duty"`
-	OpsGenie  CatalogEntityOnCallOpsGenieResourceModel  `tfsdk:"ops_genie"`
-	VictorOps CatalogEntityOnCallVictorOpsResourceModel `tfsdk:"victor_ops"`
+	PagerDuty types.Object `tfsdk:"pager_duty"`
+	OpsGenie  types.Object `tfsdk:"ops_genie"`
+	VictorOps types.Object `tfsdk:"victor_ops"`
 }
 
 func (o *CatalogEntityOnCallResourceModel) AttrTypes() map[string]attr.Type {
@@ -799,10 +820,13 @@ func (o *CatalogEntityOnCallResourceModel) AttrTypes() map[string]attr.Type {
 }
 
 func (o *CatalogEntityOnCallResourceModel) ToApiModel() cortex.CatalogEntityOnCall {
+	pd := CatalogEntityOnCallPagerDutyResourceModel{}
+	og := CatalogEntityOnCallOpsGenieResourceModel{}
+	vo := CatalogEntityOnCallVictorOpsResourceModel{}
 	return cortex.CatalogEntityOnCall{
-		PagerDuty: o.PagerDuty.ToApiModel(),
-		OpsGenie:  o.OpsGenie.ToApiModel(),
-		VictorOps: o.VictorOps.ToApiModel(),
+		PagerDuty: pd.ToApiModel(),
+		OpsGenie:  og.ToApiModel(),
+		VictorOps: vo.ToApiModel(),
 	}
 }
 
@@ -814,17 +838,13 @@ func (o *CatalogEntityOnCallResourceModel) FromApiModel(ctx context.Context, dia
 	pd := CatalogEntityOnCallPagerDutyResourceModel{}
 	og := CatalogEntityOnCallOpsGenieResourceModel{}
 	vo := CatalogEntityOnCallVictorOpsResourceModel{}
-	ob := CatalogEntityOnCallResourceModel{}
 
-	if onCall.PagerDuty.ID != "" {
-		ob.PagerDuty = pd.FromApiModel(&onCall.PagerDuty)
+	ob := CatalogEntityOnCallResourceModel{
+		PagerDuty: pd.FromApiModel(ctx, diagnostics, &onCall.PagerDuty),
+		OpsGenie:  og.FromApiModel(ctx, diagnostics, &onCall.OpsGenie),
+		VictorOps: vo.FromApiModel(ctx, diagnostics, &onCall.VictorOps),
 	}
-	if onCall.OpsGenie.ID != "" {
-		ob.OpsGenie = og.FromApiModel(&onCall.OpsGenie)
-	}
-	if onCall.VictorOps.ID != "" {
-		ob.VictorOps = vo.FromApiModel(&onCall.VictorOps)
-	}
+
 	obj, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &ob)
 	diagnostics.Append(d...)
 	return obj
@@ -851,11 +871,18 @@ func (o *CatalogEntityOnCallPagerDutyResourceModel) ToApiModel() cortex.CatalogE
 	}
 }
 
-func (o *CatalogEntityOnCallPagerDutyResourceModel) FromApiModel(pagerDuty *cortex.CatalogEntityOnCallPagerDuty) CatalogEntityOnCallPagerDutyResourceModel {
-	return CatalogEntityOnCallPagerDutyResourceModel{
-		ID:   types.StringValue(pagerDuty.ID),
-		Type: types.StringValue(pagerDuty.Type),
+func (o *CatalogEntityOnCallPagerDutyResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityOnCallPagerDuty) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
 	}
+
+	ob := CatalogEntityOnCallPagerDutyResourceModel{
+		ID:   types.StringValue(entity.ID),
+		Type: types.StringValue(entity.Type),
+	}
+	obj, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return obj
 }
 
 // OpsGenie
@@ -879,11 +906,18 @@ func (o *CatalogEntityOnCallOpsGenieResourceModel) ToApiModel() cortex.CatalogEn
 	}
 }
 
-func (o *CatalogEntityOnCallOpsGenieResourceModel) FromApiModel(genie *cortex.CatalogEntityOnCallOpsGenie) CatalogEntityOnCallOpsGenieResourceModel {
-	return CatalogEntityOnCallOpsGenieResourceModel{
-		ID:   types.StringValue(genie.ID),
-		Type: types.StringValue(genie.Type),
+func (o *CatalogEntityOnCallOpsGenieResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityOnCallOpsGenie) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
 	}
+
+	ob := CatalogEntityOnCallOpsGenieResourceModel{
+		ID:   types.StringValue(entity.ID),
+		Type: types.StringValue(entity.Type),
+	}
+	obj, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return obj
 }
 
 // VictorOps
@@ -907,11 +941,18 @@ func (o *CatalogEntityOnCallVictorOpsResourceModel) ToApiModel() cortex.CatalogE
 	}
 }
 
-func (o *CatalogEntityOnCallVictorOpsResourceModel) FromApiModel(entity *cortex.CatalogEntityOnCallVictorOps) CatalogEntityOnCallVictorOpsResourceModel {
-	return CatalogEntityOnCallVictorOpsResourceModel{
+func (o *CatalogEntityOnCallVictorOpsResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityOnCallVictorOps) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
+	ob := CatalogEntityOnCallVictorOpsResourceModel{
 		ID:   types.StringValue(entity.ID),
 		Type: types.StringValue(entity.Type),
 	}
+	obj, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return obj
 }
 
 /***********************************************************************************************************************

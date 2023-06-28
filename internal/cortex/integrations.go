@@ -61,6 +61,10 @@ type CatalogEntityAlert struct {
 	Value string `json:"value" yaml:"value"`
 }
 
+func (o *CatalogEntityAlert) Enabled() bool {
+	return o.Tag != ""
+}
+
 type CatalogEntityApm struct {
 	DataDog   CatalogEntityApmDataDog   `json:"datadog,omitempty" yaml:"datadog,omitempty"`
 	Dynatrace CatalogEntityApmDynatrace `json:"dynatrace,omitempty" yaml:"dynatrace,omitempty"`
