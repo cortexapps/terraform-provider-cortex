@@ -310,10 +310,6 @@ Required:
 <a id="nestedatt--slos"></a>
 ### Nested Schema for `slos`
 
-Required:
-
-- `sumo_logic` (Attributes List) SumoLogic SLO configuration for the entity. (see [below for nested schema](#nestedatt--slos--sumo_logic))
-
 Optional:
 
 - `data_dog` (Attributes List) DataDog SLO configuration for the entity. (see [below for nested schema](#nestedatt--slos--data_dog))
@@ -321,14 +317,7 @@ Optional:
 - `lightstep` (Attributes) Lightstep SLO configuration for the entity. (see [below for nested schema](#nestedatt--slos--lightstep))
 - `prometheus` (Attributes List) Prometheus SLO configuration for the entity. (see [below for nested schema](#nestedatt--slos--prometheus))
 - `signal_fx` (Attributes List) SignalFx SLO configuration for the entity. (see [below for nested schema](#nestedatt--slos--signal_fx))
-
-<a id="nestedatt--slos--sumo_logic"></a>
-### Nested Schema for `slos.sumo_logic`
-
-Required:
-
-- `id` (String) SumoLogic SLO ID.
-
+- `sumo_logic` (Attributes List) SumoLogic SLO configuration for the entity. (see [below for nested schema](#nestedatt--slos--sumo_logic))
 
 <a id="nestedatt--slos--data_dog"></a>
 ### Nested Schema for `slos.data_dog`
@@ -409,6 +398,14 @@ Required:
 - `query` (String) Elasticsearch query for your metric. Filter by metric with `sf_metric` and add additional dimensions to narrow the search. Queries resulting in multiple datasets will be rolled up according to `rollup`.
 - `rollup` (String) SUM or AVERAGE.
 - `target` (Number) Target number for SLO.
+
+
+<a id="nestedatt--slos--sumo_logic"></a>
+### Nested Schema for `slos.sumo_logic`
+
+Required:
+
+- `id` (String) SumoLogic SLO ID.
 
 
 

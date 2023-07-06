@@ -80,6 +80,16 @@ func TestAccCatalogEntityResourceSimple(t *testing.T) {
 
 					resource.TestCheckResourceAttr(resourceName, "git.github.repository", "cortexio/test-simple-1"),
 					resource.TestCheckResourceAttr(resourceName, "sentry.project", "test-simple-1"),
+
+					resource.TestCheckResourceAttr(resourceName, "slos.lightstep.streams.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "slos.lightstep.streams.0.stream_id", "asdf1234567"),
+					resource.TestCheckResourceAttr(resourceName, "slos.lightstep.streams.0.targets.latencies.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "slos.lightstep.streams.0.targets.latencies.0.percentile", "0.5"),
+					resource.TestCheckResourceAttr(resourceName, "slos.lightstep.streams.0.targets.latencies.0.target", "2"),
+					resource.TestCheckResourceAttr(resourceName, "slos.lightstep.streams.0.targets.latencies.0.slo", "0.9995"),
+					resource.TestCheckResourceAttr(resourceName, "slos.lightstep.streams.0.targets.latencies.1.percentile", "0.7"),
+					resource.TestCheckResourceAttr(resourceName, "slos.lightstep.streams.0.targets.latencies.1.target", "1"),
+					resource.TestCheckResourceAttr(resourceName, "slos.lightstep.streams.0.targets.latencies.1.slo", "0.9998"),
 				),
 			},
 			// ImportState testing
@@ -134,6 +144,30 @@ resource "cortex_catalog_entity" "test-simple-1" {
   git = {
     github = {
       repository = "cortexio/test-simple-1"
+    }
+  }
+
+  slos = {
+    lightstep = {
+      streams = [
+        {
+          stream_id = "asdf1234567"
+          targets = {
+            latencies = [
+              {
+                percentile = 0.5
+                target     = 2
+                slo        = 0.9995
+              },
+              {
+                percentile = 0.7
+                target     = 1
+                slo        = 0.9998
+              }
+            ]
+          }
+        }
+      ]
     }
   }
 
