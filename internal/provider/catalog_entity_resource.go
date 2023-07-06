@@ -548,7 +548,7 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 					"sumo_logic": schema.ListNestedAttribute{
 						MarkdownDescription: "SumoLogic SLO configuration for the entity.",
-						Required:            true,
+						Optional:            true,
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
