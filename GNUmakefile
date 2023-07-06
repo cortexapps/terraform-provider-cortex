@@ -2,7 +2,7 @@ HOSTNAME=github.com
 NAMESPACE=bigcommerce
 NAME=cortex
 BINARY=terraform-provider-${NAME}
-VERSION=0.0.7-dev
+VERSION=0.0.8-dev
 
 GOOS?=$(shell go tool dist env | grep GOOS | grep -o '".*"' | sed 's/"//g')
 GOARCH?=$(shell go tool dist env | grep GOARCH | grep -o '".*"' | sed 's/"//g')
