@@ -391,8 +391,13 @@ func (o *CatalogEntityDependencyResourceModel) ToApiModel() cortex.CatalogEntity
 		err := json.Unmarshal([]byte(o.Metadata.ValueString()), &metadata)
 		if err != nil {
 			fmt.Println("Error parsing Dependency configuration: ", err)
-			metadata = make(map[string]interface{})
+			metadata = nil
 		}
+		if len(metadata) == 0 {
+			metadata = nil
+		}
+	} else {
+		metadata = nil
 	}
 
 	return cortex.CatalogEntityDependency{
@@ -407,19 +412,28 @@ func (o *CatalogEntityDependencyResourceModel) ToApiModel() cortex.CatalogEntity
 func (o *CatalogEntityDependencyResourceModel) FromApiModel(ctx context.Context, diag *diag.Diagnostics, dependency *cortex.CatalogEntityDependency) types.Object {
 	obj := CatalogEntityDependencyResourceModel{
 		Tag:         types.StringValue(dependency.Tag),
-		Method:      types.StringValue(dependency.Method),
-		Path:        types.StringValue(dependency.Path),
 		Description: types.StringValue(dependency.Description),
 	}
-	if dependency.Metadata == nil {
-		dependency.Metadata = map[string]interface{}{}
+	if dependency.Path != "" {
+		obj.Path = types.StringValue(dependency.Path)
+	} else {
+		obj.Path = types.StringNull()
 	}
-	depMetadata, err := json.Marshal(dependency.Metadata)
-	if err != nil {
-		tflog.Error(ctx, fmt.Sprintf("Error marshalling Dependency metadata: %+v", err))
-		depMetadata = []byte{}
+	if dependency.Method != "" {
+		obj.Method = types.StringValue(dependency.Method)
+	} else {
+		obj.Method = types.StringNull()
 	}
-	obj.Metadata = types.StringValue(string(depMetadata))
+	if dependency.Metadata != nil && len(dependency.Metadata) > 0 {
+		depMetadata, err := json.Marshal(dependency.Metadata)
+		if err != nil {
+			tflog.Error(ctx, fmt.Sprintf("Error marshalling Dependency metadata: %+v", err))
+			depMetadata = []byte{}
+		}
+		obj.Metadata = types.StringValue(string(depMetadata))
+	} else {
+		obj.Metadata = types.StringNull()
+	}
 
 	retObj, d := types.ObjectValueFrom(ctx, obj.AttrTypes(), &obj)
 	diag.Append(d...)
