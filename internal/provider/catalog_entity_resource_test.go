@@ -209,6 +209,10 @@ func TestAccCatalogEntityResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "groups.0", "test"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "groups.1", "test2"),
 
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "dependencies.#", "1"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "dependencies.0.tag", "manual-test"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "dependencies.0.description", "for testing"),
+
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "links.#", "1"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "links.0.name", "Internal Docs"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "links.0.type", "documentation"),
@@ -292,6 +296,13 @@ resource "cortex_catalog_entity" "test" {
       notifications_enabled = true
     }
  ]
+
+  dependencies = [
+    { 
+      tag = "manual-test"
+      description = "for testing"
+    }
+  ]
 
   groups = [
    "test",
