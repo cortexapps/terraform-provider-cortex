@@ -66,6 +66,14 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"type": schema.StringAttribute{
+				MarkdownDescription: "Set when the entity is a Resource. This must match a tag of a valid Resource Definition.",
+				Optional:            true,
+			},
+			"definition": schema.StringAttribute{
+				MarkdownDescription: "Set when the entity is a Resource. These are the properties defined by the Resource Definition, in JSON format in a string (use the `jsonencode` function to convert a JSON object to a string).",
+				Optional:            true,
+			},
 
 			// Optional attributes
 			"owners": schema.ListNestedAttribute{

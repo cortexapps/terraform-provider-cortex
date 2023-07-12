@@ -1,5 +1,9 @@
 Changelog for the Cortex terraform provider.
 
+## 0.0.9
+
+* Add ability to manage custom resources
+* 
 ## 0.0.8
 
 * Fix issue with empty metadata responses on x-cortex-dependency entities

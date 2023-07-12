@@ -1,6 +1,7 @@
 package provider_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"testing"
@@ -500,4 +501,62 @@ resource "cortex_catalog_entity" "test" {
   }
 }
 `, tag, name, description)
+}
+
+func TestAccCatalogEntityResourceResourceSimple(t *testing.T) {
+	tag := "test-resource-simple"
+	resourceName := "cortex_catalog_entity.test-resource-simple"
+	name := "Simple Test Resource"
+	description := "Simple configuration resource"
+	resourceType := "test-resource-definition"
+	expectedDefinition := map[string]interface{}{"version": "1.0.0"}
+	expectedDefinitionString, _ := json.Marshal(&expectedDefinition)
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testAccCatalogEntityResourceResourceSimple(tag, name, description),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "tag", tag),
+					resource.TestCheckResourceAttr(resourceName, "name", name),
+					resource.TestCheckResourceAttr(resourceName, "description", description),
+					resource.TestCheckResourceAttr(resourceName, "type", resourceType),
+					resource.TestCheckResourceAttr(resourceName, "definition", string(expectedDefinitionString)),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Update and Read testing
+			{
+				Config: testAccCatalogEntityResourceResourceSimple(tag, name, "Simple configuration resource 2"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "tag", tag),
+					resource.TestCheckResourceAttr(resourceName, "name", name),
+					resource.TestCheckResourceAttr(resourceName, "description", "Simple configuration resource 2"),
+					resource.TestCheckResourceAttr(resourceName, "type", resourceType),
+					resource.TestCheckResourceAttr(resourceName, "definition", string(expectedDefinitionString)),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
+
+func testAccCatalogEntityResourceResourceSimple(tag string, name string, description string) string {
+	return fmt.Sprintf(`
+resource "cortex_catalog_entity" "test-resource-simple" {
+ tag = %[1]q
+ name = %[2]q
+ description = %[3]q
+ type = "test-resource-definition"
+ definition = jsonencode({
+	"version": "1.0.0"
+ })
+}`, tag, name, description)
 }

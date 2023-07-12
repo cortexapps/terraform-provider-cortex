@@ -20,6 +20,8 @@ type CatalogEntityResourceModel struct {
 	Tag            types.String                      `tfsdk:"tag"`
 	Name           types.String                      `tfsdk:"name"`
 	Description    types.String                      `tfsdk:"description"`
+	Type           types.String                      `tfsdk:"type"`
+	Definition     types.String                      `tfsdk:"definition"`
 	Owners         []CatalogEntityOwnerResourceModel `tfsdk:"owners"`
 	Groups         []types.String                    `tfsdk:"groups"`
 	Links          []CatalogEntityLinkResourceModel  `tfsdk:"links"`
@@ -47,6 +49,16 @@ func getDefaultObjectOptions() basetypes.ObjectAsOptions {
 func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityData {
 	defaultObjOptions := getDefaultObjectOptions()
 
+	definition := make(map[string]interface{})
+	if !o.Definition.IsNull() && !o.Definition.IsUnknown() && o.Definition.ValueString() != "" {
+		err := json.Unmarshal([]byte(o.Definition.ValueString()), &definition)
+		if err != nil {
+			fmt.Println("Error parsing x-cortex-definition: ", err)
+			definition = make(map[string]interface{})
+		}
+	} else {
+		definition = make(map[string]interface{})
+	}
 	owners := make([]cortex.CatalogEntityOwner, len(o.Owners))
 	for i, owner := range o.Owners {
 		owners[i] = owner.ToApiModel()
@@ -152,6 +164,8 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		Tag:            o.Tag.ValueString(),
 		Title:          o.Name.ValueString(),
 		Description:    o.Description.ValueString(),
+		Type:           o.Type.ValueString(),
+		Definition:     definition,
 		Owners:         owners,
 		Groups:         groups,
 		Links:          links,
@@ -177,6 +191,22 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 	o.Id = types.StringValue(entity.Tag)
 	o.Name = types.StringValue(entity.Title)
 	o.Description = types.StringValue(entity.Description)
+	o.Type = types.StringValue(entity.Type)
+	if entity.Type == "service" {
+		o.Type = types.StringNull()
+	}
+
+	// coerce map of unknown types into string
+	if entity.Definition != nil && len(entity.Definition) > 0 {
+		definition, err := json.Marshal(entity.Definition)
+		if err != nil {
+			diagnostics.AddError("Error parsing definition: %s", err.Error())
+			return
+		}
+		o.Definition = types.StringValue(string(definition))
+	} else {
+		o.Definition = types.StringNull()
+	}
 
 	if len(entity.Owners) > 0 {
 		o.Owners = make([]CatalogEntityOwnerResourceModel, len(entity.Owners))

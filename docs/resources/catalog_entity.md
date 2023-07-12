@@ -27,6 +27,7 @@ Catalog Entity
 - `bug_snag` (Attributes) BugSnag configuration for the entity. (see [below for nested schema](#nestedatt--bug_snag))
 - `checkmarx` (Attributes) Checkmarx configuration for the entity. (see [below for nested schema](#nestedatt--checkmarx))
 - `dashboards` (Attributes) Dashboards configuration for the entity. (see [below for nested schema](#nestedatt--dashboards))
+- `definition` (String) Set when the entity is a Resource. These are the properties defined by the Resource Definition, in JSON format in a string (use the `jsonencode` function to convert a JSON object to a string).
 - `dependencies` (Attributes List) List of dependencies for the entity. (see [below for nested schema](#nestedatt--dependencies))
 - `description` (String) Description of the entity visible in the Service or Resource Catalog. Markdown is supported.
 - `git` (Attributes) Git configuration for the entity. (see [below for nested schema](#nestedatt--git))
@@ -41,6 +42,7 @@ Catalog Entity
 - `slos` (Attributes) Service-level Objectives configuration for the entity. (see [below for nested schema](#nestedatt--slos))
 - `snyk` (Attributes) Snyk configuration for the entity. (see [below for nested schema](#nestedatt--snyk))
 - `static_analysis` (Attributes) Static analysis configuration for the entity. (see [below for nested schema](#nestedatt--static_analysis))
+- `type` (String) Set when the entity is a Resource. This must match a tag of a valid Resource Definition.
 
 ### Read-Only
 

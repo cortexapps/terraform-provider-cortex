@@ -11,6 +11,11 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 	entity.Tag = MapFetchToString(info, "x-cortex-tag")
 	entity.Type = MapFetch(info, "x-cortex-type", "service").(string)
 
+	entity.Definition = map[string]interface{}{}
+	if info["x-cortex-definition"] != nil {
+		entity.Definition = info["x-cortex-definition"].(map[string]interface{})
+	}
+
 	entity.Links = []CatalogEntityLink{}
 	if info["x-cortex-link"] != nil {
 		c.interpolateLinks(entity, info["x-cortex-link"].([]interface{}))
