@@ -190,10 +190,15 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityData) {
 	o.Id = types.StringValue(entity.Tag)
 	o.Name = types.StringValue(entity.Title)
-	o.Description = types.StringValue(entity.Description)
-	o.Type = types.StringValue(entity.Type)
-	if entity.Type == "service" {
+	if entity.Type == "service" || entity.Type == "" {
 		o.Type = types.StringNull()
+	} else {
+		o.Type = types.StringValue(entity.Type)
+	}
+	if entity.Description == "" {
+		o.Description = types.StringNull()
+	} else {
+		o.Description = types.StringValue(entity.Description)
 	}
 
 	// coerce map of unknown types into string
