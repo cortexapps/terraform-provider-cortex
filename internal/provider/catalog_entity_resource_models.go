@@ -25,6 +25,7 @@ type CatalogEntityResourceModel struct {
 	Owners         []CatalogEntityOwnerResourceModel `tfsdk:"owners"`
 	Groups         []types.String                    `tfsdk:"groups"`
 	Links          []CatalogEntityLinkResourceModel  `tfsdk:"links"`
+	IgnoreMetadata types.Bool                        `tfsdk:"ignore_metadata"`
 	Metadata       types.String                      `tfsdk:"metadata"`
 	Dependencies   []types.Object                    `tfsdk:"dependencies"`
 	Alerts         []types.Object                    `tfsdk:"alerts"`
@@ -72,6 +73,17 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		links[i] = link.ToApiModel()
 	}
 	metadata := make(map[string]interface{})
+	if !o.IgnoreMetadata.ValueBool() {
+		if !o.Metadata.IsNull() && !o.Metadata.IsUnknown() && o.Metadata.ValueString() != "" {
+			err := json.Unmarshal([]byte(o.Metadata.ValueString()), &metadata)
+			if err != nil {
+				fmt.Println("Error parsing custom metadata: ", err)
+				metadata = make(map[string]interface{})
+			}
+		} else {
+			metadata = make(map[string]interface{})
+		}
+	}
 	if !o.Metadata.IsNull() && !o.Metadata.IsUnknown() && o.Metadata.ValueString() != "" {
 		err := json.Unmarshal([]byte(o.Metadata.ValueString()), &metadata)
 		if err != nil {
@@ -169,6 +181,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		Owners:         owners,
 		Groups:         groups,
 		Links:          links,
+		IgnoreMetadata: o.IgnoreMetadata.ValueBool(),
 		Metadata:       metadata,
 		Dependencies:   dependencies,
 		Alerts:         alerts,

@@ -560,3 +560,51 @@ resource "cortex_catalog_entity" "test-resource-simple" {
  })
 }`, tag, name, description)
 }
+
+func TestAccCatalogEntityUnmanagedMetadata(t *testing.T) {
+	tag := "test-unmanaged-metadata"
+	resourceName := "cortex_catalog_entity.test-unmanaged-metadata"
+	name := "Unmanaged Metadata Test Entity"
+	description := "Unmanaged Metadata entity"
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testAccCatalogEntityUnmanagedMetadata(tag, name, description),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "tag", tag),
+					resource.TestCheckResourceAttr(resourceName, "name", name),
+					resource.TestCheckResourceAttr(resourceName, "description", description),
+					resource.TestCheckResourceAttr(resourceName, "ignore_metadata", "true"),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"metadata",
+					"ignore_metadata",
+				},
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
+
+func testAccCatalogEntityUnmanagedMetadata(tag string, name string, description string) string {
+	return fmt.Sprintf(`
+resource "cortex_catalog_entity" "test-unmanaged-metadata" {
+ tag = %[1]q
+ name = %[2]q
+ description = %[3]q
+ ignore_metadata = true
+ metadata = jsonencode({
+  "this": "is",
+  "ignored": true
+ })
+}`, tag, name, description)
+}

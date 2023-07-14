@@ -32,6 +32,7 @@ Catalog Entity
 - `description` (String) Description of the entity visible in the Service or Resource Catalog. Markdown is supported.
 - `git` (Attributes) Git configuration for the entity. (see [below for nested schema](#nestedatt--git))
 - `groups` (List of String) List of groups related to the entity.
+- `ignore_metadata` (Boolean) Whether the entity's custom metadata is managed by Terraform. Defaults to `false`. If set to `true`, the provider will ignore any metadata on the Entity and not persist it to state.
 - `issues` (Attributes) Issue tracking configuration for the entity. (see [below for nested schema](#nestedatt--issues))
 - `links` (Attributes List) List of links related to the entity. (see [below for nested schema](#nestedatt--links))
 - `metadata` (String) Custom metadata for the entity, in JSON format in a string. (Use the `jsonencode` function to convert a JSON object to a string.)

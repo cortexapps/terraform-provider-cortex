@@ -22,6 +22,10 @@ func NewCatalogEntityResource() resource.Resource {
 	return &CatalogEntityResource{}
 }
 
+func NewCatalogEntityResourceModel() CatalogEntityResourceModel {
+	return CatalogEntityResourceModel{}
+}
+
 /***********************************************************************************************************************
  * Types
  **********************************************************************************************************************/
@@ -145,6 +149,10 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 						},
 					},
 				},
+			},
+			"ignore_metadata": schema.BoolAttribute{
+				MarkdownDescription: "Whether the entity's custom metadata is managed by Terraform. Defaults to `false`. If set to `true`, the provider will ignore any metadata on the Entity and not persist it to state.",
+				Optional:            true,
 			},
 			"metadata": schema.StringAttribute{
 				MarkdownDescription: "Custom metadata for the entity, in JSON format in a string. (Use the `jsonencode` function to convert a JSON object to a string.)",
@@ -762,7 +770,7 @@ func (r *CatalogEntityResource) Configure(ctx context.Context, req resource.Conf
 }
 
 func (r *CatalogEntityResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data *CatalogEntityResourceModel
+	data := NewCatalogEntityResourceModel()
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -770,9 +778,10 @@ func (r *CatalogEntityResource) Create(ctx context.Context, req resource.CreateR
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	oldMetadata := data.Metadata
 
 	// Issue API request
-	upsertRequest := r.toUpsertRequest(ctx, data)
+	upsertRequest := r.toUpsertRequest(ctx, &data)
 	entity, err := r.client.CatalogEntities().Upsert(ctx, upsertRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read catalog entity, got error: %s", err))
@@ -781,6 +790,9 @@ func (r *CatalogEntityResource) Create(ctx context.Context, req resource.CreateR
 
 	// Set computed attributes
 	data.FromApiModel(ctx, &resp.Diagnostics, entity)
+	if data.IgnoreMetadata.ValueBool() {
+		data.Metadata = oldMetadata
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -790,7 +802,7 @@ func (r *CatalogEntityResource) Create(ctx context.Context, req resource.CreateR
 }
 
 func (r *CatalogEntityResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *CatalogEntityResourceModel
+	data := NewCatalogEntityResourceModel()
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -798,6 +810,7 @@ func (r *CatalogEntityResource) Read(ctx context.Context, req resource.ReadReque
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	oldMetadata := data.Metadata
 
 	// Issue API request
 	entity, err := r.client.CatalogEntities().GetFromDescriptor(ctx, data.Tag.ValueString())
@@ -809,6 +822,9 @@ func (r *CatalogEntityResource) Read(ctx context.Context, req resource.ReadReque
 
 	// Set attributes from API response
 	data.FromApiModel(ctx, &resp.Diagnostics, entity)
+	if data.IgnoreMetadata.ValueBool() {
+		data.Metadata = oldMetadata
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -818,17 +834,18 @@ func (r *CatalogEntityResource) Read(ctx context.Context, req resource.ReadReque
 }
 
 func (r *CatalogEntityResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data *CatalogEntityResourceModel
+	data := NewCatalogEntityResourceModel()
+	//data.IgnoreMetadata = types.BoolNull()
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	oldMetadata := data.Metadata
 
-	// Issue API request
-	upsertRequest := r.toUpsertRequest(ctx, data)
+	// Issue API request)
+	upsertRequest := r.toUpsertRequest(ctx, &data)
 	entity, err := r.client.CatalogEntities().Upsert(ctx, upsertRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read catalog entity, got error: %s", err))
@@ -837,6 +854,9 @@ func (r *CatalogEntityResource) Update(ctx context.Context, req resource.UpdateR
 
 	// Set computed attributes
 	data.FromApiModel(ctx, &resp.Diagnostics, entity)
+	if data.IgnoreMetadata.ValueBool() {
+		data.Metadata = oldMetadata
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -846,7 +866,7 @@ func (r *CatalogEntityResource) Update(ctx context.Context, req resource.UpdateR
 }
 
 func (r *CatalogEntityResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *CatalogEntityResourceModel
+	data := NewCatalogEntityResourceModel()
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -868,4 +888,5 @@ func (r *CatalogEntityResource) Delete(ctx context.Context, req resource.DeleteR
 
 func (r *CatalogEntityResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("tag"), req, resp)
+	//resp.State.SetAttribute(ctx, path.Root("metadata"), types.StringNull())
 }
