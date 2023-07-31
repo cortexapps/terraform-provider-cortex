@@ -30,6 +30,7 @@ Catalog Entity
 - `definition` (String) Set when the entity is a Resource. These are the properties defined by the Resource Definition, in JSON format in a string (use the `jsonencode` function to convert a JSON object to a string).
 - `dependencies` (Attributes List) List of dependencies for the entity. (see [below for nested schema](#nestedatt--dependencies))
 - `description` (String) Description of the entity visible in the Service or Resource Catalog. Markdown is supported.
+- `firehydrant` (Attributes) FireHydrant configuration for the entity. (see [below for nested schema](#nestedatt--firehydrant))
 - `git` (Attributes) Git configuration for the entity. (see [below for nested schema](#nestedatt--git))
 - `groups` (List of String) List of groups related to the entity.
 - `ignore_metadata` (Boolean) Whether the entity's custom metadata is managed by Terraform. Defaults to `false`. If set to `true`, the provider will ignore any metadata on the Entity and not persist it to state.
@@ -153,6 +154,23 @@ Optional:
 - `metadata` (String) Custom metadata for the dependency, in JSON format in a string. (Use the `jsonencode` function to convert a JSON object to a string.)
 - `method` (String) HTTP method if depending on a specific endpoint.
 - `path` (String) The actual endpoint this dependency refers to.
+
+
+<a id="nestedatt--firehydrant"></a>
+### Nested Schema for `firehydrant`
+
+Optional:
+
+- `services` (Attributes List) List of FireHydrant services for the entity. (see [below for nested schema](#nestedatt--firehydrant--services))
+
+<a id="nestedatt--firehydrant--services"></a>
+### Nested Schema for `firehydrant.services`
+
+Required:
+
+- `id` (String) FireHydrant service identifier. Either the ID or the Slug, based on the value of Type below.
+- `type` (String) FireHydrant service identifier type. Either `ID` or `SLUG`.
+
 
 
 <a id="nestedatt--git"></a>
