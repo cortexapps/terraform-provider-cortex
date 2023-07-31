@@ -1,5 +1,9 @@
 Changelog for the Cortex terraform provider.
 
+## Unreleased
+
+* Add the ability to ignore metadata on a Catalog Entity, allowing it to be managed via API instead
+
 ## 0.0.10
 
 * Better handle empty values for description and type on Catalog Entities

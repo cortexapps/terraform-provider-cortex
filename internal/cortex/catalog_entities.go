@@ -191,6 +191,9 @@ func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEnt
 		Violations: []CatalogEntityViolation{},
 	}
 	apiError := &ApiError{}
+	if req.Info.IgnoreMetadata {
+		req.Info.Metadata = nil
+	}
 
 	// The API requires submitting the request as YAML, so we need to marshal it first.
 	bytes, err := yaml.Marshal(req)

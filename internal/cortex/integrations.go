@@ -8,16 +8,17 @@ package cortex
 // match the structure of the CatalogEntity struct in other responses.
 // See: https://github.com/cortexapps/solutions/blob/master/examples/yaml/catalog/resource.yaml
 type CatalogEntityData struct {
-	Title        string                    `json:"title" yaml:"title"`
-	Description  string                    `json:"description,omitempty" yaml:"description,omitempty"`
-	Tag          string                    `json:"x-cortex-tag" yaml:"x-cortex-tag"`
-	Type         string                    `json:"x-cortex-type,omitempty" yaml:"x-cortex-type,omitempty"`
-	Definition   map[string]interface{}    `json:"x-cortex-definition,omitempty" yaml:"x-cortex-definition,omitempty"`
-	Owners       []CatalogEntityOwner      `json:"x-cortex-owners,omitempty" yaml:"x-cortex-owners,omitempty"`
-	Groups       []string                  `json:"x-cortex-groups,omitempty" yaml:"x-cortex-groups"` // TODO: is this -groups or -service-groups? docs unclear
-	Links        []CatalogEntityLink       `json:"x-cortex-link,omitempty" yaml:"x-cortex-link,omitempty"`
-	Metadata     map[string]interface{}    `json:"x-cortex-custom-metadata,omitempty" yaml:"x-cortex-custom-metadata,omitempty"`
-	Dependencies []CatalogEntityDependency `json:"x-cortex-dependency,omitempty" yaml:"x-cortex-dependency,omitempty"`
+	Title          string                    `json:"title" yaml:"title"`
+	Description    string                    `json:"description,omitempty" yaml:"description,omitempty"`
+	Tag            string                    `json:"x-cortex-tag" yaml:"x-cortex-tag"`
+	Type           string                    `json:"x-cortex-type,omitempty" yaml:"x-cortex-type,omitempty"`
+	Definition     map[string]interface{}    `json:"x-cortex-definition,omitempty" yaml:"x-cortex-definition,omitempty"`
+	Owners         []CatalogEntityOwner      `json:"x-cortex-owners,omitempty" yaml:"x-cortex-owners,omitempty"`
+	Groups         []string                  `json:"x-cortex-groups,omitempty" yaml:"x-cortex-groups"` // TODO: is this -groups or -service-groups? docs unclear
+	Links          []CatalogEntityLink       `json:"x-cortex-link,omitempty" yaml:"x-cortex-link,omitempty"`
+	IgnoreMetadata bool                      `json:"-"`
+	Metadata       map[string]interface{}    `json:"x-cortex-custom-metadata,omitempty" yaml:"x-cortex-custom-metadata,omitempty"`
+	Dependencies   []CatalogEntityDependency `json:"x-cortex-dependency,omitempty" yaml:"x-cortex-dependency,omitempty"`
 
 	// Various generic integration attributes
 	Alerts         []CatalogEntityAlert        `json:"x-cortex-alerts,omitempty" yaml:"x-cortex-alerts,omitempty"`
