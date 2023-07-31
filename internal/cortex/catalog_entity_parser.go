@@ -86,6 +86,10 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 		c.interpolateCheckmarx(entity, info["x-cortex-checkmarx"].(map[string]interface{}))
 	}
 
+	if info["x-cortex-firehydrant"] != nil {
+		c.interpolateFirehydrant(entity, info["x-cortex-firehydrant"].(map[string]interface{}))
+	}
+
 	if info["x-cortex-sentry"] != nil {
 		c.interpolateSentry(entity, info["x-cortex-sentry"].(map[string]interface{}))
 	}
@@ -449,6 +453,27 @@ func (c *CatalogEntityParser) interpolateCheckmarx(entity *CatalogEntityData, ch
 			}
 			if pe.ID > 0 || pe.Name != "" {
 				entity.Checkmarx.Projects = append(entity.Checkmarx.Projects, pe)
+			}
+		}
+	}
+}
+
+func (c *CatalogEntityParser) interpolateFirehydrant(entity *CatalogEntityData, firehydrantMap map[string]interface{}) {
+	entity.FireHydrant = CatalogEntityFireHydrant{
+		Services: []CatalogEntityFireHydrantService{},
+	}
+	if firehydrantMap["services"] != nil {
+		for _, service := range firehydrantMap["services"].([]interface{}) {
+			serviceMap := service.(map[string]interface{})
+			se := CatalogEntityFireHydrantService{}
+			if serviceMap["identifier"] != nil {
+				se.ID = MapFetch(serviceMap, "identifier", "").(string)
+			}
+			if serviceMap["identifierType"] != nil {
+				se.Type = MapFetch(serviceMap, "identifierType", "").(string)
+			}
+			if se.Enabled() {
+				entity.FireHydrant.Services = append(entity.FireHydrant.Services, se)
 			}
 		}
 	}

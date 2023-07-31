@@ -239,6 +239,10 @@ func TestAccCatalogEntityResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "bug_snag.project", "cortexio/products-service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "sentry.project", "cortexio/products-service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "checkmarx.projects.0.name", "products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "firehydrant.services.0.id", "asdf1234"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "firehydrant.services.0.type", "ID"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "firehydrant.services.1.id", "products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "firehydrant.services.1.type", "SLUG"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "rollbar.project", "products-service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "snyk.projects.0.organization", "cortexio"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "snyk.projects.0.project_id", "cortexio/products-service"),
@@ -478,6 +482,19 @@ resource "cortex_catalog_entity" "test" {
     projects = [
       {
         name = "products-service"
+      }
+    ]
+  }
+
+  firehydrant = {
+    services = [
+      { 
+        id   = "asdf1234"
+        type = "ID"
+      },
+      { 
+        id   = "products-service"
+        type = "SLUG"
       }
     ]
   }

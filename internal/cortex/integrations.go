@@ -31,11 +31,12 @@ type CatalogEntityData struct {
 	StaticAnalysis CatalogEntityStaticAnalysis `json:"x-cortex-static-analysis,omitempty" yaml:"x-cortex-static-analysis,omitempty"`
 
 	// Integration-specific things
-	BugSnag   CatalogEntityBugSnag   `json:"x-cortex-bugsnag,omitempty" yaml:"x-cortex-bugsnag,omitempty"`
-	Checkmarx CatalogEntityCheckmarx `json:"x-cortex-checkmarx,omitempty" yaml:"x-cortex-checkmarx,omitempty"`
-	Rollbar   CatalogEntityRollbar   `json:"x-cortex-rollbar,omitempty" yaml:"x-cortex-rollbar,omitempty"`
-	Sentry    CatalogEntitySentry    `json:"x-cortex-sentry,omitempty" yaml:"x-cortex-sentry,omitempty"`
-	Snyk      CatalogEntitySnyk      `json:"x-cortex-snyk,omitempty" yaml:"x-cortex-snyk,omitempty"`
+	BugSnag     CatalogEntityBugSnag     `json:"x-cortex-bugsnag,omitempty" yaml:"x-cortex-bugsnag,omitempty"`
+	Checkmarx   CatalogEntityCheckmarx   `json:"x-cortex-checkmarx,omitempty" yaml:"x-cortex-checkmarx,omitempty"`
+	FireHydrant CatalogEntityFireHydrant `json:"x-cortex-firehydrant,omitempty" yaml:"x-cortex-firehydrant,omitempty"`
+	Rollbar     CatalogEntityRollbar     `json:"x-cortex-rollbar,omitempty" yaml:"x-cortex-rollbar,omitempty"`
+	Sentry      CatalogEntitySentry      `json:"x-cortex-sentry,omitempty" yaml:"x-cortex-sentry,omitempty"`
+	Snyk        CatalogEntitySnyk        `json:"x-cortex-snyk,omitempty" yaml:"x-cortex-snyk,omitempty"`
 }
 
 type CatalogEntityLink struct {
@@ -261,6 +262,27 @@ type CatalogEntitySLODynatrace struct {
 
 func (o *CatalogEntitySLODynatrace) Enabled() bool {
 	return o.ID != ""
+}
+
+/***********************************************************************************************************************
+ * FireHydrant - https://docs.cortex.io/docs/reference/integrations/firehydrant
+ **********************************************************************************************************************/
+
+type CatalogEntityFireHydrant struct {
+	Services []CatalogEntityFireHydrantService `json:"services" yaml:"services"`
+}
+
+func (o *CatalogEntityFireHydrant) Enabled() bool {
+	return len(o.Services) > 0
+}
+
+type CatalogEntityFireHydrantService struct {
+	ID   string `json:"identifier" yaml:"identifier"`
+	Type string `json:"identifierType" yaml:"identifierType"`
+}
+
+func (o *CatalogEntityFireHydrantService) Enabled() bool {
+	return o.ID != "" && o.Type != ""
 }
 
 /***********************************************************************************************************************

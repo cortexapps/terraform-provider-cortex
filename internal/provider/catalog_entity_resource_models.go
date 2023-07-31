@@ -38,6 +38,7 @@ type CatalogEntityResourceModel struct {
 	StaticAnalysis types.Object                      `tfsdk:"static_analysis"`
 	BugSnag        types.Object                      `tfsdk:"bug_snag"`
 	Checkmarx      types.Object                      `tfsdk:"checkmarx"`
+	FireHydrant    types.Object                      `tfsdk:"firehydrant"`
 	Rollbar        types.Object                      `tfsdk:"rollbar"`
 	Sentry         types.Object                      `tfsdk:"sentry"`
 	Snyk           types.Object                      `tfsdk:"snyk"`
@@ -156,6 +157,11 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 	if err != nil {
 		fmt.Println("Error parsing Checkmarx configuration: ", err)
 	}
+	firehydrant := CatalogEntityFireHydrantResourceModel{}
+	err = o.FireHydrant.As(ctx, &firehydrant, defaultObjOptions)
+	if err != nil {
+		fmt.Println("Error parsing FireHydrant configuration: ", err)
+	}
 	rollbar := CatalogEntityRollbarResourceModel{}
 	err = o.Rollbar.As(ctx, &rollbar, defaultObjOptions)
 	if err != nil {
@@ -194,6 +200,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		StaticAnalysis: staticAnalysis.ToApiModel(ctx),
 		BugSnag:        bugSnag.ToApiModel(),
 		Checkmarx:      checkmarx.ToApiModel(),
+		FireHydrant:    firehydrant.ToApiModel(),
 		Rollbar:        rollbar.ToApiModel(),
 		Sentry:         sentry.ToApiModel(),
 		Snyk:           snyk.ToApiModel(),
@@ -313,6 +320,9 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 
 	checkmarx := CatalogEntityCheckmarxResourceModel{}
 	o.Checkmarx = checkmarx.FromApiModel(ctx, diagnostics, &entity.Checkmarx)
+
+	firehydrant := CatalogEntityFireHydrantResourceModel{}
+	o.FireHydrant = firehydrant.FromApiModel(ctx, diagnostics, &entity.FireHydrant)
 
 	rollbar := CatalogEntityRollbarResourceModel{}
 	o.Rollbar = rollbar.FromApiModel(ctx, diagnostics, &entity.Rollbar)
@@ -1147,6 +1157,77 @@ func (o *CatalogEntityCheckmarxProjectResourceModel) FromApiModel(project cortex
 		ob.Name = types.StringValue(project.Name)
 	}
 	return ob
+}
+
+/***********************************************************************************************************************
+ * FireHydrant
+ **********************************************************************************************************************/
+
+type CatalogEntityFireHydrantResourceModel struct {
+	Services []CatalogEntityFireHydrantServiceResourceModel `tfsdk:"services"`
+}
+
+func (o *CatalogEntityFireHydrantResourceModel) AttrTypes() map[string]attr.Type {
+	ob := CatalogEntityFireHydrantServiceResourceModel{}
+	return map[string]attr.Type{
+		"services": types.ListType{ElemType: types.ObjectType{AttrTypes: ob.AttrTypes()}},
+	}
+}
+
+func (o *CatalogEntityFireHydrantResourceModel) ToApiModel() cortex.CatalogEntityFireHydrant {
+	services := make([]cortex.CatalogEntityFireHydrantService, len(o.Services))
+	for i, s := range o.Services {
+		services[i] = s.ToApiModel()
+	}
+	return cortex.CatalogEntityFireHydrant{
+		Services: services,
+	}
+}
+
+func (o *CatalogEntityFireHydrantResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityFireHydrant) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
+	obj := &CatalogEntityFireHydrantResourceModel{}
+
+	services := make([]CatalogEntityFireHydrantServiceResourceModel, len(entity.Services))
+	for i, s := range entity.Services {
+		so := CatalogEntityFireHydrantServiceResourceModel{}
+		services[i] = so.FromApiModel(s)
+	}
+	obj.Services = services
+
+	objectValue, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &obj)
+	diagnostics.Append(d...)
+	return objectValue
+}
+
+type CatalogEntityFireHydrantServiceResourceModel struct {
+	ID   types.String `tfsdk:"id"`
+	Type types.String `tfsdk:"type"`
+}
+
+func (o *CatalogEntityFireHydrantServiceResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"id":   types.StringType,
+		"type": types.StringType,
+	}
+}
+
+func (o *CatalogEntityFireHydrantServiceResourceModel) ToApiModel() cortex.CatalogEntityFireHydrantService {
+	entity := cortex.CatalogEntityFireHydrantService{
+		ID:   o.ID.ValueString(),
+		Type: o.Type.ValueString(),
+	}
+	return entity
+}
+
+func (o *CatalogEntityFireHydrantServiceResourceModel) FromApiModel(service cortex.CatalogEntityFireHydrantService) CatalogEntityFireHydrantServiceResourceModel {
+	return CatalogEntityFireHydrantServiceResourceModel{
+		ID:   types.StringValue(service.ID),
+		Type: types.StringValue(service.Type),
+	}
 }
 
 /***********************************************************************************************************************

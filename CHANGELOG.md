@@ -2,6 +2,7 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+* Add `firehydrant` attribute support for Catalog Entities
 * Add the ability to ignore metadata on a Catalog Entity, allowing it to be managed via API instead
 
 ## 0.0.10

@@ -688,6 +688,31 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
+			"firehydrant": schema.SingleNestedAttribute{
+				MarkdownDescription: "FireHydrant configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"services": schema.ListNestedAttribute{
+						MarkdownDescription: "List of FireHydrant services for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									MarkdownDescription: "FireHydrant service identifier. Either the ID or the Slug, based on the value of Type below.",
+									Required:            true,
+								},
+								"type": schema.StringAttribute{
+									MarkdownDescription: "FireHydrant service identifier type. Either `ID` or `SLUG`.",
+									Required:            true,
+									Validators: []validator.String{
+										stringvalidator.OneOf("ID", "SLUG"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"rollbar": schema.SingleNestedAttribute{
 				MarkdownDescription: "Rollbar configuration for the entity.",
 				Optional:            true,

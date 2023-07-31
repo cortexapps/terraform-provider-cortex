@@ -9,8 +9,7 @@ General TODO file of things left to implement.
 ### Catalog Entity
 
 Entities:
-- x-cortex-team
-- x-cortex-firehydrant
+- x-cortex-team type of Entity (new feature, see Teams section) 
 - x-cortex-infra (AWS, GCP, etc)
 - x-cortex-k8s
 - x-cortex-wiz
@@ -25,7 +24,8 @@ Needs more complete acceptance tests. Only basic tests for now.
 
 ### Teams
 
-Redo all of this to support the new change of Teams to Entities.
+Redo all of this to support the new change of Teams to Entities. This likely means moving to YAML based API approach
+for Teams.
 
 ### Resource Definitions
 
