@@ -102,6 +102,10 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 		c.interpolateSnyk(entity, info["x-cortex-snyk"].(map[string]interface{}))
 	}
 
+	if info["x-cortex-wiz"] != nil {
+		c.interpolateWiz(entity, info["x-cortex-wiz"].(map[string]interface{}))
+	}
+
 	return entity, nil
 }
 
@@ -488,6 +492,18 @@ func (c *CatalogEntityParser) interpolateSnyk(entity *CatalogEntityData, snykMap
 				ProjectID:    MapFetchToString(projectMap, "projectId"),
 				Organization: MapFetchToString(projectMap, "organizationId"),
 				Source:       MapFetchToString(projectMap, "source"),
+			})
+		}
+	}
+}
+
+func (c *CatalogEntityParser) interpolateWiz(entity *CatalogEntityData, wizMap map[string]interface{}) {
+	if wizMap["projects"] != nil {
+		projects := wizMap["projects"].([]interface{})
+		for _, project := range projects {
+			projectMap := project.(map[string]interface{})
+			entity.Wiz.Projects = append(entity.Wiz.Projects, CatalogEntityWizProject{
+				ProjectID: MapFetchToString(projectMap, "projectId"),
 			})
 		}
 	}

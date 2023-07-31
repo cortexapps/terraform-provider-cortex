@@ -247,6 +247,7 @@ func TestAccCatalogEntityResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "snyk.projects.0.organization", "cortexio"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "snyk.projects.0.project_id", "cortexio/products-service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "snyk.projects.0.source", "CODE"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "wiz.projects.0.project_id", "01234567-e65f-4b7b-a8b1-5b642894ec37"),
 				),
 			},
 			// ImportState testing
@@ -513,6 +514,14 @@ resource "cortex_catalog_entity" "test" {
 	    organization = "cortexio"
 	    project_id = "cortexio/products-service"
 	    source = "CODE"
+	  }
+	]
+  }
+
+  wiz = {
+	projects = [
+	  {
+	    project_id = "01234567-e65f-4b7b-a8b1-5b642894ec37"
 	  }
 	]
   }

@@ -42,6 +42,7 @@ type CatalogEntityResourceModel struct {
 	Rollbar        types.Object                      `tfsdk:"rollbar"`
 	Sentry         types.Object                      `tfsdk:"sentry"`
 	Snyk           types.Object                      `tfsdk:"snyk"`
+	Wiz            types.Object                      `tfsdk:"wiz"`
 }
 
 func getDefaultObjectOptions() basetypes.ObjectAsOptions {
@@ -177,6 +178,11 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 	if err != nil {
 		fmt.Println("Error parsing Snyk configuration: ", err)
 	}
+	wiz := CatalogEntityWizResourceModel{}
+	err = o.Wiz.As(ctx, &wiz, defaultObjOptions)
+	if err != nil {
+		fmt.Println("Error parsing Wiz configuration: ", err)
+	}
 
 	return cortex.CatalogEntityData{
 		Tag:            o.Tag.ValueString(),
@@ -204,6 +210,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		Rollbar:        rollbar.ToApiModel(),
 		Sentry:         sentry.ToApiModel(),
 		Snyk:           snyk.ToApiModel(),
+		Wiz:            wiz.ToApiModel(),
 	}
 }
 
@@ -332,6 +339,9 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 
 	snyk := CatalogEntitySnykResourceModel{}
 	o.Snyk = snyk.FromApiModel(ctx, diagnostics, &entity.Snyk)
+
+	wiz := CatalogEntityWizResourceModel{}
+	o.Wiz = wiz.FromApiModel(ctx, diagnostics, &entity.Wiz)
 }
 
 // CatalogEntityOwnerResourceModel describes owners of the catalog entity. This can be a user, Slack channel, or group.
@@ -1384,6 +1394,73 @@ func (o *CatalogEntitySnykProjectResourceModel) FromApiModel(entity *cortex.Cata
 		ob.Source = types.StringNull()
 	}
 	return ob
+}
+
+/***********************************************************************************************************************
+ * Wiz
+ **********************************************************************************************************************/
+
+type CatalogEntityWizResourceModel struct {
+	Projects []CatalogEntityWizProjectResourceModel `tfsdk:"projects"`
+}
+
+func (o *CatalogEntityWizResourceModel) AttrTypes() map[string]attr.Type {
+	obp := CatalogEntityWizProjectResourceModel{}
+	return map[string]attr.Type{
+		"projects": types.ListType{
+			ElemType: types.ObjectType{AttrTypes: obp.AttrTypes()},
+		},
+	}
+}
+
+func (o *CatalogEntityWizResourceModel) ToApiModel() cortex.CatalogEntityWiz {
+	var projects = make([]cortex.CatalogEntityWizProject, len(o.Projects))
+	for i, e := range o.Projects {
+		projects[i] = e.ToApiModel()
+	}
+	return cortex.CatalogEntityWiz{
+		Projects: projects,
+	}
+}
+
+func (o *CatalogEntityWizResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityWiz) types.Object {
+	obj := &CatalogEntityWizResourceModel{}
+	if !entity.Enabled() {
+		return types.ObjectNull(obj.AttrTypes())
+	}
+
+	var projects = make([]CatalogEntityWizProjectResourceModel, len(entity.Projects))
+	for i, e := range entity.Projects {
+		ob := CatalogEntityWizProjectResourceModel{}
+		projects[i] = ob.FromApiModel(&e)
+	}
+	obj.Projects = projects
+
+	objectValue, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &obj)
+	diagnostics.Append(d...)
+	return objectValue
+}
+
+type CatalogEntityWizProjectResourceModel struct {
+	ProjectID types.String `tfsdk:"project_id"`
+}
+
+func (o *CatalogEntityWizProjectResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"project_id": types.StringType,
+	}
+}
+
+func (o *CatalogEntityWizProjectResourceModel) ToApiModel() cortex.CatalogEntityWizProject {
+	return cortex.CatalogEntityWizProject{
+		ProjectID: o.ProjectID.ValueString(),
+	}
+}
+
+func (o *CatalogEntityWizProjectResourceModel) FromApiModel(entity *cortex.CatalogEntityWizProject) CatalogEntityWizProjectResourceModel {
+	return CatalogEntityWizProjectResourceModel{
+		ProjectID: types.StringValue(entity.ProjectID),
+	}
 }
 
 /***********************************************************************************************************************

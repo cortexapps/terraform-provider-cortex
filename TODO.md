@@ -12,7 +12,6 @@ Entities:
 - x-cortex-team type of Entity (new feature, see Teams section) 
 - x-cortex-infra (AWS, GCP, etc)
 - x-cortex-k8s
-- x-cortex-wiz
 - OpenAPI docs?
 - Packages?
 - `x-cortex-domain-parents`:

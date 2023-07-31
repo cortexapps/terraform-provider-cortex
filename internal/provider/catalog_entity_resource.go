@@ -762,6 +762,24 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
+			"wiz": schema.SingleNestedAttribute{
+				MarkdownDescription: "Wiz configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"projects": schema.ListNestedAttribute{
+						MarkdownDescription: "List of Wiz projects for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"project_id": schema.StringAttribute{
+									MarkdownDescription: "Wiz project ID.",
+									Required:            true,
+								},
+							},
+						},
+					},
+				},
+			},
 
 			//Computed
 			"id": schema.StringAttribute{

@@ -37,6 +37,7 @@ type CatalogEntityData struct {
 	Rollbar     CatalogEntityRollbar     `json:"x-cortex-rollbar,omitempty" yaml:"x-cortex-rollbar,omitempty"`
 	Sentry      CatalogEntitySentry      `json:"x-cortex-sentry,omitempty" yaml:"x-cortex-sentry,omitempty"`
 	Snyk        CatalogEntitySnyk        `json:"x-cortex-snyk,omitempty" yaml:"x-cortex-snyk,omitempty"`
+	Wiz         CatalogEntityWiz         `json:"x-cortex-wiz,omitempty" yaml:"x-cortex-wiz,omitempty"`
 }
 
 type CatalogEntityLink struct {
@@ -531,4 +532,20 @@ type CatalogEntityOnCallVictorOps struct {
 
 func (o *CatalogEntityOnCallVictorOps) Enabled() bool {
 	return o.ID != ""
+}
+
+/***********************************************************************************************************************
+ * Snyk - https://docs.cortex.io/docs/reference/integrations/snyk
+ **********************************************************************************************************************/
+
+type CatalogEntityWiz struct {
+	Projects []CatalogEntityWizProject `json:"projects,omitempty" yaml:"projects,omitempty"`
+}
+
+func (o *CatalogEntityWiz) Enabled() bool {
+	return len(o.Projects) > 0
+}
+
+type CatalogEntityWizProject struct {
+	ProjectID string `json:"projectId" yaml:"projectId"`
 }
