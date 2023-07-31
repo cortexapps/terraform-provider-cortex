@@ -189,6 +189,13 @@ func (c *CatalogEntityParser) interpolateOnCall(entity *CatalogEntityData, onCal
 			Type: MapFetchToString(voMap, "type"),
 		}
 	}
+	if onCallMap["xmatters"] != nil {
+		voMap := onCallMap["xmatters"].(map[string]interface{})
+		entity.OnCall.XMatters = CatalogEntityOnCallXMatters{
+			ID:   MapFetchToString(voMap, "id"),
+			Type: MapFetchToString(voMap, "type"),
+		}
+	}
 }
 
 // Git

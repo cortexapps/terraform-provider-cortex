@@ -45,6 +45,7 @@ Catalog Entity
 - `snyk` (Attributes) Snyk configuration for the entity. (see [below for nested schema](#nestedatt--snyk))
 - `static_analysis` (Attributes) Static analysis configuration for the entity. (see [below for nested schema](#nestedatt--static_analysis))
 - `type` (String) Set when the entity is a Resource. This must match a tag of a valid Resource Definition.
+- `wiz` (Attributes) Wiz configuration for the entity. (see [below for nested schema](#nestedatt--wiz))
 
 ### Read-Only
 
@@ -266,6 +267,7 @@ Optional:
 - `ops_genie` (Attributes) OpsGenie configuration for the entity. (see [below for nested schema](#nestedatt--on_call--ops_genie))
 - `pager_duty` (Attributes) PagerDuty configuration for the entity. (see [below for nested schema](#nestedatt--on_call--pager_duty))
 - `victor_ops` (Attributes) VictorOps configuration for the entity. (see [below for nested schema](#nestedatt--on_call--victor_ops))
+- `xmatters` (Attributes) XMatters configuration for the entity. (see [below for nested schema](#nestedatt--on_call--xmatters))
 
 <a id="nestedatt--on_call--ops_genie"></a>
 ### Nested Schema for `on_call.ops_genie`
@@ -292,6 +294,15 @@ Required:
 
 - `id` (String) VictorOps Schedule ID.
 - `type` (String) Type. Valid values are `SCHEDULE`.
+
+
+<a id="nestedatt--on_call--xmatters"></a>
+### Nested Schema for `on_call.xmatters`
+
+Required:
+
+- `id` (String) XMatters Group Name.
+- `type` (String) Type. Valid values are `SERVICE`.
 
 
 
@@ -503,3 +514,20 @@ Required:
 
 - `application_name` (String) Veracode application name.
 - `sandbox_name` (String) Veracode sandbox name.
+
+
+
+
+<a id="nestedatt--wiz"></a>
+### Nested Schema for `wiz`
+
+Optional:
+
+- `projects` (Attributes List) List of Wiz projects for the entity. (see [below for nested schema](#nestedatt--wiz--projects))
+
+<a id="nestedatt--wiz--projects"></a>
+### Nested Schema for `wiz.projects`
+
+Required:
+
+- `project_id` (String) Wiz project ID.

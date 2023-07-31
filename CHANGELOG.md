@@ -2,8 +2,9 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
-* Add `wiz` attribute support for Catalog Entities
-* Add `firehydrant` attribute support for Catalog Entities
+* Add `xmatters` support for OnCall for Catalog Entities
+* Add `wiz` support for Catalog Entities
+* Add `firehydrant` support for Catalog Entities
 * Add the ability to ignore metadata on a Catalog Entity, allowing it to be managed via API instead
 
 ## 0.0.10

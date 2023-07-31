@@ -354,6 +354,23 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 							},
 						},
 					},
+					"xmatters": schema.SingleNestedAttribute{
+						MarkdownDescription: "XMatters configuration for the entity.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"id": schema.StringAttribute{
+								MarkdownDescription: "XMatters Group Name.",
+								Required:            true,
+							},
+							"type": schema.StringAttribute{
+								MarkdownDescription: "Type. Valid values are `SERVICE`.",
+								Required:            true,
+								Validators: []validator.String{
+									stringvalidator.OneOf("SERVICE"),
+								},
+							},
+						},
+					},
 				},
 			},
 			"apm": schema.SingleNestedAttribute{

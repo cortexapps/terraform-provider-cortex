@@ -116,6 +116,7 @@ type CatalogEntityOnCall struct {
 	PagerDuty CatalogEntityOnCallPagerDuty `json:"pagerduty,omitempty" yaml:"pagerduty,omitempty"`
 	OpsGenie  CatalogEntityOnCallOpsGenie  `json:"opsgenie,omitempty" yaml:"opsgenie,omitempty"`
 	VictorOps CatalogEntityOnCallVictorOps `json:"victorops,omitempty" yaml:"victorops,omitempty"`
+	XMatters  CatalogEntityOnCallXMatters  `json:"xmatters,omitempty" yaml:"xmatters,omitempty"`
 }
 
 func (c *CatalogEntityOnCall) Enabled() bool {
@@ -535,7 +536,7 @@ func (o *CatalogEntityOnCallVictorOps) Enabled() bool {
 }
 
 /***********************************************************************************************************************
- * Snyk - https://docs.cortex.io/docs/reference/integrations/snyk
+ * Wiz - https://docs.cortex.io/docs/reference/integrations/wiz
  **********************************************************************************************************************/
 
 type CatalogEntityWiz struct {
@@ -548,4 +549,17 @@ func (o *CatalogEntityWiz) Enabled() bool {
 
 type CatalogEntityWizProject struct {
 	ProjectID string `json:"projectId" yaml:"projectId"`
+}
+
+/***********************************************************************************************************************
+ * XMatters -  https://docs.cortex.io/docs/reference/integrations/xmatters
+ **********************************************************************************************************************/
+
+type CatalogEntityOnCallXMatters struct {
+	ID   string `json:"id" yaml:"id"`
+	Type string `json:"type" yaml:"type"`
+}
+
+func (o *CatalogEntityOnCallXMatters) Enabled() bool {
+	return o.ID != "" && o.Type != ""
 }

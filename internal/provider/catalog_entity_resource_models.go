@@ -899,16 +899,19 @@ type CatalogEntityOnCallResourceModel struct {
 	PagerDuty types.Object `tfsdk:"pager_duty"`
 	OpsGenie  types.Object `tfsdk:"ops_genie"`
 	VictorOps types.Object `tfsdk:"victor_ops"`
+	XMatters  types.Object `tfsdk:"xmatters"`
 }
 
 func (o *CatalogEntityOnCallResourceModel) AttrTypes() map[string]attr.Type {
 	pd := CatalogEntityOnCallPagerDutyResourceModel{}
 	og := CatalogEntityOnCallOpsGenieResourceModel{}
 	vo := CatalogEntityOnCallVictorOpsResourceModel{}
+	xm := CatalogEntityOnCallXMattersResourceModel{}
 	return map[string]attr.Type{
 		"pager_duty": types.ObjectType{AttrTypes: pd.AttrTypes()},
 		"ops_genie":  types.ObjectType{AttrTypes: og.AttrTypes()},
 		"victor_ops": types.ObjectType{AttrTypes: vo.AttrTypes()},
+		"xmatters":   types.ObjectType{AttrTypes: xm.AttrTypes()},
 	}
 }
 
@@ -1048,6 +1051,41 @@ func (o *CatalogEntityOnCallVictorOpsResourceModel) FromApiModel(ctx context.Con
 	}
 
 	ob := CatalogEntityOnCallVictorOpsResourceModel{
+		ID:   types.StringValue(entity.ID),
+		Type: types.StringValue(entity.Type),
+	}
+	obj, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return obj
+}
+
+// XMatters
+
+type CatalogEntityOnCallXMattersResourceModel struct {
+	ID   types.String `tfsdk:"id"`
+	Type types.String `tfsdk:"type"`
+}
+
+func (o *CatalogEntityOnCallXMattersResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"id":   types.StringType,
+		"type": types.StringType,
+	}
+}
+
+func (o *CatalogEntityOnCallXMattersResourceModel) ToApiModel() cortex.CatalogEntityOnCallXMatters {
+	return cortex.CatalogEntityOnCallXMatters{
+		ID:   o.ID.ValueString(),
+		Type: o.Type.ValueString(),
+	}
+}
+
+func (o *CatalogEntityOnCallXMattersResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityOnCallXMatters) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
+	ob := CatalogEntityOnCallXMattersResourceModel{
 		ID:   types.StringValue(entity.ID),
 		Type: types.StringValue(entity.Type),
 	}
