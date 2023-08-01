@@ -16,8 +16,3 @@ Entities:
 - Packages?
 - `x-cortex-domain-parents`:
     tag: domain-iam
-
-### Teams
-
-Redo all of this to support the new change of Teams to Entities. This likely means moving to YAML based API approach
-for Teams.

@@ -102,7 +102,6 @@ func (p *CortexProvider) Configure(ctx context.Context, req provider.ConfigureRe
 func (p *CortexProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewCatalogEntityResource,
-		NewTeamResource,
 		NewDepartmentResource,
 		NewScorecardResource,
 		NewResourceDefinitionResource,

@@ -44,6 +44,7 @@ type CatalogEntityResourceModel struct {
 	Sentry         types.Object                      `tfsdk:"sentry"`
 	Snyk           types.Object                      `tfsdk:"snyk"`
 	Wiz            types.Object                      `tfsdk:"wiz"`
+	Team           types.Object                      `tfsdk:"team"`
 }
 
 func getDefaultObjectOptions() basetypes.ObjectAsOptions {
@@ -188,6 +189,11 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 	if err != nil {
 		fmt.Println("Error parsing Wiz configuration: ", err)
 	}
+	team := CatalogEntityTeamResourceModel{}
+	err = o.Team.As(ctx, &team, defaultObjOptions)
+	if err != nil {
+		fmt.Println("Error parsing Team configuration: ", err)
+	}
 
 	return cortex.CatalogEntityData{
 		Tag:            o.Tag.ValueString(),
@@ -217,6 +223,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		Sentry:         sentry.ToApiModel(),
 		Snyk:           snyk.ToApiModel(),
 		Wiz:            wiz.ToApiModel(),
+		Team:           team.ToApiModel(),
 	}
 }
 
@@ -358,6 +365,9 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 
 	wiz := CatalogEntityWizResourceModel{}
 	o.Wiz = wiz.FromApiModel(ctx, diagnostics, &entity.Wiz)
+
+	team := CatalogEntityTeamResourceModel{}
+	o.Team = team.FromApiModel(ctx, diagnostics, &entity.Team)
 }
 
 // CatalogEntityOwnerResourceModel describes owners of the catalog entity. This can be a user, Slack channel, or group.

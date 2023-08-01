@@ -39,6 +39,9 @@ type CatalogEntityData struct {
 	Sentry      CatalogEntitySentry      `json:"x-cortex-sentry,omitempty" yaml:"x-cortex-sentry,omitempty"`
 	Snyk        CatalogEntitySnyk        `json:"x-cortex-snyk,omitempty" yaml:"x-cortex-snyk,omitempty"`
 	Wiz         CatalogEntityWiz         `json:"x-cortex-wiz,omitempty" yaml:"x-cortex-wiz,omitempty"`
+
+	// Team-specific attributes
+	Team CatalogEntityTeam `json:"team" yaml:"x-cortex-team,omitempty"`
 }
 
 type CatalogEntityLink struct {
@@ -53,6 +56,38 @@ type CatalogEntityDependency struct {
 	Path        string                 `json:"path,omitempty" yaml:"path,omitempty"`
 	Description string                 `json:"description,omitempty" yaml:"description,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+}
+
+/***********************************************************************************************************************
+ * Teams - Generic structs for teams
+ **********************************************************************************************************************/
+
+type CatalogEntityTeam struct {
+	Members []CatalogEntityTeamMember  `json:"members" yaml:"members,omitempty"`
+	Groups  []CatalogEntityGroupMember `json:"groups" yaml:"groups,omitempty"`
+}
+
+func (o *CatalogEntityTeam) Enabled() bool {
+	return len(o.Members) > 0 || len(o.Groups) > 0
+}
+
+type CatalogEntityTeamMember struct {
+	Name                 string `json:"name" yaml:"name"`
+	Email                string `json:"email" yaml:"email"`
+	NotificationsEnabled bool   `json:"notificationsEnabled" yaml:"notificationsEnabled"`
+}
+
+func (o *CatalogEntityTeamMember) Enabled() bool {
+	return o.Name != "" && o.Email != ""
+}
+
+type CatalogEntityGroupMember struct {
+	Name     string `json:"name" yaml:"name"`
+	Provider string `json:"provider" yaml:"provider"`
+}
+
+func (o *CatalogEntityGroupMember) Enabled() bool {
+	return o.Name != "" && o.Provider != ""
 }
 
 /***********************************************************************************************************************

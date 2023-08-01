@@ -45,7 +45,8 @@ Catalog Entity
 - `slos` (Attributes) Service-level Objectives configuration for the entity. (see [below for nested schema](#nestedatt--slos))
 - `snyk` (Attributes) Snyk configuration for the entity. (see [below for nested schema](#nestedatt--snyk))
 - `static_analysis` (Attributes) Static analysis configuration for the entity. (see [below for nested schema](#nestedatt--static_analysis))
-- `type` (String) Set when the entity is a Resource. This must match a tag of a valid Resource Definition, Domain, or Team.
+- `team` (Attributes) Team configuration for the entity. Only used for entities of type `TEAM`. (see [below for nested schema](#nestedatt--team))
+- `type` (String) Set when the entity is a Resource or Team. This must match a tag of a valid Resource Definition or be "team" or "domain".
 - `wiz` (Attributes) Wiz configuration for the entity. (see [below for nested schema](#nestedatt--wiz))
 
 ### Read-Only
@@ -524,6 +525,37 @@ Required:
 - `application_name` (String) Veracode application name.
 - `sandbox_name` (String) Veracode sandbox name.
 
+
+
+
+<a id="nestedatt--team"></a>
+### Nested Schema for `team`
+
+Optional:
+
+- `groups` (Attributes List) List of groups to derive team members from. (see [below for nested schema](#nestedatt--team--groups))
+- `members` (Attributes List) List of additional team members for the team not derived from any groups. (see [below for nested schema](#nestedatt--team--members))
+
+<a id="nestedatt--team--groups"></a>
+### Nested Schema for `team.groups`
+
+Required:
+
+- `name` (String) Name of the group.
+- `provider` (String) Provider of the group.
+
+
+<a id="nestedatt--team--members"></a>
+### Nested Schema for `team.members`
+
+Required:
+
+- `email` (String) Email address of the team member.
+- `name` (String) Name of the team member.
+
+Optional:
+
+- `notifications_enabled` (Boolean) Whether the team member should receive notifications.
 
 
 

@@ -112,6 +112,11 @@ func (c *CatalogEntityParser) YamlToEntity(yamlEntity map[string]interface{}) (C
 		c.interpolateWiz(&entity, info["x-cortex-wiz"].(map[string]interface{}))
 	}
 
+	// team-specific entity attributes
+	if info["x-cortex-team"] != nil {
+		c.interpolateTeam(&entity, info["x-cortex-team"].(map[string]interface{}))
+	}
+
 	return entity, nil
 }
 
@@ -611,6 +616,34 @@ func (c *CatalogEntityParser) interpolateStaticAnalysisVeracode(entity *CatalogE
 				}
 				entity.StaticAnalysis.Veracode.Sandboxes = append(entity.StaticAnalysis.Veracode.Sandboxes, sandboxEntity)
 			}
+		}
+	}
+}
+
+/***********************************************************************************************************************
+ * Team attributes
+ **********************************************************************************************************************/
+
+func (c *CatalogEntityParser) interpolateTeam(entity *CatalogEntityData, teamMap map[string]interface{}) {
+	if teamMap["members"] != nil {
+		members := teamMap["members"].([]interface{})
+		for _, member := range members {
+			memberMap := member.(map[string]interface{})
+			entity.Team.Members = append(entity.Team.Members, CatalogEntityTeamMember{
+				Name:                 MapFetchToString(memberMap, "name"),
+				Email:                MapFetchToString(memberMap, "email"),
+				NotificationsEnabled: MapFetch(memberMap, "notificationsEnabled", false).(bool),
+			})
+		}
+	}
+	if teamMap["groups"] != nil {
+		groups := teamMap["groups"].([]interface{})
+		for _, group := range groups {
+			groupMap := group.(map[string]interface{})
+			entity.Team.Groups = append(entity.Team.Groups, CatalogEntityGroupMember{
+				Name:     MapFetchToString(groupMap, "name"),
+				Provider: MapFetchToString(groupMap, "provider"),
+			})
 		}
 	}
 }

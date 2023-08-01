@@ -71,7 +71,7 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 				},
 			},
 			"type": schema.StringAttribute{
-				MarkdownDescription: "Set when the entity is a Resource. This must match a tag of a valid Resource Definition, Domain, or Team.",
+				MarkdownDescription: "Set when the entity is a Resource or Team. This must match a tag of a valid Resource Definition or be \"team\" or \"domain\".",
 				Optional:            true,
 			},
 			"definition": schema.StringAttribute{
@@ -803,6 +803,52 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 								"project_id": schema.StringAttribute{
 									MarkdownDescription: "Wiz project ID.",
 									Required:            true,
+								},
+							},
+						},
+					},
+				},
+			},
+			// Team attributes
+			"team": schema.SingleNestedAttribute{
+				MarkdownDescription: "Team configuration for the entity. Only used for entities of type `TEAM`.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"members": schema.ListNestedAttribute{
+						MarkdownDescription: "List of additional team members for the team not derived from any groups.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"email": schema.StringAttribute{
+									MarkdownDescription: "Email address of the team member.",
+									Required:            true,
+								},
+								"name": schema.StringAttribute{
+									MarkdownDescription: "Name of the team member.",
+									Required:            true,
+								},
+								"notifications_enabled": schema.BoolAttribute{
+									MarkdownDescription: "Whether the team member should receive notifications.",
+									Optional:            true,
+								},
+							},
+						},
+					},
+					"groups": schema.ListNestedAttribute{
+						MarkdownDescription: "List of groups to derive team members from.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"name": schema.StringAttribute{
+									MarkdownDescription: "Name of the group.",
+									Required:            true,
+								},
+								"provider": schema.StringAttribute{
+									MarkdownDescription: "Provider of the group.",
+									Required:            true,
+									Validators: []validator.String{
+										stringvalidator.OneOf("ACTIVE_DIRECTORY", "BAMBOO_HR", "CORTEX", "GITHUB", "GOOGLE", "OKTA", "OPSGENIE", "WORKDAY"),
+									},
 								},
 							},
 						},
