@@ -975,10 +975,14 @@ func (o *CatalogEntityOnCallResourceModel) ToApiModel(ctx context.Context) corte
 	vo := CatalogEntityOnCallVictorOpsResourceModel{}
 	o.VictorOps.As(ctx, &vo, defaultObjOptions)
 
+	xm := CatalogEntityOnCallXMattersResourceModel{}
+	o.XMatters.As(ctx, &xm, defaultObjOptions)
+
 	return cortex.CatalogEntityOnCall{
 		PagerDuty: pd.ToApiModel(),
 		OpsGenie:  og.ToApiModel(),
 		VictorOps: vo.ToApiModel(),
+		XMatters:  xm.ToApiModel(),
 	}
 }
 
@@ -990,11 +994,13 @@ func (o *CatalogEntityOnCallResourceModel) FromApiModel(ctx context.Context, dia
 	pd := CatalogEntityOnCallPagerDutyResourceModel{}
 	og := CatalogEntityOnCallOpsGenieResourceModel{}
 	vo := CatalogEntityOnCallVictorOpsResourceModel{}
+	xm := CatalogEntityOnCallXMattersResourceModel{}
 
 	ob := CatalogEntityOnCallResourceModel{
 		PagerDuty: pd.FromApiModel(ctx, diagnostics, &onCall.PagerDuty),
 		OpsGenie:  og.FromApiModel(ctx, diagnostics, &onCall.OpsGenie),
 		VictorOps: vo.FromApiModel(ctx, diagnostics, &onCall.VictorOps),
+		XMatters:  xm.FromApiModel(ctx, diagnostics, &onCall.XMatters),
 	}
 
 	obj, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &ob)

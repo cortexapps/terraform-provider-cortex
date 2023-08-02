@@ -2,6 +2,10 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.1.2
+
+* Fix issue with XMatters null type being omitted in state cases when not used
+
 ## 0.1.1
 
 * Omit `defaultJql` from JIRA issue management when empty

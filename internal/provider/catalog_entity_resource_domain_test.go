@@ -6,6 +6,56 @@ import (
 	"testing"
 )
 
+func TestAccCatalogEntityDomainMinimal(t *testing.T) {
+	tag := "domain-test-minimal"
+	resourceName := "cortex_catalog_entity." + tag
+	name := "Test Minimal Domain"
+	description := "Minimal Domain configuration for testing"
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testAccCatalogEntityDomainMinimal(tag, name, description),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "tag", tag),
+					resource.TestCheckResourceAttr(resourceName, "name", name),
+					resource.TestCheckResourceAttr(resourceName, "description", description),
+					resource.TestCheckResourceAttr(resourceName, "type", "domain"),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Update and Read testing
+			{
+				Config: testAccCatalogEntityDomainMinimal(tag, name, description+" 2"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "tag", tag),
+					resource.TestCheckResourceAttr(resourceName, "name", name),
+					resource.TestCheckResourceAttr(resourceName, "description", description+" 2"),
+					resource.TestCheckResourceAttr(resourceName, "type", "domain"),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
+
+func testAccCatalogEntityDomainMinimal(tag string, name string, description string) string {
+	return fmt.Sprintf(`
+resource "cortex_catalog_entity" %[1]q {
+ tag = %[1]q
+ name = %[2]q
+ description = %[3]q
+ type = "domain"
+}`, tag, name, description)
+}
+
 func TestAccCatalogEntityDomainWithChildren(t *testing.T) {
 	tag := "domain-test-with-children"
 	resourceName := "cortex_catalog_entity." + tag
