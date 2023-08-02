@@ -2,7 +2,7 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
-## 0.1.3
+## 0.1.4
 
 * Fix issue with duplicated query params in parallel subsequent requests in cortex client
 
