@@ -29,7 +29,7 @@ type CatalogEntityDataSourceModel struct {
 	Description types.String `tfsdk:"description"`
 }
 
-func (o *CatalogEntityDataSourceModel) FromApiModel(entity *cortex.CatalogEntityData) {
+func (o *CatalogEntityDataSourceModel) FromApiModel(entity cortex.CatalogEntityData) {
 	o.Id = types.StringValue(entity.Tag)
 	o.Tag = types.StringValue(entity.Tag)
 	o.Name = types.StringValue(entity.Title)

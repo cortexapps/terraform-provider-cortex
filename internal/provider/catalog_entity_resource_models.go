@@ -225,7 +225,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 	}
 }
 
-func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityData) {
+func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity cortex.CatalogEntityData) {
 	o.Id = types.StringValue(entity.Tag)
 	o.Name = types.StringValue(entity.Title)
 	if entity.Type == "service" || entity.Type == "" {

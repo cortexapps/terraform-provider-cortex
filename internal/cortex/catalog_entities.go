@@ -12,9 +12,9 @@ import (
 
 type CatalogEntitiesClientInterface interface {
 	Get(ctx context.Context, tag string) (*CatalogEntity, error)
-	GetFromDescriptor(ctx context.Context, tag string) (*CatalogEntityData, error)
+	GetFromDescriptor(ctx context.Context, tag string) (CatalogEntityData, error)
 	List(ctx context.Context, params *CatalogEntityListParams) (*CatalogEntitiesResponse, error)
-	Upsert(ctx context.Context, req UpsertCatalogEntityRequest) (*CatalogEntityData, error)
+	Upsert(ctx context.Context, req UpsertCatalogEntityRequest) (CatalogEntityData, error)
 	Delete(ctx context.Context, tag string) error
 }
 
@@ -108,8 +108,7 @@ type CatalogEntityGetDescriptorParams struct {
 	Yaml bool `url:"yaml"`
 }
 
-func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag string) (*CatalogEntityData, error) {
-	entity := &CatalogEntityData{}
+func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag string) (CatalogEntityData, error) {
 	entityDescriptorResponse := map[string]interface{}{}
 
 	apiError := &ApiError{}
@@ -120,18 +119,18 @@ func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag strin
 	cl := c.Client().Get(uri).QueryStruct(params).ResponseDecoder(yamlDecoder{})
 	response, err := cl.Receive(entityDescriptorResponse, apiError)
 	if err != nil {
-		return entity, errors.Join(fmt.Errorf("failed getting catalog entity descriptor for %s from %s", tag, uri), err)
+		return CatalogEntityData{}, errors.Join(fmt.Errorf("failed getting catalog entity descriptor for %s from %s", tag, uri), err)
 	}
 
 	err = c.client.handleResponseStatus(response, apiError)
 	if err != nil {
-		return entity, errors.Join(fmt.Errorf("failed handling response status for %s from %s", tag, uri), err)
+		return CatalogEntityData{}, errors.Join(fmt.Errorf("failed handling response status for %s from %s", tag, uri), err)
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("body: %+v", entityDescriptorResponse))
 
 	cl.ResponseDecoder(jsonDecoder{})
-	return c.parser.YamlToEntity(entity, entityDescriptorResponse)
+	return c.parser.YamlToEntity(entityDescriptorResponse)
 }
 
 /***********************************************************************************************************************
@@ -182,8 +181,7 @@ type UpsertCatalogEntityResponse struct {
 	Violations []CatalogEntityViolation `json:"violations"`
 }
 
-func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEntityRequest) (*CatalogEntityData, error) {
-	entity := &CatalogEntityData{}
+func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEntityRequest) (CatalogEntityData, error) {
 	req.OpenApi = "3.0.1"
 	upsertResponse := &UpsertCatalogEntityResponse{
 		Ok:         false,
@@ -197,7 +195,7 @@ func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEnt
 	// The API requires submitting the request as YAML, so we need to marshal it first.
 	bytes, err := yaml.Marshal(req)
 	if err != nil {
-		return entity, errors.New("could not marshal yaml: " + err.Error())
+		return CatalogEntityData{}, errors.New("could not marshal yaml: " + err.Error())
 	}
 	body := strings.NewReader(string(bytes))
 
@@ -209,14 +207,14 @@ func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEnt
 		Body(body).
 		Receive(upsertResponse, apiError)
 	if err != nil {
-		return entity, errors.New("could not upsert catalog entity: " + err.Error())
+		return CatalogEntityData{}, errors.New("could not upsert catalog entity: " + err.Error())
 	}
 
 	err = c.client.handleResponseStatus(response, apiError)
 	if err != nil {
 		reqYaml, _ := yaml.Marshal(req)
 		tflog.Error(ctx, fmt.Sprintf("Failed upserting catalog entity: %+v\n\nRequest:\n%+v\n%+v", err, string(reqYaml), apiError.String()))
-		return entity, err
+		return CatalogEntityData{}, err
 	}
 
 	// coerce violations into an error
@@ -225,7 +223,7 @@ func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEnt
 		for _, v := range upsertResponse.Violations {
 			o += v.String() + "\n"
 		}
-		return entity, errors.New(o)
+		return CatalogEntityData{}, errors.New(o)
 	}
 
 	// re-fetch the catalog entity, since it's not returned here

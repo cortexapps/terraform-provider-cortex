@@ -3,7 +3,8 @@ package cortex
 type CatalogEntityParser struct{}
 
 // YamlToEntity converts YAML into a CatalogEntity, from the specification.
-func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity map[string]interface{}) (*CatalogEntityData, error) {
+func (c *CatalogEntityParser) YamlToEntity(yamlEntity map[string]interface{}) (CatalogEntityData, error) {
+	entity := CatalogEntityData{}
 	info := yamlEntity["info"].(map[string]interface{})
 
 	entity.Title = MapFetchToString(info, "title")
@@ -18,7 +19,7 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 
 	entity.Links = []CatalogEntityLink{}
 	if info["x-cortex-link"] != nil {
-		c.interpolateLinks(entity, info["x-cortex-link"].([]interface{}))
+		c.interpolateLinks(&entity, info["x-cortex-link"].([]interface{}))
 	}
 
 	entity.Groups = []string{}
@@ -30,12 +31,12 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 
 	entity.Owners = []CatalogEntityOwner{}
 	if info["x-cortex-owners"] != nil {
-		c.interpolateOwners(entity, info["x-cortex-owners"].([]interface{}))
+		c.interpolateOwners(&entity, info["x-cortex-owners"].([]interface{}))
 	}
 
 	entity.Children = []CatalogEntityChild{}
 	if info["x-cortex-children"] != nil {
-		c.interpolateChildren(entity, info["x-cortex-children"].([]interface{}))
+		c.interpolateChildren(&entity, info["x-cortex-children"].([]interface{}))
 	}
 
 	entity.Metadata = map[string]interface{}{}
@@ -45,70 +46,70 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 
 	entity.Dependencies = []CatalogEntityDependency{}
 	if info["x-cortex-dependency"] != nil {
-		c.interpolateDependencies(entity, info["x-cortex-dependency"].([]interface{}))
+		c.interpolateDependencies(&entity, info["x-cortex-dependency"].([]interface{}))
 	}
 
 	if info["x-cortex-git"] != nil {
 		entity.Git = CatalogEntityGit{}
-		c.interpolateGit(entity, info["x-cortex-git"].(map[string]interface{}))
+		c.interpolateGit(&entity, info["x-cortex-git"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-dashboards"] != nil {
-		c.interpolateDashboards(entity, info["x-cortex-dashboards"].(map[string]interface{}))
+		c.interpolateDashboards(&entity, info["x-cortex-dashboards"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-issues"] != nil {
-		c.interpolateIssues(entity, info["x-cortex-issues"].(map[string]interface{}))
+		c.interpolateIssues(&entity, info["x-cortex-issues"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-slos"] != nil {
 		slosMap := info["x-cortex-slos"].(map[string]interface{})
-		c.interpolateSLOs(entity, slosMap)
+		c.interpolateSLOs(&entity, slosMap)
 	}
 
 	if info["x-cortex-apm"] != nil {
-		c.interpolateApm(entity, info["x-cortex-apm"].(map[string]interface{}))
+		c.interpolateApm(&entity, info["x-cortex-apm"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-static-analysis"] != nil {
-		c.interpolateStaticAnalysis(entity, info["x-cortex-static-analysis"].(map[string]interface{}))
+		c.interpolateStaticAnalysis(&entity, info["x-cortex-static-analysis"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-oncall"] != nil {
 		onCallMap := info["x-cortex-oncall"].(map[string]interface{})
-		c.interpolateOnCall(entity, onCallMap)
+		c.interpolateOnCall(&entity, onCallMap)
 	}
 
 	if info["x-cortex-alerts"] != nil {
-		c.interpolateAlerts(entity, info["x-cortex-alerts"].([]interface{}))
+		c.interpolateAlerts(&entity, info["x-cortex-alerts"].([]interface{}))
 	}
 
 	if info["x-cortex-bugsnag"] != nil {
-		c.interpolateBugSnag(entity, info["x-cortex-bugsnag"].(map[string]interface{}))
+		c.interpolateBugSnag(&entity, info["x-cortex-bugsnag"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-checkmarx"] != nil {
-		c.interpolateCheckmarx(entity, info["x-cortex-checkmarx"].(map[string]interface{}))
+		c.interpolateCheckmarx(&entity, info["x-cortex-checkmarx"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-firehydrant"] != nil {
-		c.interpolateFirehydrant(entity, info["x-cortex-firehydrant"].(map[string]interface{}))
+		c.interpolateFirehydrant(&entity, info["x-cortex-firehydrant"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-sentry"] != nil {
-		c.interpolateSentry(entity, info["x-cortex-sentry"].(map[string]interface{}))
+		c.interpolateSentry(&entity, info["x-cortex-sentry"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-rollbar"] != nil {
-		c.interpolateRollbar(entity, info["x-cortex-rollbar"].(map[string]interface{}))
+		c.interpolateRollbar(&entity, info["x-cortex-rollbar"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-snyk"] != nil {
-		c.interpolateSnyk(entity, info["x-cortex-snyk"].(map[string]interface{}))
+		c.interpolateSnyk(&entity, info["x-cortex-snyk"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-wiz"] != nil {
-		c.interpolateWiz(entity, info["x-cortex-wiz"].(map[string]interface{}))
+		c.interpolateWiz(&entity, info["x-cortex-wiz"].(map[string]interface{}))
 	}
 
 	return entity, nil

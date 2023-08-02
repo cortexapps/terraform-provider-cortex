@@ -907,7 +907,6 @@ func (r *CatalogEntityResource) Read(ctx context.Context, req resource.ReadReque
 
 func (r *CatalogEntityResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	data := NewCatalogEntityResourceModel()
-	//data.IgnoreMetadata = types.BoolNull()
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
