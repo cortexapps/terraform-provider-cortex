@@ -33,6 +33,11 @@ func (c *CatalogEntityParser) YamlToEntity(entity *CatalogEntityData, yamlEntity
 		c.interpolateOwners(entity, info["x-cortex-owners"].([]interface{}))
 	}
 
+	entity.Children = []CatalogEntityChild{}
+	if info["x-cortex-children"] != nil {
+		c.interpolateChildren(entity, info["x-cortex-children"].([]interface{}))
+	}
+
 	entity.Metadata = map[string]interface{}{}
 	if info["x-cortex-custom-metadata"] != nil {
 		entity.Metadata = info["x-cortex-custom-metadata"].(map[string]interface{})
@@ -131,6 +136,15 @@ func (c *CatalogEntityParser) interpolateOwners(entity *CatalogEntityData, owner
 			Provider:             MapFetchToString(ownerMap, "provider"),
 			Channel:              MapFetchToString(ownerMap, "channel"),
 			NotificationsEnabled: MapFetch(ownerMap, "notificationsEnabled", false).(bool),
+		})
+	}
+}
+
+func (c *CatalogEntityParser) interpolateChildren(entity *CatalogEntityData, children []interface{}) {
+	for _, child := range children {
+		childMap := child.(map[string]interface{})
+		entity.Children = append(entity.Children, CatalogEntityChild{
+			Tag: MapFetchToString(childMap, "tag"),
 		})
 	}
 }

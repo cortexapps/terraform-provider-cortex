@@ -14,9 +14,10 @@ type CatalogEntityData struct {
 	Type           string                    `json:"x-cortex-type,omitempty" yaml:"x-cortex-type,omitempty"`
 	Definition     map[string]interface{}    `json:"x-cortex-definition,omitempty" yaml:"x-cortex-definition,omitempty"`
 	Owners         []CatalogEntityOwner      `json:"x-cortex-owners,omitempty" yaml:"x-cortex-owners,omitempty"`
-	Groups         []string                  `json:"x-cortex-groups,omitempty" yaml:"x-cortex-groups"` // TODO: is this -groups or -service-groups? docs unclear
+	Children       []CatalogEntityChild      `json:"x-cortex-children,omitempty" yaml:"x-cortex-children,omitempty"`
+	Groups         []string                  `json:"x-cortex-groups,omitempty" yaml:"x-cortex-groups,omitempty"` // TODO: is this -groups or -service-groups? docs unclear
 	Links          []CatalogEntityLink       `json:"x-cortex-link,omitempty" yaml:"x-cortex-link,omitempty"`
-	IgnoreMetadata bool                      `json:"-"`
+	IgnoreMetadata bool                      `json:"-" yaml:"-"`
 	Metadata       map[string]interface{}    `json:"x-cortex-custom-metadata,omitempty" yaml:"x-cortex-custom-metadata,omitempty"`
 	Dependencies   []CatalogEntityDependency `json:"x-cortex-dependency,omitempty" yaml:"x-cortex-dependency,omitempty"`
 
@@ -131,6 +132,10 @@ type CatalogEntityOwner struct {
 	Provider             string `json:"provider,omitempty" yaml:"provider,omitempty"`
 	Channel              string `json:"channel,omitempty" yaml:"channel,omitempty"` // for slack, do not add # to beginning
 	NotificationsEnabled bool   `json:"notificationsEnabled,omitempty" yaml:"notificationsEnabled,omitempty"`
+}
+
+type CatalogEntityChild struct {
+	Tag string `json:"tag" yaml:"tag"`
 }
 
 type CatalogEntitySLOs struct {

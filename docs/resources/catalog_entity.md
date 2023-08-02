@@ -26,6 +26,7 @@ Catalog Entity
 - `apm` (Attributes) APM configuration for the entity. (see [below for nested schema](#nestedatt--apm))
 - `bug_snag` (Attributes) BugSnag configuration for the entity. (see [below for nested schema](#nestedatt--bug_snag))
 - `checkmarx` (Attributes) Checkmarx configuration for the entity. (see [below for nested schema](#nestedatt--checkmarx))
+- `children` (Attributes List) List of child entities for the entity. Only used for entities of type `TEAM` or `DOMAIN`. (see [below for nested schema](#nestedatt--children))
 - `dashboards` (Attributes) Dashboards configuration for the entity. (see [below for nested schema](#nestedatt--dashboards))
 - `definition` (String) Set when the entity is a Resource. These are the properties defined by the Resource Definition, in JSON format in a string (use the `jsonencode` function to convert a JSON object to a string).
 - `dependencies` (Attributes List) List of dependencies for the entity. (see [below for nested schema](#nestedatt--dependencies))
@@ -44,7 +45,7 @@ Catalog Entity
 - `slos` (Attributes) Service-level Objectives configuration for the entity. (see [below for nested schema](#nestedatt--slos))
 - `snyk` (Attributes) Snyk configuration for the entity. (see [below for nested schema](#nestedatt--snyk))
 - `static_analysis` (Attributes) Static analysis configuration for the entity. (see [below for nested schema](#nestedatt--static_analysis))
-- `type` (String) Set when the entity is a Resource. This must match a tag of a valid Resource Definition.
+- `type` (String) Set when the entity is a Resource. This must match a tag of a valid Resource Definition, Domain, or Team.
 - `wiz` (Attributes) Wiz configuration for the entity. (see [below for nested schema](#nestedatt--wiz))
 
 ### Read-Only
@@ -123,6 +124,14 @@ Optional:
 - `id` (Number) Checkmarx project ID. Required if Name is not set.
 - `name` (String) Checkmarx project name. Required if ID is not set.
 
+
+
+<a id="nestedatt--children"></a>
+### Nested Schema for `children`
+
+Required:
+
+- `tag` (String) Tag of the child entity.
 
 
 <a id="nestedatt--dashboards"></a>

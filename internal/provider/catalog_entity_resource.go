@@ -71,7 +71,7 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 				},
 			},
 			"type": schema.StringAttribute{
-				MarkdownDescription: "Set when the entity is a Resource. This must match a tag of a valid Resource Definition.",
+				MarkdownDescription: "Set when the entity is a Resource. This must match a tag of a valid Resource Definition, Domain, or Team.",
 				Optional:            true,
 			},
 			"definition": schema.StringAttribute{
@@ -118,6 +118,18 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 						"notifications_enabled": schema.BoolAttribute{
 							MarkdownDescription: "Whether Slack notifications are enabled for all owners of this service. Only allowed if `type` is `slack`.",
 							Optional:            true,
+						},
+					},
+				},
+			},
+			"children": schema.ListNestedAttribute{
+				MarkdownDescription: "List of child entities for the entity. Only used for entities of type `TEAM` or `DOMAIN`.",
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"tag": schema.StringAttribute{
+							MarkdownDescription: "Tag of the child entity.",
+							Required:            true,
 						},
 					},
 				},

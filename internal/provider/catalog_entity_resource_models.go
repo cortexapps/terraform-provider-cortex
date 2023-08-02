@@ -23,6 +23,7 @@ type CatalogEntityResourceModel struct {
 	Type           types.String                      `tfsdk:"type"`
 	Definition     types.String                      `tfsdk:"definition"`
 	Owners         []CatalogEntityOwnerResourceModel `tfsdk:"owners"`
+	Children       []types.Object                    `tfsdk:"children"`
 	Groups         []types.String                    `tfsdk:"groups"`
 	Links          []CatalogEntityLinkResourceModel  `tfsdk:"links"`
 	IgnoreMetadata types.Bool                        `tfsdk:"ignore_metadata"`
@@ -65,6 +66,15 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 	owners := make([]cortex.CatalogEntityOwner, len(o.Owners))
 	for i, owner := range o.Owners {
 		owners[i] = owner.ToApiModel()
+	}
+	children := make([]cortex.CatalogEntityChild, len(o.Children))
+	for i, child := range o.Children {
+		ch := CatalogEntityChildResourceModel{}
+		err := child.As(ctx, &ch, defaultObjOptions)
+		if err != nil {
+			fmt.Println("Error parsing child: ", err)
+		}
+		children[i] = ch.ToApiModel()
 	}
 	groups := make([]string, len(o.Groups))
 	for i, group := range o.Groups {
@@ -191,6 +201,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		Type:           o.Type.ValueString(),
 		Definition:     definition,
 		Owners:         owners,
+		Children:       children,
 		Groups:         groups,
 		Links:          links,
 		IgnoreMetadata: o.IgnoreMetadata.ValueBool(),
@@ -248,6 +259,16 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 		}
 	} else {
 		o.Owners = nil
+	}
+
+	if len(entity.Children) > 0 {
+		o.Children = make([]types.Object, len(entity.Children))
+		for i, child := range entity.Children {
+			m := CatalogEntityChildResourceModel{}
+			o.Children[i] = m.FromApiModel(ctx, diagnostics, &child)
+		}
+	} else {
+		o.Children = nil
 	}
 
 	if len(entity.Groups) > 0 {
@@ -411,6 +432,33 @@ func (o *CatalogEntityOwnerResourceModel) FromApiModel(owner *cortex.CatalogEnti
 		obj.Provider = types.StringValue(owner.Provider)
 	}
 	return obj
+}
+
+// CatalogEntityChildResourceModel describes a child of the catalog entity.
+type CatalogEntityChildResourceModel struct {
+	Tag types.String `tfsdk:"tag"`
+}
+
+func (o *CatalogEntityChildResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"tag": types.StringType,
+	}
+}
+
+func (o *CatalogEntityChildResourceModel) ToApiModel() cortex.CatalogEntityChild {
+	return cortex.CatalogEntityChild{
+		Tag: o.Tag.ValueString(),
+	}
+}
+
+func (o *CatalogEntityChildResourceModel) FromApiModel(ctx context.Context, diag *diag.Diagnostics, entity *cortex.CatalogEntityChild) types.Object {
+	obj := CatalogEntityChildResourceModel{
+		Tag: types.StringValue(entity.Tag),
+	}
+
+	retObj, d := types.ObjectValueFrom(ctx, obj.AttrTypes(), &obj)
+	diag.Append(d...)
+	return retObj
 }
 
 type CatalogEntityLinkResourceModel struct {
