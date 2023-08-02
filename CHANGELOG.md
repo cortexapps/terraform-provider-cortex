@@ -2,6 +2,8 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.1.0
+
 * Add `children` support for Domain Catalog Entities
 * Add `xmatters` support for OnCall for Catalog Entities
 * Add `wiz` support for Catalog Entities
