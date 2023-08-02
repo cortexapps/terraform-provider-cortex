@@ -28,13 +28,33 @@ func setupClient(requestPath string, mockedResponse interface{}, requestTests ..
 			panic(fmt.Errorf("could not encode JSON: %w", err))
 		}
 	})
+	return buildClient(mux)
+}
 
+func setupYamlClient(requestPath string, mockedResponse interface{}, requestTests ...RequestTest) (*cortex.HttpClient, func(), error) {
+	mux := http.NewServeMux()
+	mux.HandleFunc(requestPath, func(w http.ResponseWriter, req *http.Request) {
+		defer req.Body.Close()
+
+		for _, test := range requestTests {
+			test(req)
+		}
+		if err := yaml.NewEncoder(w).Encode(mockedResponse); err != nil {
+			panic(fmt.Errorf("could not encode YAML: %w", err))
+		}
+	})
+	return buildClient(mux)
+}
+
+func buildClient(mux *http.ServeMux) (*cortex.HttpClient, func(), error) {
 	ts := httptest.NewServer(mux)
 
 	c, err := cortex.NewClient(
+		cortex.WithContext(context.Background()),
 		cortex.WithURL(ts.URL),
 		cortex.WithToken("test"),
 		cortex.WithVersion("test"),
+		//cortex.WithResponseDecoders(),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not build client: %w", err)
@@ -75,6 +95,44 @@ func TestClientInitialization(t *testing.T) {
 	assert.Equal(t, expectedAuthString, token, "Expected auth string to be %s, got %s", expectedAuthString, token)
 }
 
+type GetCatalogEntityOpenApiResponse struct {
+	Openapi string                   `json:"openapi" yaml: "openapi"`
+	Info    cortex.CatalogEntityData `json:"info" yaml:"info"`
+}
+
+func TestClientNoQueryStructDuplication(t *testing.T) {
+	testTag := "test-catalog-entity"
+	desiredUri := "/api/v1/catalog/test-catalog-entity/openapi?yaml=true"
+	resp := GetCatalogEntityOpenApiResponse{
+		Openapi: "3.0.1",
+		Info:    cortex.CatalogEntityData{Tag: testTag},
+	}
+	route := cortex.Route("catalog_entities", testTag+"/openapi")
+	c, teardown, err := setupYamlClient(
+		route,
+		resp,
+		AssertRequestMethod(t, "GET"),
+		AssertRequestURI(t, desiredUri),
+	)
+	assert.Nil(t, err, "could not setup client")
+	defer teardown()
+
+	params := cortex.CatalogEntityGetDescriptorParams{
+		Yaml: true,
+	}
+	req, err := c.YamlClient().Get(route).QueryStruct(params).Request()
+	assert.Nil(t, err, "error building sling request: %s", err)
+
+	desiredUrl := "http://" + req.Host + desiredUri
+	assert.Equal(t, desiredUrl, req.URL.String(), "expected request URL to be %s, got %s", desiredUrl, req.URL.String())
+
+	req, err = c.YamlClient().Get(route).QueryStruct(params).Request()
+	assert.Nil(t, err, "error building sling request: %s", err)
+
+	desiredUrl = "http://" + req.Host + desiredUri
+	assert.Equal(t, desiredUrl, req.URL.String(), "expected request URL to be %s, got %s", desiredUrl, req.URL.String())
+}
+
 func AssertRequestBody(t *testing.T, src interface{}) RequestTest {
 	return func(req *http.Request) {
 		t.Run("AssertRequestBody", func(t *testing.T) {
@@ -112,6 +170,14 @@ func AssertRequestMethod(t *testing.T, method string) RequestTest {
 	return func(req *http.Request) {
 		t.Run("AssertRequestMethod", func(t *testing.T) {
 			assert.Equal(t, method, req.Method, "expected request method to be %s, got %s", method, req.Method)
+		})
+	}
+}
+
+func AssertRequestURI(t *testing.T, desiredURI string) RequestTest {
+	return func(req *http.Request) {
+		t.Run("AssertRequestURI", func(t *testing.T) {
+			assert.Equal(t, req.RequestURI, desiredURI, "expected request URI to be %s, got %s", desiredURI, req.RequestURI)
 		})
 	}
 }

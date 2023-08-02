@@ -26,11 +26,11 @@ type CatalogEntitiesClient struct {
 var _ CatalogEntitiesClientInterface = &CatalogEntitiesClient{}
 
 func (c *CatalogEntitiesClient) Client() *sling.Sling {
-	return c.client.Client().New()
+	return c.client.Client()
 }
 
 func (c *CatalogEntitiesClient) YamlClient() *sling.Sling {
-	return c.client.YamlClient().New()
+	return c.client.YamlClient()
 }
 
 /***********************************************************************************************************************
@@ -120,7 +120,7 @@ func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag strin
 		Yaml: true,
 	}
 	uri := Route("catalog_entities", tag+"/openapi")
-	cl := c.YamlClient().Get(uri).QueryStruct(&params)
+	cl := c.YamlClient().Get(uri).QueryStruct(params)
 	response, err := cl.Receive(entityDescriptorResponse, apiError)
 	if err != nil {
 		return CatalogEntityData{}, errors.Join(fmt.Errorf("failed getting catalog entity descriptor for %s from %s", tag, uri), err)

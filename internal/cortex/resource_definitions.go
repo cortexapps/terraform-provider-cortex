@@ -21,7 +21,7 @@ type ResourceDefinitionsClient struct {
 var _ ResourceDefinitionsClientInterface = &ResourceDefinitionsClient{}
 
 func (c *ResourceDefinitionsClient) Client() *sling.Sling {
-	return c.client.client
+	return c.client.Client()
 }
 
 /***********************************************************************************************************************

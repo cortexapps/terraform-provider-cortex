@@ -136,11 +136,11 @@ func (c *HttpClient) Ping(ctx context.Context) error {
 }
 
 func (c *HttpClient) Client() *sling.Sling {
-	return c.client
+	return c.client.New()
 }
 
 func (c *HttpClient) YamlClient() *sling.Sling {
-	return c.yamlClient
+	return c.yamlClient.New()
 }
 
 /********** Client Interfaces **********/

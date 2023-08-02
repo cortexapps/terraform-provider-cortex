@@ -22,7 +22,7 @@ type ScorecardsClient struct {
 var _ ScorecardsClientInterface = &ScorecardsClient{}
 
 func (c *ScorecardsClient) Client() *sling.Sling {
-	return c.client.client
+	return c.client.Client()
 }
 
 /***********************************************************************************************************************

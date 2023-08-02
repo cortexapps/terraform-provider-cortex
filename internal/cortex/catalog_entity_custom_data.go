@@ -18,7 +18,7 @@ type CatalogEntityCustomDataClient struct {
 var _ CatalogEntityCustomDataClientInterface = &CatalogEntityCustomDataClient{}
 
 func (c *CatalogEntityCustomDataClient) Client() *sling.Sling {
-	return c.client.client
+	return c.client.Client()
 }
 
 /***********************************************************************************************************************

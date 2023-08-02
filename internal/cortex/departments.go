@@ -21,7 +21,7 @@ type DepartmentsClient struct {
 var _ DepartmentsClientInterface = &DepartmentsClient{}
 
 func (c *DepartmentsClient) Client() *sling.Sling {
-	return c.client.client
+	return c.client.Client()
 }
 
 /***********************************************************************************************************************

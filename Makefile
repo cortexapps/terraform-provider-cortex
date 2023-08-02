@@ -38,7 +38,7 @@ docs:
 # unit tests
 test:
 	go clean -testcache
-	go test -v -cover ./...
+	go test -v -cover ./... $(TESTARGS)
 
 # acceptance tests
 testacc:

@@ -26,7 +26,7 @@ type TeamsClient struct {
 var _ TeamsClientInterface = &TeamsClient{}
 
 func (c *TeamsClient) Client() *sling.Sling {
-	return c.client.client
+	return c.client.Client()
 }
 
 /***********************************************************************************************************************
