@@ -96,7 +96,7 @@ func TestClientInitialization(t *testing.T) {
 }
 
 type GetCatalogEntityOpenApiResponse struct {
-	Openapi string                   `json:"openapi" yaml: "openapi"`
+	Openapi string                   `json:"openapi" yaml:"openapi"`
 	Info    cortex.CatalogEntityData `json:"info" yaml:"info"`
 }
 
