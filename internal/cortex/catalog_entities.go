@@ -111,10 +111,9 @@ type CatalogEntityGetDescriptorParams struct {
 func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag string) (*CatalogEntityData, error) {
 	entity := &CatalogEntityData{}
 	entityDescriptorResponse := map[string]interface{}{}
-	entityDescriptorResponse["openapi"] = "3.0.1"
 
 	apiError := &ApiError{}
-	params := &CatalogEntityGetDescriptorParams{
+	params := CatalogEntityGetDescriptorParams{
 		Yaml: true,
 	}
 	uri := Route("catalog_entities", tag+"/openapi")

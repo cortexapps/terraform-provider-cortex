@@ -58,7 +58,7 @@ func (c *DepartmentsClient) Get(ctx context.Context, tag string) (*Department, e
 	department := &Department{}
 	apiError := &ApiError{}
 
-	params := &DepartmentGetParams{
+	params := DepartmentGetParams{
 		DepartmentTag: tag,
 	}
 	body, err := c.Client().Get(Route("departments", "")).QueryStruct(params).Receive(department, apiError)
@@ -140,7 +140,7 @@ type DeleteDepartmentResponse struct{}
 func (c *DepartmentsClient) Delete(ctx context.Context, tag string) error {
 	response := &DeleteDepartmentResponse{}
 	apiError := &ApiError{}
-	params := &DeleteDepartmentRequest{
+	params := DeleteDepartmentRequest{
 		DepartmentTag: tag,
 	}
 
