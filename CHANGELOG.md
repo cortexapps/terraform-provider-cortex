@@ -2,6 +2,10 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.1.5
+
+* Fix provider null issue when a domain is created with no children
+
 ## 0.1.4
 
 * Fix issue with duplicated query params in parallel subsequent requests in cortex client

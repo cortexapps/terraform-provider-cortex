@@ -23,7 +23,7 @@ type CatalogEntityResourceModel struct {
 	Type           types.String                      `tfsdk:"type"`
 	Definition     types.String                      `tfsdk:"definition"`
 	Owners         []CatalogEntityOwnerResourceModel `tfsdk:"owners"`
-	Children       []types.Object                    `tfsdk:"children"`
+	Children       []CatalogEntityChildResourceModel `tfsdk:"children"`
 	Groups         []types.String                    `tfsdk:"groups"`
 	Links          []CatalogEntityLinkResourceModel  `tfsdk:"links"`
 	IgnoreMetadata types.Bool                        `tfsdk:"ignore_metadata"`
@@ -69,12 +69,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 	}
 	children := make([]cortex.CatalogEntityChild, len(o.Children))
 	for i, child := range o.Children {
-		ch := CatalogEntityChildResourceModel{}
-		err := child.As(ctx, &ch, defaultObjOptions)
-		if err != nil {
-			fmt.Println("Error parsing child: ", err)
-		}
-		children[i] = ch.ToApiModel()
+		children[i] = child.ToApiModel()
 	}
 	groups := make([]string, len(o.Groups))
 	for i, group := range o.Groups {
@@ -262,10 +257,10 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 	}
 
 	if len(entity.Children) > 0 {
-		o.Children = make([]types.Object, len(entity.Children))
+		o.Children = make([]CatalogEntityChildResourceModel, len(entity.Children))
 		for i, child := range entity.Children {
 			m := CatalogEntityChildResourceModel{}
-			o.Children[i] = m.FromApiModel(ctx, diagnostics, &child)
+			o.Children[i] = m.FromApiModel(&child)
 		}
 	} else {
 		o.Children = nil
@@ -451,14 +446,10 @@ func (o *CatalogEntityChildResourceModel) ToApiModel() cortex.CatalogEntityChild
 	}
 }
 
-func (o *CatalogEntityChildResourceModel) FromApiModel(ctx context.Context, diag *diag.Diagnostics, entity *cortex.CatalogEntityChild) types.Object {
-	obj := CatalogEntityChildResourceModel{
+func (o *CatalogEntityChildResourceModel) FromApiModel(entity *cortex.CatalogEntityChild) CatalogEntityChildResourceModel {
+	return CatalogEntityChildResourceModel{
 		Tag: types.StringValue(entity.Tag),
 	}
-
-	retObj, d := types.ObjectValueFrom(ctx, obj.AttrTypes(), &obj)
-	diag.Append(d...)
-	return retObj
 }
 
 type CatalogEntityLinkResourceModel struct {
