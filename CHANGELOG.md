@@ -2,6 +2,10 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.1.3
+
+* Fix issue with duplicated query params in parallel subsequent requests in cortex client
+
 ## 0.1.2
 
 * Fix issue with XMatters null type being omitted in state cases when not used

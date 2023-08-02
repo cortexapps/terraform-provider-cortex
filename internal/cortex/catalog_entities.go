@@ -26,7 +26,11 @@ type CatalogEntitiesClient struct {
 var _ CatalogEntitiesClientInterface = &CatalogEntitiesClient{}
 
 func (c *CatalogEntitiesClient) Client() *sling.Sling {
-	return c.client.client
+	return c.client.Client().New()
+}
+
+func (c *CatalogEntitiesClient) YamlClient() *sling.Sling {
+	return c.client.YamlClient().New()
 }
 
 /***********************************************************************************************************************
@@ -116,7 +120,7 @@ func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag strin
 		Yaml: true,
 	}
 	uri := Route("catalog_entities", tag+"/openapi")
-	cl := c.Client().Get(uri).QueryStruct(params).ResponseDecoder(yamlDecoder{})
+	cl := c.YamlClient().Get(uri).QueryStruct(&params)
 	response, err := cl.Receive(entityDescriptorResponse, apiError)
 	if err != nil {
 		return CatalogEntityData{}, errors.Join(fmt.Errorf("failed getting catalog entity descriptor for %s from %s", tag, uri), err)
@@ -129,7 +133,6 @@ func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag strin
 
 	tflog.Debug(ctx, fmt.Sprintf("body: %+v", entityDescriptorResponse))
 
-	cl.ResponseDecoder(jsonDecoder{})
 	return c.parser.YamlToEntity(entityDescriptorResponse)
 }
 
@@ -154,7 +157,7 @@ func (c *CatalogEntitiesClient) List(ctx context.Context, params *CatalogEntityL
 	entitiesResponse := &CatalogEntitiesResponse{}
 	apiError := &ApiError{}
 
-	response, err := c.Client().Get(Route("catalog_entities", "")).QueryStruct(params).Receive(entitiesResponse, apiError)
+	response, err := c.Client().Get(Route("catalog_entities", "")).QueryStruct(&params).Receive(entitiesResponse, apiError)
 	if err != nil {
 		return nil, errors.New("could not get entities: " + err.Error())
 	}
@@ -202,7 +205,6 @@ func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEnt
 	tflog.Debug(ctx, fmt.Sprintf("CREATE body: %+v", body))
 	response, err := c.Client().
 		Set("Content-Type", "application/openapi;charset=UTF-8").
-		Set("Accept", "application/json").
 		Post(Route("open_api", "")).
 		Body(body).
 		Receive(upsertResponse, apiError)

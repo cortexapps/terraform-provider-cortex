@@ -76,7 +76,7 @@ func (c *ResourceDefinitionsClient) List(ctx context.Context, params *ResourceDe
 	data := &ResourceDefinitionsResponse{}
 	apiError := &ApiError{}
 
-	response, err := c.Client().Get(Route("resource_definitions", "")).QueryStruct(params).Receive(data, apiError)
+	response, err := c.Client().Get(Route("resource_definitions", "")).QueryStruct(&params).Receive(data, apiError)
 	if err != nil {
 		return nil, errors.New("could not get resource definitions: " + err.Error())
 	}

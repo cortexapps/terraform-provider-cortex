@@ -66,7 +66,7 @@ func (c *CatalogEntityCustomDataClient) List(ctx context.Context, entityTag stri
 	var entitiesResponse []CatalogEntityCustomData
 	apiError := &ApiError{}
 
-	response, err := c.Client().Get(Route("catalog_entities", entityTag+"/custom-data")).QueryStruct(params).Receive(entitiesResponse, apiError)
+	response, err := c.Client().Get(Route("catalog_entities", entityTag+"/custom-data")).QueryStruct(&params).Receive(entitiesResponse, apiError)
 	if err != nil {
 		return nil, errors.New("could not get catalog entity custom data: " + err.Error())
 	}

@@ -61,7 +61,7 @@ func (c *DepartmentsClient) Get(ctx context.Context, tag string) (*Department, e
 	params := DepartmentGetParams{
 		DepartmentTag: tag,
 	}
-	body, err := c.Client().Get(Route("departments", "")).QueryStruct(params).Receive(department, apiError)
+	body, err := c.Client().Get(Route("departments", "")).QueryStruct(&params).Receive(department, apiError)
 	if err != nil {
 		return department, fmt.Errorf("failed getting department: %+v", err)
 	}
@@ -144,7 +144,7 @@ func (c *DepartmentsClient) Delete(ctx context.Context, tag string) error {
 		DepartmentTag: tag,
 	}
 
-	body, err := c.Client().Delete(Route("departments", "")).QueryStruct(params).Receive(response, apiError)
+	body, err := c.Client().Delete(Route("departments", "")).QueryStruct(&params).Receive(response, apiError)
 	if err != nil {
 		return errors.New("could not delete department: " + err.Error())
 	}

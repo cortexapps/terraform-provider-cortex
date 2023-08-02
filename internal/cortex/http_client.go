@@ -35,11 +35,12 @@ func Route(domain string, path string) string {
 }
 
 type HttpClient struct {
-	ctx     context.Context
-	client  *sling.Sling
-	baseUrl string
-	token   string
-	version string
+	ctx        context.Context
+	client     *sling.Sling
+	yamlClient *sling.Sling
+	baseUrl    string
+	token      string
+	version    string
 }
 
 type OptionDelegator func(c *HttpClient) error
@@ -59,7 +60,12 @@ func NewClient(opts ...OptionDelegator) (*HttpClient, error) {
 	}
 	c.client = sling.New().Doer(hc).Base(c.baseUrl).
 		Set("User-Agent", fmt.Sprintf("%s (%s)", UserAgentPrefix, c.version)).
-		Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
+		Set("Authorization", fmt.Sprintf("Bearer %s", c.token)).
+		ResponseDecoder(jsonDecoder{})
+	c.yamlClient = sling.New().Doer(hc).Base(c.baseUrl).
+		Set("User-Agent", fmt.Sprintf("%s (%s)", UserAgentPrefix, c.version)).
+		Set("Authorization", fmt.Sprintf("Bearer %s", c.token)).
+		ResponseDecoder(yamlDecoder{})
 
 	return c, nil
 }
@@ -127,6 +133,14 @@ func (c *HttpClient) Ping(ctx context.Context) error {
 		return err
 	}
 	return c.handleResponseStatus(response, apiError)
+}
+
+func (c *HttpClient) Client() *sling.Sling {
+	return c.client
+}
+
+func (c *HttpClient) YamlClient() *sling.Sling {
+	return c.yamlClient
 }
 
 /********** Client Interfaces **********/

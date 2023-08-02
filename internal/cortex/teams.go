@@ -121,7 +121,7 @@ func (c *TeamsClient) List(ctx context.Context, params *TeamListParams) (*TeamsR
 	teamsResponse := &TeamsResponse{}
 	apiError := &ApiError{}
 
-	response, err := c.Client().Get(Route("teams", "")).QueryStruct(params).Receive(teamsResponse, apiError)
+	response, err := c.Client().Get(Route("teams", "")).QueryStruct(&params).Receive(teamsResponse, apiError)
 	if err != nil {
 		return nil, errors.New("could not get teams: " + err.Error())
 	}

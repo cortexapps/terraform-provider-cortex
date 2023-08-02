@@ -182,7 +182,7 @@ func (c *ScorecardsClient) List(ctx context.Context, params *ScorecardListParams
 	scorecardsResponse := &ScorecardsResponse{}
 	apiError := &ApiError{}
 
-	response, err := c.Client().Get(Route("scorecards", "")).QueryStruct(params).Receive(scorecardsResponse, apiError)
+	response, err := c.Client().Get(Route("scorecards", "")).QueryStruct(&params).Receive(scorecardsResponse, apiError)
 	if err != nil {
 		return nil, errors.New("could not get scorecards: " + err.Error())
 	}
