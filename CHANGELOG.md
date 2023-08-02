@@ -2,6 +2,10 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.1.1
+
+* Omit `defaultJql` from JIRA issue management when empty
+
 ## 0.1.0
 
 * Add `children` support for Domain Catalog Entities

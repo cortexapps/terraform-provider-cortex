@@ -323,7 +323,7 @@ func (o *CatalogEntityGitGitlab) Enabled() bool {
  **********************************************************************************************************************/
 
 type CatalogEntityIssuesJira struct {
-	DefaultJQL string   `json:"defaultJql" yaml:"defaultJql"`
+	DefaultJQL string   `json:"defaultJql,omitempty" yaml:"defaultJql,omitempty"`
 	Projects   []string `json:"projects,omitempty" yaml:"projects,omitempty"`
 	Labels     []string `json:"labels,omitempty" yaml:"labels,omitempty"`
 	Components []string `json:"components,omitempty" yaml:"components,omitempty"`
