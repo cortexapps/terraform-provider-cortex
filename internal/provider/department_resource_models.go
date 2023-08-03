@@ -46,19 +46,6 @@ func (r *DepartmentResourceModel) ToApiModel() cortex.Department {
 	return entity
 }
 
-// ToUpdateRequest https://docs.cortex.io/docs/api/update-department
-func (r *DepartmentResourceModel) ToUpdateRequest() cortex.UpdateDepartmentRequest {
-	var members []cortex.DepartmentMember
-	for _, member := range r.Members {
-		members = append(members, member.ToApiModel())
-	}
-	return cortex.UpdateDepartmentRequest{
-		Name:        r.Name.ValueString(),
-		Description: r.Description.ValueString(),
-		Members:     members,
-	}
-}
-
 /***********************************************************************************************************************
  * Members
  **********************************************************************************************************************/

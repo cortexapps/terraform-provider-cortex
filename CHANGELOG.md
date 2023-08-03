@@ -2,6 +2,8 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+* Add `cortex_catalog_entity_custom_data` resource for managing scoped custom data on catalog entities
+
 ## 0.1.6
 
 * Full resource definition support

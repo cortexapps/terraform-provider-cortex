@@ -177,7 +177,7 @@ func AssertRequestMethod(t *testing.T, method string) RequestTest {
 func AssertRequestURI(t *testing.T, desiredURI string) RequestTest {
 	return func(req *http.Request) {
 		t.Run("AssertRequestURI", func(t *testing.T) {
-			assert.Equal(t, req.RequestURI, desiredURI, "expected request URI to be %s, got %s", desiredURI, req.RequestURI)
+			assert.Equal(t, desiredURI, req.RequestURI, "expected request URI to be %s, got %s", desiredURI, req.RequestURI)
 		})
 	}
 }

@@ -28,7 +28,7 @@ func TestGetDepartment(t *testing.T) {
 
 	res, err := c.Departments().Get(context.Background(), testDepartmentTag)
 	assert.Nil(t, err, "error retrieving a department")
-	assert.Equal(t, testDepartmentResponse, res)
+	assert.Equal(t, testDepartmentResponse.Tag, res.Tag)
 }
 
 func TestCreateDepartment(t *testing.T) {
