@@ -80,14 +80,14 @@ func (d *DepartmentDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
-	department, err := d.client.Departments().Get(ctx, data.Tag.ValueString())
+	entity, err := d.client.Departments().Get(ctx, data.Tag.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read department, got error: %s", err))
 		return
 	}
 
 	// Map entity to resource model
-	data.FromApiModel(department)
+	data.FromApiModel(entity)
 
 	// Write to TF state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

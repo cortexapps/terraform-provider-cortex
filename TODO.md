@@ -25,8 +25,3 @@ Needs more complete acceptance tests. Only basic tests for now.
 
 Redo all of this to support the new change of Teams to Entities. This likely means moving to YAML based API approach
 for Teams.
-
-### Departments
-
-Needs more full end-to-end tests.
-

@@ -8,9 +8,9 @@ import (
 )
 
 type DepartmentsClientInterface interface {
-	Get(ctx context.Context, tag string) (*Department, error)
-	Create(ctx context.Context, req CreateDepartmentRequest) (*Department, error)
-	Update(ctx context.Context, tag string, req UpdateDepartmentRequest) (*Department, error)
+	Get(ctx context.Context, tag string) (Department, error)
+	Create(ctx context.Context, req CreateDepartmentRequest) (Department, error)
+	Update(ctx context.Context, tag string, req UpdateDepartmentRequest) (Department, error)
 	Delete(ctx context.Context, tag string) error
 }
 
@@ -54,19 +54,19 @@ type DepartmentsResponse struct {
 	Departments []Department `json:"department"`
 }
 
-func (c *DepartmentsClient) Get(ctx context.Context, tag string) (*Department, error) {
-	department := &Department{}
-	apiError := &ApiError{}
+func (c *DepartmentsClient) Get(ctx context.Context, tag string) (Department, error) {
+	department := Department{}
+	apiError := ApiError{}
 
 	params := DepartmentGetParams{
 		DepartmentTag: tag,
 	}
-	body, err := c.Client().Get(Route("departments", "")).QueryStruct(&params).Receive(department, apiError)
+	body, err := c.Client().Get(Route("departments", "")).QueryStruct(&params).Receive(&department, &apiError)
 	if err != nil {
 		return department, fmt.Errorf("failed getting department: %+v", err)
 	}
 
-	err = c.client.handleResponseStatus(body, apiError)
+	err = c.client.handleResponseStatus(body, &apiError)
 	if err != nil {
 		return department, fmt.Errorf("failed getting department: %+v", err)
 	}
@@ -84,16 +84,26 @@ type CreateDepartmentRequest struct {
 	Members     []DepartmentMember `json:"members"`
 }
 
-func (c *DepartmentsClient) Create(ctx context.Context, req CreateDepartmentRequest) (*Department, error) {
-	department := &Department{}
-	apiError := &ApiError{}
+// ToCreateRequest https://docs.cortex.io/docs/api/create-department
+func (r *Department) ToCreateRequest() CreateDepartmentRequest {
+	return CreateDepartmentRequest{
+		Tag:         r.Tag,
+		Name:        r.Name,
+		Description: r.Description,
+		Members:     r.Members,
+	}
+}
 
-	body, err := c.Client().Post(Route("departments", "")).BodyJSON(&req).Receive(department, apiError)
+func (c *DepartmentsClient) Create(ctx context.Context, req CreateDepartmentRequest) (Department, error) {
+	department := Department{}
+	apiError := ApiError{}
+
+	body, err := c.Client().Post(Route("departments", "")).BodyJSON(&req).Receive(&department, &apiError)
 	if err != nil {
 		return department, fmt.Errorf("failed creating department: %+v", err)
 	}
 
-	err = c.client.handleResponseStatus(body, apiError)
+	err = c.client.handleResponseStatus(body, &apiError)
 	if err != nil {
 		return department, err
 	}
@@ -111,16 +121,25 @@ type UpdateDepartmentRequest struct {
 	Members     []DepartmentMember `json:"members"`
 }
 
-func (c *DepartmentsClient) Update(ctx context.Context, tag string, req UpdateDepartmentRequest) (*Department, error) {
-	department := &Department{}
-	apiError := &ApiError{}
+// ToUpdateRequest https://docs.cortex.io/docs/api/update-department
+func (r *Department) ToUpdateRequest() UpdateDepartmentRequest {
+	return UpdateDepartmentRequest{
+		Name:        r.Name,
+		Description: r.Description,
+		Members:     r.Members,
+	}
+}
 
-	body, err := c.Client().Put(Route("departments", tag)).BodyJSON(&req).Receive(department, apiError)
+func (c *DepartmentsClient) Update(ctx context.Context, tag string, req UpdateDepartmentRequest) (Department, error) {
+	department := Department{}
+	apiError := ApiError{}
+
+	body, err := c.Client().Put(Route("departments", tag)).BodyJSON(&req).Receive(&department, &apiError)
 	if err != nil {
 		return department, errors.New("could not update department: " + err.Error())
 	}
 
-	err = c.client.handleResponseStatus(body, apiError)
+	err = c.client.handleResponseStatus(body, &apiError)
 	if err != nil {
 		return department, err
 	}
@@ -138,18 +157,18 @@ type DeleteDepartmentRequest struct {
 type DeleteDepartmentResponse struct{}
 
 func (c *DepartmentsClient) Delete(ctx context.Context, tag string) error {
-	response := &DeleteDepartmentResponse{}
-	apiError := &ApiError{}
+	response := DeleteDepartmentResponse{}
+	apiError := ApiError{}
 	params := DeleteDepartmentRequest{
 		DepartmentTag: tag,
 	}
 
-	body, err := c.Client().Delete(Route("departments", "")).QueryStruct(&params).Receive(response, apiError)
+	body, err := c.Client().Delete(Route("departments", "")).QueryStruct(&params).Receive(&response, &apiError)
 	if err != nil {
 		return errors.New("could not delete department: " + err.Error())
 	}
 
-	err = c.client.handleResponseStatus(body, apiError)
+	err = c.client.handleResponseStatus(body, &apiError)
 	if err != nil {
 		return err
 	}

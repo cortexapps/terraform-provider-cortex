@@ -5,10 +5,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// DepartmentResource defines the resource implementation.
-type DepartmentResource struct {
-	client *cortex.HttpClient
-}
+/***********************************************************************************************************************
+ * Models
+ **********************************************************************************************************************/
 
 // DepartmentResourceModel describes the department data model within Terraform.
 type DepartmentResourceModel struct {
@@ -19,47 +18,50 @@ type DepartmentResourceModel struct {
 	Members     []DepartmentMemberResourceModel `tfsdk:"members"`
 }
 
-// ToCreateRequest https://docs.cortex.io/docs/api/create-department
-func (o *DepartmentResourceModel) ToCreateRequest() cortex.CreateDepartmentRequest {
-	var members []cortex.DepartmentMember
-	for _, member := range o.Members {
-		members = append(members, member.ToApiModel())
-	}
-
-	return cortex.CreateDepartmentRequest{
-		Tag:         o.Tag.ValueString(),
-		Name:        o.Name.ValueString(),
-		Description: o.Description.ValueString(),
-		Members:     members,
-	}
-}
-
-// ToUpdateRequest https://docs.cortex.io/docs/api/update-department
-func (o *DepartmentResourceModel) ToUpdateRequest() cortex.UpdateDepartmentRequest {
-	var members []cortex.DepartmentMember
-	for _, member := range o.Members {
-		members = append(members, member.ToApiModel())
-	}
-	return cortex.UpdateDepartmentRequest{
-		Name:        o.Name.ValueString(),
-		Description: o.Description.ValueString(),
-		Members:     members,
-	}
-}
-
-func (o *DepartmentResourceModel) FromApiModel(department *cortex.Department) {
-	o.Id = types.StringValue(department.Tag)
-	o.Tag = types.StringValue(department.Tag)
-	o.Name = types.StringValue(department.Name)
-	o.Description = types.StringValue(department.Description)
-	if department.Members != nil {
-		o.Members = make([]DepartmentMemberResourceModel, len(department.Members))
-		for i, member := range department.Members {
+func (r *DepartmentResourceModel) FromApiModel(entity cortex.Department) {
+	r.Id = types.StringValue(entity.Tag)
+	r.Tag = types.StringValue(entity.Tag)
+	r.Name = types.StringValue(entity.Name)
+	r.Description = types.StringValue(entity.Description)
+	if entity.Members != nil {
+		r.Members = make([]DepartmentMemberResourceModel, len(entity.Members))
+		for i, member := range entity.Members {
 			m := DepartmentMemberResourceModel{}
-			o.Members[i] = m.FromApiModel(&member)
+			r.Members[i] = m.FromApiModel(&member)
 		}
 	}
 }
+
+func (r *DepartmentResourceModel) ToApiModel() cortex.Department {
+	entity := cortex.Department{
+		Tag:         r.Tag.ValueString(),
+		Name:        r.Name.ValueString(),
+		Description: r.Description.ValueString(),
+	}
+	var members []cortex.DepartmentMember
+	for _, member := range r.Members {
+		members = append(members, member.ToApiModel())
+	}
+	entity.Members = members
+	return entity
+}
+
+// ToUpdateRequest https://docs.cortex.io/docs/api/update-department
+func (r *DepartmentResourceModel) ToUpdateRequest() cortex.UpdateDepartmentRequest {
+	var members []cortex.DepartmentMember
+	for _, member := range r.Members {
+		members = append(members, member.ToApiModel())
+	}
+	return cortex.UpdateDepartmentRequest{
+		Name:        r.Name.ValueString(),
+		Description: r.Description.ValueString(),
+		Members:     members,
+	}
+}
+
+/***********************************************************************************************************************
+ * Members
+ **********************************************************************************************************************/
 
 type DepartmentMemberResourceModel struct {
 	Name        types.String `tfsdk:"name"`
@@ -83,6 +85,10 @@ func (o *DepartmentMemberResourceModel) FromApiModel(member *cortex.DepartmentMe
 	}
 }
 
+/***********************************************************************************************************************
+ * Data Source
+ **********************************************************************************************************************/
+
 // DepartmentDataSourceModel describes the data source data model.
 type DepartmentDataSourceModel struct {
 	Id          types.String `tfsdk:"id"`
@@ -91,9 +97,9 @@ type DepartmentDataSourceModel struct {
 	Description types.String `tfsdk:"description"`
 }
 
-func (o *DepartmentDataSourceModel) FromApiModel(department *cortex.Department) {
-	o.Id = types.StringValue(department.Tag)
-	o.Tag = types.StringValue(department.Tag)
-	o.Name = types.StringValue(department.Name)
-	o.Description = types.StringValue(department.Description)
+func (o *DepartmentDataSourceModel) FromApiModel(entity cortex.Department) {
+	o.Id = types.StringValue(entity.Tag)
+	o.Tag = types.StringValue(entity.Tag)
+	o.Name = types.StringValue(entity.Name)
+	o.Description = types.StringValue(entity.Description)
 }

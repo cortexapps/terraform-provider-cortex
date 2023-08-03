@@ -19,6 +19,19 @@ func NewDepartmentResource() resource.Resource {
 	return &DepartmentResource{}
 }
 
+func NewDepartmentResourceModel() DepartmentResourceModel {
+	return DepartmentResourceModel{}
+}
+
+/***********************************************************************************************************************
+ * Types
+ **********************************************************************************************************************/
+
+// DepartmentResource defines the resource implementation.
+type DepartmentResource struct {
+	client *cortex.HttpClient
+}
+
 /***********************************************************************************************************************
  * Schema
  **********************************************************************************************************************/
@@ -105,7 +118,7 @@ func (r *DepartmentResource) Configure(ctx context.Context, req resource.Configu
 }
 
 func (r *DepartmentResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *DepartmentResourceModel
+	data := NewDepartmentResourceModel()
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -115,14 +128,14 @@ func (r *DepartmentResource) Read(ctx context.Context, req resource.ReadRequest,
 	}
 
 	// Issue API request
-	department, err := r.client.Departments().Get(ctx, data.Tag.ValueString())
+	entity, err := r.client.Departments().Get(ctx, data.Tag.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read department %s, got error: %s", data.Tag.ValueString(), err))
 		return
 	}
 
 	// Map entity to resource model
-	data.FromApiModel(department)
+	data.FromApiModel(entity)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -130,7 +143,7 @@ func (r *DepartmentResource) Read(ctx context.Context, req resource.ReadRequest,
 
 // Create Creates a new team.
 func (r *DepartmentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data *DepartmentResourceModel
+	data := NewDepartmentResourceModel()
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -138,46 +151,52 @@ func (r *DepartmentResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	clientRequest := data.ToCreateRequest()
-	department, err := r.client.Departments().Create(ctx, clientRequest)
+	clientEntity := data.ToApiModel()
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	entity, err := r.client.Departments().Create(ctx, clientEntity.ToCreateRequest())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create department, got error: %s", err))
 		return
 	}
 
 	// Map entity to resource model
-	data.FromApiModel(department)
+	data.FromApiModel(entity)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *DepartmentResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data DepartmentResourceModel
+	data := NewDepartmentResourceModel()
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	clientRequest := data.ToUpdateRequest()
-	department, err := r.client.Departments().Update(ctx, data.Tag.ValueString(), clientRequest)
+	clientEntity := data.ToApiModel()
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	entity, err := r.client.Departments().Update(ctx, data.Tag.ValueString(), clientEntity.ToUpdateRequest())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update department, got error: %s", err))
 		return
 	}
 
 	// Map entity to resource model
-	data.FromApiModel(department)
+	data.FromApiModel(entity)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *DepartmentResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *DepartmentResourceModel
+	data := NewDepartmentResourceModel()
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)

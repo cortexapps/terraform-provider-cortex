@@ -6,34 +6,37 @@ import (
 	"testing"
 )
 
-func TestAccDepartmentResource(t *testing.T) {
-	stub := tFactoryBuildDepartmentResource()
+func TestAccDepartmentMinimalResource(t *testing.T) {
+	tag := "test-department-minimal"
+	resourceType := "cortex_department"
+	resourceName := resourceType + "." + tag
+	stub := tFactoryBuildDepartmentMinimalResource(tag)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccDepartmentResourceConfig(stub),
+				Config: testAccDepartmentMinimalResourceConfig(resourceType, stub),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("cortex_department.engineering", "tag", stub.Tag),
-					resource.TestCheckResourceAttr("cortex_department.engineering", "name", stub.Name),
-					resource.TestCheckResourceAttr("cortex_department.engineering", "description", stub.Description),
+					resource.TestCheckResourceAttr(resourceName, "tag", stub.Tag),
+					resource.TestCheckResourceAttr(resourceName, "name", stub.Name),
+					resource.TestCheckResourceAttr(resourceName, "description", stub.Description),
 				),
 			},
 			// ImportState testing
 			{
-				ResourceName:      "cortex_department.engineering",
+				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
 			// Update and Read testing
 			{
-				Config: testAccDepartmentResourceConfig(stub),
+				Config: testAccDepartmentMinimalResourceConfig(resourceType, stub),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("cortex_department.engineering", "tag", stub.Tag),
-					resource.TestCheckResourceAttr("cortex_department.engineering", "name", stub.Name),
-					resource.TestCheckResourceAttr("cortex_department.engineering", "description", stub.Description),
+					resource.TestCheckResourceAttr(resourceName, "tag", stub.Tag),
+					resource.TestCheckResourceAttr(resourceName, "name", stub.Name),
+					resource.TestCheckResourceAttr(resourceName, "description", stub.Description),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -41,12 +44,12 @@ func TestAccDepartmentResource(t *testing.T) {
 	})
 }
 
-func testAccDepartmentResourceConfig(stub TestDepartmentResource) string {
+func testAccDepartmentMinimalResourceConfig(resourceType string, stub TestDepartmentResource) string {
 	return fmt.Sprintf(`
-resource "cortex_department" "engineering" {
- 	tag = %[1]q
- 	name = %[2]q
- 	description = %[3]q
+resource %[1]q %[2]q {
+ 	tag = %[3]q
+ 	name = %[4]q
+ 	description = %[5]q
  	members = [
 		{
 			name = "John Doe"
@@ -55,7 +58,7 @@ resource "cortex_department" "engineering" {
 		}
 	]
 }
-`, stub.Tag, stub.Name, stub.Description)
+`, resourceType, stub.Tag, stub.Tag, stub.Name, stub.Description)
 }
 
 type TestDepartmentResource struct {
@@ -70,9 +73,9 @@ type TestDepartmentMemberResource struct {
 	Description string
 }
 
-func tFactoryBuildDepartmentResource() TestDepartmentResource {
+func tFactoryBuildDepartmentMinimalResource(tag string) TestDepartmentResource {
 	return TestDepartmentResource{
-		Tag:         "engineering",
+		Tag:         tag,
 		Name:        "Engineering",
 		Description: "The Engineering Department",
 		Members: []TestDepartmentMemberResource{
