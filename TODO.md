@@ -30,7 +30,3 @@ for Teams.
 
 Needs more full end-to-end tests.
 
-### Resource Definitions
-
-No support yet.
-

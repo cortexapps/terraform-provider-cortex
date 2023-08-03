@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -20,6 +19,10 @@ var _ resource.ResourceWithImportState = &ResourceDefinitionResource{}
 
 func NewResourceDefinitionResource() resource.Resource {
 	return &ResourceDefinitionResource{}
+}
+
+func NewResourceDefinitionResourceModel() ResourceDefinitionResourceModel {
+	return ResourceDefinitionResourceModel{}
 }
 
 /***********************************************************************************************************************
@@ -31,19 +34,13 @@ type ResourceDefinitionResource struct {
 	client *cortex.HttpClient
 }
 
-// ResourceDefinitionResourceModel describes the department data model within Terraform.
-type ResourceDefinitionResourceModel struct {
-	Id          types.String `tfsdk:"id"`
-	Type        types.String `tfsdk:"type"`
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
-	Source      types.String `tfsdk:"source"`
-	Schema      types.Map    `tfsdk:"schema"`
-}
-
 /***********************************************************************************************************************
  * Schema
  **********************************************************************************************************************/
+
+func (r *ResourceDefinitionResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_resource_definition"
+}
 
 func (r *ResourceDefinitionResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
@@ -64,15 +61,14 @@ func (r *ResourceDefinitionResource) Schema(ctx context.Context, req resource.Sc
 				Required:            true,
 			},
 			"source": schema.StringAttribute{
-				MarkdownDescription: "Source of the resource definition.",
+				MarkdownDescription: "Source of the resource definition. Either \"CORTEX\" or \"CUSTOM\".",
 				Required:            true,
 				Validators: []validator.String{
-					stringvalidator.OneOfCaseInsensitive("cortex", "custom"),
+					stringvalidator.OneOfCaseInsensitive("CORTEX", "CUSTOM"),
 				},
 			},
-			"schema": schema.MapAttribute{
+			"schema": schema.StringAttribute{
 				MarkdownDescription: "Schema for the resource definition.",
-				ElementType:         types.StringType,
 				Required:            true,
 			},
 
@@ -97,10 +93,6 @@ func (r *ResourceDefinitionResource) Schema(ctx context.Context, req resource.Sc
  * Methods
  **********************************************************************************************************************/
 
-func (r *ResourceDefinitionResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_resource_definition"
-}
-
 func (r *ResourceDefinitionResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
@@ -122,7 +114,7 @@ func (r *ResourceDefinitionResource) Configure(ctx context.Context, req resource
 }
 
 func (r *ResourceDefinitionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *ResourceDefinitionResourceModel
+	data := NewResourceDefinitionResourceModel()
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -132,26 +124,17 @@ func (r *ResourceDefinitionResource) Read(ctx context.Context, req resource.Read
 	}
 
 	// Issue API request
-	response, err := r.client.ResourceDefinitions().Get(ctx, data.Type.String())
+	entity, err := r.client.ResourceDefinitions().Get(ctx, data.Type.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read resource definition, got error: %s", err))
 		return
 	}
 
 	// Map data from the API response to the model
-	data.Id = types.StringValue(response.Type)
-	data.Type = types.StringValue(response.Type)
-	data.Name = types.StringValue(response.Name)
-	data.Description = types.StringValue(response.Description)
-	data.Source = types.StringValue(response.Source)
-
-	// TODO: Ensure this will actually work - unsure if this properly maintains schema types internally
-	mv, diag := types.MapValueFrom(ctx, types.StringType, response.Schema)
-	if diag.HasError() {
-		resp.Diagnostics = diag
+	data.FromApiModel(ctx, &resp.Diagnostics, entity)
+	if resp.Diagnostics.HasError() {
 		return
 	}
-	data.Schema = mv
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -159,7 +142,7 @@ func (r *ResourceDefinitionResource) Read(ctx context.Context, req resource.Read
 
 // Create Creates a new team.
 func (r *ResourceDefinitionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data *ResourceDefinitionResourceModel
+	data := NewResourceDefinitionResourceModel()
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -168,67 +151,59 @@ func (r *ResourceDefinitionResource) Create(ctx context.Context, req resource.Cr
 		return
 	}
 
-	schemaReq := map[string]interface{}{}
-	data.Schema.ElementsAs(ctx, schemaReq, true)
-
-	clientRequest := cortex.CreateResourceDefinitionRequest{
-		Type:        data.Type.String(),
-		Name:        data.Name.String(),
-		Description: data.Description.String(),
-		Source:      data.Source.String(),
-		Schema:      schemaReq,
+	clientEntity := data.ToApiModel(&resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	resourceDefinition, err := r.client.ResourceDefinitions().Create(ctx, clientRequest)
+
+	entity, err := r.client.ResourceDefinitions().Create(ctx, clientEntity.ToCreateRequest())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create resource definition, got error: %s", err))
 		return
 	}
 
-	// Set the ID in state based on the Type
-	data.Id = data.Type
-	data.Type = types.StringValue(resourceDefinition.Type)
-
-	// Save data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-
-	//resp.State.SetAttribute(ctx, path.Root("id"), data.TeamTag)
-	//resp.State.SetAttribute(ctx, path.Root("team_tag"), data.TeamTag)
-}
-
-func (r *ResourceDefinitionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data *ResourceDefinitionResourceModel
-
-	// Read Terraform plan data into the model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-
+	// Set computed attributes
+	data.FromApiModel(ctx, &resp.Diagnostics, entity)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	schemaReq := map[string]interface{}{}
-	data.Schema.ElementsAs(ctx, schemaReq, true)
+	// Save data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
 
-	clientRequest := cortex.UpdateResourceDefinitionRequest{
-		Name:        data.Name.String(),
-		Description: data.Description.String(),
-		Schema:      schemaReq,
+func (r *ResourceDefinitionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	data := NewResourceDefinitionResourceModel()
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	resourceDefinition, err := r.client.ResourceDefinitions().Update(ctx, data.Type.String(), clientRequest)
+
+	clientEntity := data.ToApiModel(&resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	entity, err := r.client.ResourceDefinitions().Update(ctx, data.Type.ValueString(), clientEntity.ToUpdateRequest())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update resource definition, got error: %s", err))
 		return
 	}
 
-	// Set the ID in state based on the tag
-	data.Id = data.Type
-	data.Type = types.StringValue(resourceDefinition.Type)
+	// Set computed attributes
+	data.FromApiModel(ctx, &resp.Diagnostics, entity)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *ResourceDefinitionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *ResourceDefinitionResourceModel
+	data := NewResourceDefinitionResourceModel()
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -237,7 +212,7 @@ func (r *ResourceDefinitionResource) Delete(ctx context.Context, req resource.De
 		return
 	}
 
-	err := r.client.ResourceDefinitions().Delete(ctx, data.Type.String())
+	err := r.client.ResourceDefinitions().Delete(ctx, data.Type.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete resource definition, got error: %s", err))
 		return
@@ -245,5 +220,5 @@ func (r *ResourceDefinitionResource) Delete(ctx context.Context, req resource.De
 }
 
 func (r *ResourceDefinitionResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("tag"), req, resp)
+	resource.ImportStatePassthroughID(ctx, path.Root("type"), req, resp)
 }

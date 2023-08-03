@@ -18,8 +18,8 @@ ResourceDefinition Entity
 ### Required
 
 - `name` (String) Name of the team.
-- `schema` (Map of String) Schema for the resource definition.
-- `source` (String) Source of the resource definition.
+- `schema` (String) Schema for the resource definition.
+- `source` (String) Source of the resource definition. Either "CORTEX" or "CUSTOM".
 - `type` (String) Unique identifier for the resource definition.
 
 ### Optional

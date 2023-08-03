@@ -2,6 +2,10 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.1.6
+
+* Full resource definition support
+
 ## 0.1.5
 
 * Fix provider null issue when a domain is created with no children

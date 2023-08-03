@@ -7,10 +7,10 @@ import (
 )
 
 type ResourceDefinitionsClientInterface interface {
-	Get(ctx context.Context, typeName string) (*ResourceDefinition, error)
-	List(ctx context.Context, params *ResourceDefinitionListParams) (*ResourceDefinitionsResponse, error)
-	Create(ctx context.Context, req CreateResourceDefinitionRequest) (*ResourceDefinition, error)
-	Update(ctx context.Context, typeName string, req UpdateResourceDefinitionRequest) (*ResourceDefinition, error)
+	Get(ctx context.Context, typeName string) (ResourceDefinition, error)
+	List(ctx context.Context, params *ResourceDefinitionListParams) (ResourceDefinitionsResponse, error)
+	Create(ctx context.Context, req CreateResourceDefinitionRequest) (ResourceDefinition, error)
+	Update(ctx context.Context, typeName string, req UpdateResourceDefinitionRequest) (ResourceDefinition, error)
 	Delete(ctx context.Context, typeName string) error
 }
 
@@ -41,15 +41,15 @@ type ResourceDefinition struct {
  * GET /api/v1/catalog/definitions/:typeName
  **********************************************************************************************************************/
 
-func (c *ResourceDefinitionsClient) Get(ctx context.Context, typeName string) (*ResourceDefinition, error) {
-	data := &ResourceDefinition{}
-	apiError := &ApiError{}
-	response, err := c.Client().Get(Route("resource_definitions", typeName)).Receive(data, apiError)
+func (c *ResourceDefinitionsClient) Get(ctx context.Context, typeName string) (ResourceDefinition, error) {
+	data := ResourceDefinition{}
+	apiError := ApiError{}
+	response, err := c.Client().Get(Route("resource_definitions", typeName)).Receive(&data, &apiError)
 	if err != nil {
 		return data, errors.New("could not get resource definition: " + err.Error())
 	}
 
-	err = c.client.handleResponseStatus(response, apiError)
+	err = c.client.handleResponseStatus(response, &apiError)
 	if err != nil {
 		return data, errors.Join(errors.New("Failed getting resource definition: "), err)
 	}
@@ -72,18 +72,18 @@ type ResourceDefinitionsResponse struct {
 }
 
 // List retrieves a list of resource definitions based on a query.
-func (c *ResourceDefinitionsClient) List(ctx context.Context, params *ResourceDefinitionListParams) (*ResourceDefinitionsResponse, error) {
-	data := &ResourceDefinitionsResponse{}
-	apiError := &ApiError{}
+func (c *ResourceDefinitionsClient) List(ctx context.Context, params *ResourceDefinitionListParams) (ResourceDefinitionsResponse, error) {
+	data := ResourceDefinitionsResponse{}
+	apiError := ApiError{}
 
-	response, err := c.Client().Get(Route("resource_definitions", "")).QueryStruct(&params).Receive(data, apiError)
+	response, err := c.Client().Get(Route("resource_definitions", "")).QueryStruct(&params).Receive(&data, &apiError)
 	if err != nil {
-		return nil, errors.New("could not get resource definitions: " + err.Error())
+		return data, errors.New("could not get resource definitions: " + err.Error())
 	}
 
-	err = c.client.handleResponseStatus(response, apiError)
+	err = c.client.handleResponseStatus(response, &apiError)
 	if err != nil {
-		return nil, err
+		return data, err
 	}
 
 	return data, nil
@@ -101,20 +101,29 @@ type CreateResourceDefinitionRequest struct {
 	Source      string                 `json:"source,omitempty"`
 }
 
+func (r *ResourceDefinition) ToCreateRequest() CreateResourceDefinitionRequest {
+	return CreateResourceDefinitionRequest{
+		Type:        r.Type,
+		Name:        r.Name,
+		Description: r.Description,
+		Schema:      r.Schema,
+	}
+}
+
 type CreateResourceDefinitionResponse struct {
 	ResourceDefinition *ResourceDefinition `json:"scorecard"`
 }
 
-func (c *ResourceDefinitionsClient) Create(ctx context.Context, req CreateResourceDefinitionRequest) (*ResourceDefinition, error) {
-	data := &ResourceDefinition{}
-	apiError := &ApiError{}
+func (c *ResourceDefinitionsClient) Create(ctx context.Context, req CreateResourceDefinitionRequest) (ResourceDefinition, error) {
+	data := ResourceDefinition{}
+	apiError := ApiError{}
 
-	response, err := c.Client().Post(Route("resource_definitions", "")).BodyJSON(&req).Receive(data, apiError)
+	response, err := c.Client().Post(Route("resource_definitions", "")).BodyJSON(&req).Receive(&data, &apiError)
 	if err != nil {
 		return data, errors.New("could not create a resource definition: " + err.Error())
 	}
 
-	err = c.client.handleResponseStatus(response, apiError)
+	err = c.client.handleResponseStatus(response, &apiError)
 	if err != nil {
 		return data, err
 	}
@@ -132,16 +141,24 @@ type UpdateResourceDefinitionRequest struct {
 	Schema      map[string]interface{} `json:"schema,omitempty"`
 }
 
-func (c *ResourceDefinitionsClient) Update(ctx context.Context, typeName string, req UpdateResourceDefinitionRequest) (*ResourceDefinition, error) {
-	data := &ResourceDefinition{}
-	apiError := &ApiError{}
+func (r *ResourceDefinition) ToUpdateRequest() UpdateResourceDefinitionRequest {
+	return UpdateResourceDefinitionRequest{
+		Name:        r.Name,
+		Description: r.Description,
+		Schema:      r.Schema,
+	}
+}
 
-	response, err := c.Client().Put(Route("resource_definitions", typeName)).BodyJSON(&req).Receive(data, apiError)
+func (c *ResourceDefinitionsClient) Update(ctx context.Context, typeName string, req UpdateResourceDefinitionRequest) (ResourceDefinition, error) {
+	data := ResourceDefinition{}
+	apiError := ApiError{}
+
+	response, err := c.Client().Put(Route("resource_definitions", typeName)).BodyJSON(&req).Receive(&data, &apiError)
 	if err != nil {
 		return data, errors.New("could not update a resource definition: " + err.Error())
 	}
 
-	err = c.client.handleResponseStatus(response, apiError)
+	err = c.client.handleResponseStatus(response, &apiError)
 	if err != nil {
 		return data, err
 	}
@@ -156,15 +173,15 @@ func (c *ResourceDefinitionsClient) Update(ctx context.Context, typeName string,
 type DeleteResourceDefinitionResponse struct{}
 
 func (c *ResourceDefinitionsClient) Delete(ctx context.Context, typeName string) error {
-	scorecardResponse := &DeleteResourceDefinitionResponse{}
-	apiError := &ApiError{}
+	scorecardResponse := DeleteResourceDefinitionResponse{}
+	apiError := ApiError{}
 
-	response, err := c.Client().Delete(Route("resource_definitions", typeName)).Receive(scorecardResponse, apiError)
+	response, err := c.Client().Delete(Route("resource_definitions", typeName)).Receive(&scorecardResponse, &apiError)
 	if err != nil {
 		return errors.New("could not delete scorecard: " + err.Error())
 	}
 
-	err = c.client.handleResponseStatus(response, apiError)
+	err = c.client.handleResponseStatus(response, &apiError)
 	if err != nil {
 		return err
 	}
