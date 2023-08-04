@@ -24,5 +24,5 @@ ResourceDefinition data source
 - `description` (String)
 - `id` (String) The ID of this resource.
 - `name` (String)
-- `schema` (Map of String)
+- `schema` (String)
 - `source` (String)

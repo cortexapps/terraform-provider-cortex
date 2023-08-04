@@ -37,6 +37,18 @@ type ResourceDefinition struct {
 	Source      string                 `json:"source,omitempty" yaml:"source,omitempty"`
 }
 
+func (r *ResourceDefinition) SchemaAsString() (string, error) {
+	value := ""
+	if r.Schema != nil {
+		err := error(nil)
+		value, err = InterfaceToString(r.Schema)
+		if err != nil {
+			return "", err
+		}
+	}
+	return value, nil
+}
+
 /***********************************************************************************************************************
  * GET /api/v1/catalog/definitions/:typeName
  **********************************************************************************************************************/

@@ -6,7 +6,6 @@ import (
 	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -19,16 +18,6 @@ func NewResourceDefinitionDataSource() datasource.DataSource {
 // ResourceDefinitionDataSource defines the data source implementation.
 type ResourceDefinitionDataSource struct {
 	client *cortex.HttpClient
-}
-
-// ResourceDefinitionDataSourceModel describes the data source data model.
-type ResourceDefinitionDataSourceModel struct {
-	Id          types.String `tfsdk:"id"`
-	Type        types.String `tfsdk:"type"`
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
-	Source      types.String `tfsdk:"source"`
-	Schema      types.Map    `tfsdk:"schema"`
 }
 
 func (d *ResourceDefinitionDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -60,9 +49,8 @@ func (d *ResourceDefinitionDataSource) Schema(ctx context.Context, req datasourc
 			"source": schema.StringAttribute{
 				Computed: true,
 			},
-			"schema": schema.MapAttribute{
-				ElementType: types.StringType,
-				Computed:    true,
+			"schema": schema.StringAttribute{
+				Computed: true,
 			},
 		},
 	}
@@ -89,7 +77,7 @@ func (d *ResourceDefinitionDataSource) Configure(ctx context.Context, req dataso
 }
 
 func (d *ResourceDefinitionDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data ResourceDefinitionDataSourceModel
+	data := NewResourceDefinitionDataSourceModel()
 
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -98,25 +86,13 @@ func (d *ResourceDefinitionDataSource) Read(ctx context.Context, req datasource.
 		return
 	}
 
-	resourceDefinition, err := d.client.ResourceDefinitions().Get(ctx, data.Type.String())
+	entity, err := d.client.ResourceDefinitions().Get(ctx, data.Type.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read resource definition, got error: %s", err))
 		return
 	}
 
-	// attempt to extract data from schema
-	schemaData, diags := types.MapValueFrom(ctx, types.StringType, resourceDefinition.Schema)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	data.Id = types.StringValue(resourceDefinition.Type)
-	data.Type = types.StringValue(resourceDefinition.Type)
-	data.Name = types.StringValue(resourceDefinition.Name)
-	data.Description = types.StringValue(resourceDefinition.Description)
-	data.Source = types.StringValue(resourceDefinition.Source)
-	data.Schema = schemaData
+	data.FromApiModel(ctx, &resp.Diagnostics, &entity)
 
 	// Write to TF state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
