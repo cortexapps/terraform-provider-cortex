@@ -76,7 +76,7 @@ Optional:
 
 Optional:
 
-- `window` (String) By default, Scorecards are evaluated every 4 hours. If you would like to evaluate Scorecards less frequently, you can override the evaluation window. This can help with rate limits. Note that Scorecards cannot be evaluated more than once per 4 hours.
+- `window` (Number) In hours. By default, Scorecards are evaluated every 4 hours. If you would like to evaluate Scorecards less frequently, you can override the evaluation window. This can help with rate limits. Note that Scorecards cannot be evaluated more than once per 4 hours.
 
 
 <a id="nestedatt--filter"></a>

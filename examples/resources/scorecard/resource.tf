@@ -2,30 +2,42 @@ resource "cortex_scorecard" "dora-metrics" {
   tag         = "dora"
   name        = "dora"
   description = "DORA metrics"
-  is_draft    = false
+  draft       = false
 
-  level {
-    name   = "Gold"
-    number = 1
+  ladder = {
+    levels = [
+      {
+        name  = "Gold"
+        rank  = 3
+        color = "#cda400"
+      },
+      {
+        name  = "Silver"
+        rank  = 2
+        color = "#8c9298"
+      },
+      {
+        name  = "Bronze"
+        rank  = 1
+        color = "#c38b5f"
+      }
+    ]
   }
-
-  level {
-    name   = "Silver"
-    number = 2
+  rules = [
+    {
+      title           = "DORA metric 1"
+      expression      = "deploys.frequency >= 1"
+      weight          = 1
+      level           = "Gold"
+      description     = "DORA metric 1 description"
+      failure_message = "Ship fast, ship often"
+    }
+  ]
+  filter = {
+    category = "SERVICE"
+    query    = "description != null"
   }
-
-  level {
-    name   = "Bronze"
-    number = 3
-  }
-
-  rule {
-    title           = "DORA metric 1"
-    expression      = "deploys.frequency >= 1"
-    number          = 1
-    weight          = 1
-    level_name      = "Gold"
-    failure_message = "Ship fast, ship often"
-    description     = "DORA metric 1 description"
+  evaluation = {
+    window = 24
   }
 }

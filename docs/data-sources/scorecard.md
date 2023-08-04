@@ -21,4 +21,59 @@ Scorecard data source
 
 ### Read-Only
 
+- `description` (String)
+- `draft` (Boolean)
+- `evaluation` (Attributes) (see [below for nested schema](#nestedatt--evaluation))
+- `filter` (Attributes) Filter of the scorecard. (see [below for nested schema](#nestedatt--filter))
 - `id` (String) The ID of this resource.
+- `ladder` (Attributes) (see [below for nested schema](#nestedatt--ladder))
+- `name` (String)
+- `rules` (Attributes List) Rules of the scorecard. (see [below for nested schema](#nestedatt--rules))
+
+<a id="nestedatt--evaluation"></a>
+### Nested Schema for `evaluation`
+
+Read-Only:
+
+- `window` (Number)
+
+
+<a id="nestedatt--filter"></a>
+### Nested Schema for `filter`
+
+Read-Only:
+
+- `category` (String)
+- `query` (String)
+
+
+<a id="nestedatt--ladder"></a>
+### Nested Schema for `ladder`
+
+Read-Only:
+
+- `levels` (Attributes List) (see [below for nested schema](#nestedatt--ladder--levels))
+
+<a id="nestedatt--ladder--levels"></a>
+### Nested Schema for `ladder.levels`
+
+Read-Only:
+
+- `color` (String)
+- `description` (String)
+- `name` (String)
+- `rank` (Number)
+
+
+
+<a id="nestedatt--rules"></a>
+### Nested Schema for `rules`
+
+Read-Only:
+
+- `description` (String)
+- `expression` (String)
+- `failure_message` (String)
+- `level` (String)
+- `title` (String)
+- `weight` (Number)

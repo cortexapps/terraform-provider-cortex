@@ -48,6 +48,86 @@ func (d *ScorecardDataSource) Schema(ctx context.Context, req datasource.SchemaR
 			"id": schema.StringAttribute{
 				Computed: true,
 			},
+			"name": schema.StringAttribute{
+				Computed: true,
+			},
+			"description": schema.StringAttribute{
+				Computed: true,
+			},
+			"draft": schema.BoolAttribute{
+				Computed: true,
+			},
+			"ladder": schema.SingleNestedAttribute{
+				Computed: true,
+				Attributes: map[string]schema.Attribute{
+					"levels": schema.ListNestedAttribute{
+						Computed: true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"name": schema.StringAttribute{
+									Computed: true,
+								},
+								"rank": schema.Int64Attribute{
+									Computed: true,
+								},
+								"color": schema.StringAttribute{
+									Computed: true,
+								},
+								"description": schema.StringAttribute{
+									Computed: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			"rules": schema.ListNestedAttribute{
+				MarkdownDescription: "Rules of the scorecard.",
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						// Required rule attributes
+						"title": schema.StringAttribute{
+							Computed: true,
+						},
+						"expression": schema.StringAttribute{
+							Computed: true,
+						},
+						"weight": schema.Int64Attribute{
+							Computed: true,
+						},
+						"level": schema.StringAttribute{
+							Computed: true,
+						},
+						"description": schema.StringAttribute{
+							Computed: true,
+						},
+						"failure_message": schema.StringAttribute{
+							Computed: true,
+						},
+					},
+				},
+			},
+			"filter": schema.SingleNestedAttribute{
+				MarkdownDescription: "Filter of the scorecard.",
+				Computed:            true,
+				Attributes: map[string]schema.Attribute{
+					"category": schema.StringAttribute{
+						Computed: true,
+					},
+					"query": schema.StringAttribute{
+						Computed: true,
+					},
+				},
+			},
+			"evaluation": schema.SingleNestedAttribute{
+				Computed: true,
+				Attributes: map[string]schema.Attribute{
+					"window": schema.Int64Attribute{
+						Computed: true,
+					},
+				},
+			},
 		},
 	}
 }

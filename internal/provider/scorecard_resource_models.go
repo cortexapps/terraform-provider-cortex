@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -107,11 +108,37 @@ func (o *ScorecardResourceModel) ToApiModel(ctx context.Context) cortex.Scorecar
 func (o *ScorecardResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity cortex.Scorecard) {
 	o.Id = types.StringValue(entity.Tag)
 	o.Tag = types.StringValue(entity.Tag)
+	o.Name = types.StringValue(entity.Name)
+	o.Description = types.StringValue(entity.Description)
+	o.Draft = types.BoolValue(entity.Draft)
+
+	ladder := ScorecardLadderResourceModel{}
+	o.Ladder = ladder.FromApiModel(ctx, diagnostics, &entity.Ladder)
+
+	rules := make([]ScorecardRuleResourceModel, len(entity.Rules))
+	for i, e := range entity.Rules {
+		rrm := ScorecardRuleResourceModel{}
+		rules[i] = rrm.FromApiModel(&e)
+	}
+	o.Rules = rules
+
+	filter := ScorecardFilterResourceModel{}
+	o.Filter = filter.FromApiModel(ctx, diagnostics, &entity.Filter)
+
+	evaluation := ScorecardEvaluationResourceModel{}
+	o.Evaluation = evaluation.FromApiModel(ctx, diagnostics, &entity.Evaluation)
 }
 
 /***********************************************************************************************************************
  * Ladder/Levels
  **********************************************************************************************************************/
+
+func (o *ScorecardLadderResourceModel) AttrTypes() map[string]attr.Type {
+	sl := ScorecardLevelResourceModel{}
+	return map[string]attr.Type{
+		"levels": types.ListType{ElemType: types.ObjectType{AttrTypes: sl.AttrTypes()}},
+	}
+}
 
 func (o *ScorecardLadderResourceModel) ToApiModel() cortex.ScorecardLadder {
 	levels := make([]cortex.ScorecardLevel, len(o.Levels))
@@ -123,6 +150,33 @@ func (o *ScorecardLadderResourceModel) ToApiModel() cortex.ScorecardLadder {
 	}
 }
 
+func (o *ScorecardLadderResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.ScorecardLadder) types.Object {
+	obj := ScorecardLadderResourceModel{}
+	if !entity.Enabled() {
+		return types.ObjectNull(obj.AttrTypes())
+	}
+
+	levels := make([]ScorecardLevelResourceModel, len(entity.Levels))
+	for i, e := range entity.Levels {
+		lrm := ScorecardLevelResourceModel{}
+		levels[i] = lrm.FromApiModel(&e)
+	}
+	obj.Levels = levels
+
+	objectValue, d := types.ObjectValueFrom(ctx, obj.AttrTypes(), &obj)
+	diagnostics.Append(d...)
+	return objectValue
+}
+
+func (o *ScorecardLevelResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"name":        types.StringType,
+		"rank":        types.Int64Type,
+		"description": types.StringType,
+		"color":       types.StringType,
+	}
+}
+
 func (o *ScorecardLevelResourceModel) ToApiModel() cortex.ScorecardLevel {
 	return cortex.ScorecardLevel{
 		Name:        o.Name.ValueString(),
@@ -130,6 +184,20 @@ func (o *ScorecardLevelResourceModel) ToApiModel() cortex.ScorecardLevel {
 		Description: o.Description.ValueString(),
 		Color:       o.Color.ValueString(),
 	}
+}
+
+func (o *ScorecardLevelResourceModel) FromApiModel(entity *cortex.ScorecardLevel) ScorecardLevelResourceModel {
+	lrm := ScorecardLevelResourceModel{
+		Name:  types.StringValue(entity.Name),
+		Rank:  types.Int64Value(entity.Rank),
+		Color: types.StringValue(entity.Color),
+	}
+	if entity.Description != "" {
+		lrm.Description = types.StringValue(entity.Description)
+	} else {
+		lrm.Description = types.StringNull()
+	}
+	return lrm
 }
 
 /***********************************************************************************************************************
@@ -147,9 +215,36 @@ func (o *ScorecardRuleResourceModel) ToApiModel() cortex.ScorecardRule {
 	}
 }
 
+func (o *ScorecardRuleResourceModel) FromApiModel(entity *cortex.ScorecardRule) ScorecardRuleResourceModel {
+	rm := ScorecardRuleResourceModel{
+		Title:      types.StringValue(entity.Title),
+		Expression: types.StringValue(entity.Expression),
+		Weight:     types.Int64Value(entity.Weight),
+		Level:      types.StringValue(entity.Level),
+	}
+	if entity.Description != "" {
+		rm.Description = types.StringValue(entity.Description)
+	} else {
+		rm.Description = types.StringNull()
+	}
+	if entity.FailureMessage != "" {
+		rm.FailureMessage = types.StringValue(entity.FailureMessage)
+	} else {
+		rm.FailureMessage = types.StringNull()
+	}
+	return rm
+}
+
 /***********************************************************************************************************************
  * Filter
  **********************************************************************************************************************/
+
+func (o *ScorecardFilterResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"category": types.StringType,
+		"query":    types.StringType,
+	}
+}
 
 func (o *ScorecardFilterResourceModel) ToApiModel() cortex.ScorecardFilter {
 	return cortex.ScorecardFilter{
@@ -158,12 +253,57 @@ func (o *ScorecardFilterResourceModel) ToApiModel() cortex.ScorecardFilter {
 	}
 }
 
+func (o *ScorecardFilterResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.ScorecardFilter) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
+	obj := ScorecardFilterResourceModel{}
+	if entity.Category != "" {
+		obj.Category = types.StringValue(entity.Category)
+	} else {
+		obj.Category = types.StringNull()
+	}
+	if entity.Query != "" {
+		obj.Query = types.StringValue(entity.Query)
+	} else {
+		obj.Query = types.StringNull()
+	}
+
+	objectValue, d := types.ObjectValueFrom(ctx, obj.AttrTypes(), &obj)
+	diagnostics.Append(d...)
+	return objectValue
+}
+
 /***********************************************************************************************************************
  * Evaluation
  **********************************************************************************************************************/
+
+func (o *ScorecardEvaluationResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"window": types.Int64Type,
+	}
+}
 
 func (o *ScorecardEvaluationResourceModel) ToApiModel() cortex.ScorecardEvaluation {
 	return cortex.ScorecardEvaluation{
 		Window: o.Window.ValueInt64(),
 	}
+}
+
+func (o *ScorecardEvaluationResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.ScorecardEvaluation) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
+	obj := ScorecardEvaluationResourceModel{}
+	if entity.Window > 0 {
+		obj.Window = types.Int64Value(entity.Window)
+	} else {
+		obj.Window = types.Int64Null()
+	}
+
+	objectValue, d := types.ObjectValueFrom(ctx, obj.AttrTypes(), &obj)
+	diagnostics.Append(d...)
+	return objectValue
 }

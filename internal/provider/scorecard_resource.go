@@ -146,8 +146,8 @@ func (r *ScorecardResource) Schema(ctx context.Context, req resource.SchemaReque
 				MarkdownDescription: "Evaluation of the scorecard.",
 				Optional:            true,
 				Attributes: map[string]schema.Attribute{
-					"window": schema.StringAttribute{
-						MarkdownDescription: "By default, Scorecards are evaluated every 4 hours. If you would like to evaluate Scorecards less frequently, you can override the evaluation window. This can help with rate limits. Note that Scorecards cannot be evaluated more than once per 4 hours.",
+					"window": schema.Int64Attribute{
+						MarkdownDescription: "In hours. By default, Scorecards are evaluated every 4 hours. If you would like to evaluate Scorecards less frequently, you can override the evaluation window. This can help with rate limits. Note that Scorecards cannot be evaluated more than once per 4 hours.",
 						Optional:            true,
 					},
 				},

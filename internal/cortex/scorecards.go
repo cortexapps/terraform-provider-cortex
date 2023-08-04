@@ -47,8 +47,29 @@ type Scorecard struct {
 	Evaluation  ScorecardEvaluation `json:"evaluation,omitempty" yaml:"evaluation,omitempty"`
 }
 
+func (s *Scorecard) ToYaml() (string, error) {
+	// The API requires submitting the request as YAML, so we need to marshal it first.
+	bytes, err := yaml.Marshal(s)
+	if err != nil {
+		return "", errors.New("could not marshal yaml: " + err.Error())
+	}
+	return string(bytes), nil
+}
+
+func (s *Scorecard) ToYamlStringReader() (*strings.Reader, error) {
+	yamlString, err := s.ToYaml()
+	if err != nil {
+		return nil, err
+	}
+	return strings.NewReader(yamlString), nil
+}
+
 type ScorecardLadder struct {
 	Levels []ScorecardLevel `json:"levels" yaml:"levels"`
+}
+
+func (s *ScorecardLadder) Enabled() bool {
+	return len(s.Levels) > 0
 }
 
 type ScorecardLevel struct {
@@ -56,6 +77,10 @@ type ScorecardLevel struct {
 	Rank        int64  `json:"rank" yaml:"rank"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 	Color       string `json:"color" yaml:"color"`
+}
+
+func (s *ScorecardLevel) Enabled() bool {
+	return s.Name != "" && s.Color != "" && s.Rank > 0
 }
 
 type ScorecardRule struct {
@@ -72,25 +97,16 @@ type ScorecardFilter struct {
 	Query    string `json:"query,omitempty" yaml:"query,omitempty"`
 }
 
+func (s *ScorecardFilter) Enabled() bool {
+	return s.Category != "" || s.Query != ""
+}
+
 type ScorecardEvaluation struct {
 	Window int64 `json:"window,omitempty" yaml:"window,omitempty"`
 }
 
-func (s *Scorecard) ToYaml() (string, error) {
-	// The API requires submitting the request as YAML, so we need to marshal it first.
-	bytes, err := yaml.Marshal(s)
-	if err != nil {
-		return "", errors.New("could not marshal yaml: " + err.Error())
-	}
-	return string(bytes), nil
-}
-
-func (s *Scorecard) ToYamlStringReader() (*strings.Reader, error) {
-	yamlString, err := s.ToYaml()
-	if err != nil {
-		return nil, err
-	}
-	return strings.NewReader(yamlString), nil
+func (s *ScorecardEvaluation) Enabled() bool {
+	return s.Window > 0
 }
 
 /***********************************************************************************************************************
