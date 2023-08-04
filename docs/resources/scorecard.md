@@ -17,41 +17,72 @@ Scorecard Entity
 
 ### Required
 
+- `ladder` (Attributes) Ladder of the scorecard. (see [below for nested schema](#nestedatt--ladder))
 - `name` (String) Name of the scorecard.
+- `rules` (Attributes List) Rules of the scorecard. (see [below for nested schema](#nestedatt--rules))
 - `tag` (String) Unique identifier for the scorecard.
 
 ### Optional
 
 - `description` (String) Description of the scorecard.
-- `is_draft` (Boolean) Whether the scorecard is a draft.
-- `level` (Block List) (see [below for nested schema](#nestedblock--level))
-- `rule` (Block List) (see [below for nested schema](#nestedblock--rule))
+- `draft` (Boolean) Whether the scorecard is a draft.
+- `evaluation` (Attributes) Evaluation of the scorecard. (see [below for nested schema](#nestedatt--evaluation))
+- `filter` (Attributes) Filter of the scorecard. (see [below for nested schema](#nestedatt--filter))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 
-<a id="nestedblock--level"></a>
-### Nested Schema for `level`
+<a id="nestedatt--ladder"></a>
+### Nested Schema for `ladder`
 
 Required:
 
-- `name` (String) Name of the link.
-- `number` (Number) Rank of the level. 1 is the highest.
+- `levels` (Attributes List) Levels of the scorecard. (see [below for nested schema](#nestedatt--ladder--levels))
+
+<a id="nestedatt--ladder--levels"></a>
+### Nested Schema for `ladder.levels`
+
+Required:
+
+- `color` (String) Color of the level.
+- `name` (String) Name of the level.
+- `rank` (Number) Rank of the level. 1 is the lowest.
+
+Optional:
+
+- `description` (String) Description of the level.
 
 
-<a id="nestedblock--rule"></a>
-### Nested Schema for `rule`
+
+<a id="nestedatt--rules"></a>
+### Nested Schema for `rules`
 
 Required:
 
 - `expression` (String) Expression of the rule.
-- `number` (Number) Rank of the level. 1 is the highest.
+- `level` (String) Level of the rule for the ladder.
 - `title` (String) Title of the rule.
-- `weight` (Number) Numerical weight of the rule. When using levels, this defaults to 1.
+- `weight` (Number) Weight of the rule.
 
 Optional:
 
 - `description` (String) Description of the rule.
-- `failure_message` (String) Message to display when the rule fails.
-- `level_name` (String) Name of the level this rule is associated with, if applicable.
+- `failure_message` (String) Failure message of the rule.
+
+
+<a id="nestedatt--evaluation"></a>
+### Nested Schema for `evaluation`
+
+Optional:
+
+- `window` (String) By default, Scorecards are evaluated every 4 hours. If you would like to evaluate Scorecards less frequently, you can override the evaluation window. This can help with rate limits. Note that Scorecards cannot be evaluated more than once per 4 hours.
+
+
+<a id="nestedatt--filter"></a>
+### Nested Schema for `filter`
+
+Optional:
+
+- `category` (String) By default, Scorecards are evaluated against all services. You can specify the category as RESOURCE to evaluate a Scorecard against resources or DOMAIN to evaluate a Scorecard against domains.
+- `query` (String) A CQL query that is run against the category; only entities matching this query will be evaluated by the Scorecard.

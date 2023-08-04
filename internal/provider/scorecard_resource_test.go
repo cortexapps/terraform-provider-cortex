@@ -1,44 +1,89 @@
 package provider_test
 
-//func TestAccScorecardResource(t *testing.T) {
-//	resource.Test(t, resource.TestCase{
-//		PreCheck:                 func() { testAccPreCheck(t) },
-//		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-//		Steps: []resource.TestStep{
-//			// Create and Read testing
-//			{
-//				Config: testAccScorecardResourceConfig("dora"),
-//				Check: resource.ComposeAggregateTestCheckFunc(
-//					resource.TestCheckResourceAttr("cortex_scorecard.dora", "tag", "dora"),
-//				),
-//			},
-//			// ImportState testing
-//			{
-//				ResourceName:      "cortex_scorecard.dora",
-//				ImportState:       true,
-//				ImportStateVerify: true,
-//				// This is not normally necessary, but is here because this
-//				// example code does not have an actual upstream service.
-//				// Once the Read method is able to refresh information from
-//				// the upstream service, this can be removed.
-//				ImportStateVerifyIgnore: []string{"tag", "defaulted"},
-//			},
-//			// Update and Read testing
-//			{
-//				Config: testAccScorecardResourceConfig("dora"),
-//				Check: resource.ComposeAggregateTestCheckFunc(
-//					resource.TestCheckResourceAttr("cortex_scorecard.dora", "tag", "dora"),
-//				),
-//			},
-//			// Delete testing automatically occurs in TestCase
-//		},
-//	})
-//}
-//
-//func testAccScorecardResourceConfig(tag string) string {
-//	return fmt.Sprintf(`
-//resource "cortex_scorecard" "dora" {
-//  tag = %[1]q
-//}
-//`, tag)
-//}
+import (
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"testing"
+)
+
+type testScorecardDataSource struct {
+	Tag  string
+	Name string
+}
+
+/***********************************************************************************************************************
+ * Helper methods
+ **********************************************************************************************************************/
+
+func (t *testScorecardDataSource) ResourceFullName() string {
+	return t.ResourceType() + "." + t.Tag
+}
+
+func (t *testScorecardDataSource) ResourceType() string {
+	return "cortex_scorecard"
+}
+
+func (t *testScorecardDataSource) ToTerraform() string {
+	return fmt.Sprintf(`
+resource %[1]q %[2]q {
+  tag = %[2]q
+  name = %[3]q
+  rules = [
+    {
+      title = "Has a Description"
+      expression = "description != null"
+      weight = 1
+      level = "Bronze"
+    }
+  ]
+  ladder = {
+    levels = [
+      {
+         name = "Bronze"
+         rank = 1
+         color = "#c38b5f"
+      }
+    ]
+  }
+}`, t.ResourceType(), t.Tag, t.Name)
+}
+
+/***********************************************************************************************************************
+ * Tests
+ **********************************************************************************************************************/
+
+func TestAccScorecardResourceMinimal(t *testing.T) {
+	stub := testScorecardDataSource{
+		Tag:  "test-minimal-scorecard",
+		Name: "Test Scorecard - Minimal",
+	}
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Read testing
+			{
+				Config: stub.ToTerraform(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "tag", stub.Tag),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "name", stub.Name),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      stub.ResourceFullName(),
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
+			// Update and Read testing
+			{
+				Config: stub.ToTerraform(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "tag", stub.Tag),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "name", stub.Name),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}

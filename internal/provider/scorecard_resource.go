@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -27,32 +26,6 @@ func NewScorecardResource() resource.Resource {
 // ScorecardResource defines the resource implementation.
 type ScorecardResource struct {
 	client *cortex.HttpClient
-}
-
-// ScorecardResourceModel describes the scorecard data model within Terraform.
-type ScorecardResourceModel struct {
-	Id          types.String                  `tfsdk:"id"`
-	Tag         types.String                  `tfsdk:"tag"`
-	Name        types.String                  `tfsdk:"name"`
-	Description types.String                  `tfsdk:"description"`
-	IsDraft     types.Bool                    `tfsdk:"is_draft"`
-	Levels      []ScorecardLevelResourceModel `tfsdk:"levels"`
-	Rules       []ScorecardRuleResourceModel  `tfsdk:"rules"`
-}
-
-type ScorecardLevelResourceModel struct {
-	Name   types.String `tfsdk:"name"`
-	Number types.Int64  `tfsdk:"number"`
-}
-
-type ScorecardRuleResourceModel struct {
-	Title          types.String `tfsdk:"title"`
-	Description    types.String `tfsdk:"description"`
-	Expression     types.String `tfsdk:"expression"`
-	Number         types.Int64  `tfsdk:"number"`
-	Weight         types.Int64  `tfsdk:"weight"`
-	LevelName      types.String `tfsdk:"level_name"`
-	FailureMessage types.String `tfsdk:"failure_message"`
 }
 
 /***********************************************************************************************************************
@@ -77,43 +50,45 @@ func (r *ScorecardResource) Schema(ctx context.Context, req resource.SchemaReque
 				MarkdownDescription: "Name of the scorecard.",
 				Required:            true,
 			},
+			"ladder": schema.SingleNestedAttribute{
+				MarkdownDescription: "Ladder of the scorecard.",
+				Required:            true,
+				Attributes: map[string]schema.Attribute{
+					"levels": schema.ListNestedAttribute{
+						MarkdownDescription: "Levels of the scorecard.",
+						Required:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								// Required level attributes
+								"name": schema.StringAttribute{
+									MarkdownDescription: "Name of the level.",
+									Required:            true,
+								},
+								"rank": schema.Int64Attribute{
+									MarkdownDescription: "Rank of the level. 1 is the lowest.",
+									Required:            true,
+								},
+								"color": schema.StringAttribute{
+									MarkdownDescription: "Color of the level.",
+									Required:            true,
+								},
 
-			// Optional attributes
-			"description": schema.StringAttribute{
-				MarkdownDescription: "Description of the scorecard.",
-				Optional:            true,
-			},
-			"is_draft": schema.BoolAttribute{
-				MarkdownDescription: "Whether the scorecard is a draft.",
-				Optional:            true,
-			},
-
-			// Computed attributes
-			"id": schema.StringAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-		},
-		Blocks: map[string]schema.Block{
-			"level": schema.ListNestedBlock{
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"name": schema.StringAttribute{
-							MarkdownDescription: "Name of the link.",
-							Required:            true,
-						},
-						"number": schema.Int64Attribute{
-							MarkdownDescription: "Rank of the level. 1 is the highest.",
-							Required:            true,
+								// Optional level attributes
+								"description": schema.StringAttribute{
+									MarkdownDescription: "Description of the level.",
+									Optional:            true,
+								},
+							},
 						},
 					},
 				},
 			},
-			"rule": schema.ListNestedBlock{
-				NestedObject: schema.NestedBlockObject{
+			"rules": schema.ListNestedAttribute{
+				MarkdownDescription: "Rules of the scorecard.",
+				Required:            true,
+				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
+						// Required rule attributes
 						"title": schema.StringAttribute{
 							MarkdownDescription: "Title of the rule.",
 							Required:            true,
@@ -122,29 +97,67 @@ func (r *ScorecardResource) Schema(ctx context.Context, req resource.SchemaReque
 							MarkdownDescription: "Expression of the rule.",
 							Required:            true,
 						},
-						"number": schema.Int64Attribute{
-							MarkdownDescription: "Rank of the level. 1 is the highest.",
+						"weight": schema.Int64Attribute{
+							MarkdownDescription: "Weight of the rule.",
 							Required:            true,
 						},
-						"weight": schema.Int64Attribute{
-							MarkdownDescription: "Numerical weight of the rule. When using levels, this defaults to 1.",
+						"level": schema.StringAttribute{
+							MarkdownDescription: "Level of the rule for the ladder.",
 							Required:            true,
 						},
 
-						// Optional attributes
+						// Optional rule attributes
 						"description": schema.StringAttribute{
 							MarkdownDescription: "Description of the rule.",
 							Optional:            true,
 						},
-						"level_name": schema.StringAttribute{
-							MarkdownDescription: "Name of the level this rule is associated with, if applicable.",
-							Optional:            true,
-						},
 						"failure_message": schema.StringAttribute{
-							MarkdownDescription: "Message to display when the rule fails.",
+							MarkdownDescription: "Failure message of the rule.",
 							Optional:            true,
 						},
 					},
+				},
+			},
+
+			// Optional attributes
+			"description": schema.StringAttribute{
+				MarkdownDescription: "Description of the scorecard.",
+				Optional:            true,
+			},
+			"draft": schema.BoolAttribute{
+				MarkdownDescription: "Whether the scorecard is a draft.",
+				Optional:            true,
+			},
+			"filter": schema.SingleNestedAttribute{
+				MarkdownDescription: "Filter of the scorecard.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"category": schema.StringAttribute{
+						MarkdownDescription: "By default, Scorecards are evaluated against all services. You can specify the category as RESOURCE to evaluate a Scorecard against resources or DOMAIN to evaluate a Scorecard against domains.",
+						Optional:            true,
+					},
+					"query": schema.StringAttribute{
+						MarkdownDescription: "A CQL query that is run against the category; only entities matching this query will be evaluated by the Scorecard.",
+						Optional:            true,
+					},
+				},
+			},
+			"evaluation": schema.SingleNestedAttribute{
+				MarkdownDescription: "Evaluation of the scorecard.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"window": schema.StringAttribute{
+						MarkdownDescription: "By default, Scorecards are evaluated every 4 hours. If you would like to evaluate Scorecards less frequently, you can override the evaluation window. This can help with rate limits. Note that Scorecards cannot be evaluated more than once per 4 hours.",
+						Optional:            true,
+					},
+				},
+			},
+
+			// Computed attributes
+			"id": schema.StringAttribute{
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 		},
@@ -180,7 +193,7 @@ func (r *ScorecardResource) Configure(ctx context.Context, req resource.Configur
 }
 
 func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *ScorecardResourceModel
+	data := NewScorecardResourceModel()
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -190,27 +203,14 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 
 	// Issue API request
-	scorecardResponse, err := r.client.Scorecards().Get(ctx, data.Tag.String())
+	entity, err := r.client.Scorecards().Get(ctx, data.Tag.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read scorecard, got error: %s", err))
 		return
 	}
 
 	// Map data from the API response to the model
-	data.Id = types.StringValue(scorecardResponse.Tag)
-	data.Tag = types.StringValue(scorecardResponse.Tag)
-	data.Name = types.StringValue(scorecardResponse.Name)
-	data.Description = types.StringValue(scorecardResponse.Description)
-	data.IsDraft = types.BoolValue(scorecardResponse.IsDraft)
-
-	var levels []ScorecardLevelResourceModel
-	for _, level := range scorecardResponse.Levels {
-		levels = append(levels, ScorecardLevelResourceModel{
-			Name:   types.StringValue(level.Name),
-			Number: types.Int64Value(level.Rank),
-		})
-	}
-	data.Levels = levels
+	data.FromApiModel(ctx, &resp.Diagnostics, entity)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -218,67 +218,59 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 
 // Create Creates a new scorecard.
 func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data *ScorecardResourceModel
+	data := NewScorecardResourceModel()
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	clientRequest := cortex.UpsertScorecardRequest{
-		Tag:         data.Tag.String(),
-		Name:        data.Name.String(),
-		Description: data.Description.String(),
-		IsDraft:     data.IsDraft.ValueBool(),
+	clientEntity := data.ToApiModel(ctx)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	scorecard, err := r.client.Scorecards().Upsert(ctx, clientRequest)
+
+	scorecard, err := r.client.Scorecards().Upsert(ctx, clientEntity)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create scorecard, got error: %s", err))
 		return
 	}
 
-	// Set the ID in state based on the tag
-	data.Id = types.StringValue(scorecard.Tag)
-	data.Tag = types.StringValue(scorecard.Tag)
+	data.FromApiModel(ctx, &resp.Diagnostics, scorecard)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data *ScorecardResourceModel
+	data := NewScorecardResourceModel()
 
 	// Read Terraform plan data into the model
-	//resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	clientRequest := cortex.UpsertScorecardRequest{
-		Tag:         data.Tag.String(),
-		Name:        data.Name.String(),
-		Description: data.Description.String(),
-		IsDraft:     data.IsDraft.ValueBool(),
+	clientEntity := data.ToApiModel(ctx)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	scorecard, err := r.client.Scorecards().Upsert(ctx, clientRequest)
+
+	scorecard, err := r.client.Scorecards().Upsert(ctx, clientEntity)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update scorecard, got error: %s", err))
 		return
 	}
 
-	// Set the ID in state based on the tag
-	data.Id = types.StringValue(scorecard.Tag)
-	data.Tag = types.StringValue(scorecard.Tag)
+	data.FromApiModel(ctx, &resp.Diagnostics, scorecard)
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *ScorecardResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *ScorecardResourceModel
+	data := NewScorecardResourceModel()
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -287,7 +279,7 @@ func (r *ScorecardResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	err := r.client.Scorecards().Delete(ctx, data.Tag.String())
+	err := r.client.Scorecards().Delete(ctx, data.Tag.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete scorecard, got error: %s", err))
 		return

@@ -3,20 +3,22 @@ package cortex
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/dghubble/sling"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"gopkg.in/yaml.v3"
 	"strings"
 )
 
 type ScorecardsClientInterface interface {
-	Get(ctx context.Context, tag string) (*Scorecard, error)
-	List(ctx context.Context, params *ScorecardListParams) (*ScorecardsResponse, error)
-	Upsert(ctx context.Context, req UpsertScorecardRequest) (*Scorecard, error)
+	Get(ctx context.Context, tag string) (Scorecard, error)
+	Upsert(ctx context.Context, scorecard Scorecard) (Scorecard, error)
 	Delete(ctx context.Context, tag string) error
 }
 
 type ScorecardsClient struct {
 	client *HttpClient
+	parser *ScorecardParser
 }
 
 var _ ScorecardsClientInterface = &ScorecardsClient{}
@@ -25,54 +27,70 @@ func (c *ScorecardsClient) Client() *sling.Sling {
 	return c.client.Client()
 }
 
+func (c *ScorecardsClient) YamlClient() *sling.Sling {
+	return c.client.YamlClient()
+}
+
 /***********************************************************************************************************************
  * Types
  **********************************************************************************************************************/
 
 // Scorecard is the nested response object that is typically returned from the scorecards endpoints.
 type Scorecard struct {
-	Tag         string                  `json:"tag" yaml:"tag"`
-	Name        string                  `json:"name,omitempty" yaml:"name,omitempty"`
-	Description string                  `json:"description,omitempty" yaml:"description,omitempty"`
-	IsDraft     bool                    `json:"is_draft" yaml:"is_draft"`
-	Rules       []ScorecardRule         `json:"rules" yaml:"rules"`
-	Levels      []ScorecardLevelSummary `json:"levels" yaml:"levels"`
-	Filter      ScorecardFilter         `json:"filter" yaml:"filter"`
-	Evaluation  ScorecardEvaluation     `json:"evaluation" yaml:"evaluation"`
-}
-
-type ScorecardRule struct {
-	Title          string `json:"title" yaml:"title"`
-	Description    string `json:"description" yaml:"description"`
-	Expression     string `json:"expression" yaml:"expression"`
-	FailureMessage string `json:"failure_message" yaml:"failureMessage"`
-	LevelName      string `json:"level_name" yaml:"levelName"`
-	Weight         int    `json:"weight" yaml:"weight"`
+	Tag         string              `json:"tag" yaml:"tag"`
+	Name        string              `json:"name" yaml:"name"`
+	Description string              `json:"description,omitempty" yaml:"description,omitempty"`
+	Draft       bool                `json:"draft,omitempty" yaml:"draft,omitempty"`
+	Rules       []ScorecardRule     `json:"rules,omitempty" yaml:"rules,omitempty"`
+	Ladder      ScorecardLadder     `json:"ladder,omitempty" yaml:"ladder,omitempty"`
+	Filter      ScorecardFilter     `json:"filter,omitempty" yaml:"filter,omitempty"`
+	Evaluation  ScorecardEvaluation `json:"evaluation,omitempty" yaml:"evaluation,omitempty"`
 }
 
 type ScorecardLadder struct {
 	Levels []ScorecardLevel `json:"levels" yaml:"levels"`
 }
 
-type ScorecardLevelSummary struct {
-	Name string `json:"name" yaml:"name"`
-	Rank int64  `json:"rank" yaml:"rank"`
-}
-
 type ScorecardLevel struct {
 	Name        string `json:"name" yaml:"name"`
-	Rank        int    `json:"rank" yaml:"rank"`
-	Color       string `json:"color" yaml:"color"`
+	Rank        int64  `json:"rank" yaml:"rank"`
 	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Color       string `json:"color" yaml:"color"`
+}
+
+type ScorecardRule struct {
+	Title          string `json:"title" yaml:"title"`
+	Expression     string `json:"expression" yaml:"expression"`
+	Weight         int64  `json:"weight" yaml:"weight"`
+	Level          string `json:"level" yaml:"level"`
+	Description    string `json:"description,omitempty" yaml:"description,omitempty"`
+	FailureMessage string `json:"failure_message,omitempty" yaml:"failureMessage,omitempty"`
 }
 
 type ScorecardFilter struct {
-	Category string `json:"category" yaml:"category"`
-	Query    string `json:"query" yaml:"query"`
+	Category string `json:"category,omitempty" yaml:"category,omitempty"`
+	Query    string `json:"query,omitempty" yaml:"query,omitempty"`
 }
 
 type ScorecardEvaluation struct {
-	Window int `json:"window" yaml:"window"`
+	Window int64 `json:"window,omitempty" yaml:"window,omitempty"`
+}
+
+func (s *Scorecard) ToYaml() (string, error) {
+	// The API requires submitting the request as YAML, so we need to marshal it first.
+	bytes, err := yaml.Marshal(s)
+	if err != nil {
+		return "", errors.New("could not marshal yaml: " + err.Error())
+	}
+	return string(bytes), nil
+}
+
+func (s *Scorecard) ToYamlStringReader() (*strings.Reader, error) {
+	yamlString, err := s.ToYaml()
+	if err != nil {
+		return nil, err
+	}
+	return strings.NewReader(yamlString), nil
 }
 
 /***********************************************************************************************************************
@@ -81,163 +99,67 @@ type ScorecardEvaluation struct {
 
 // GetScorecardResponse is the generic root response object for scorecards.
 type GetScorecardResponse struct {
-	Scorecard *Scorecard `json:"scorecard"`
+	Scorecard Scorecard `json:"scorecard"`
 }
 
-func (c *ScorecardsClient) Get(ctx context.Context, tag string) (*Scorecard, error) {
-	scorecardResponse := &GetScorecardResponse{
-		Scorecard: &Scorecard{},
-	}
-	apiError := &ApiError{}
-	response, err := c.Client().Get(Route("scorecards", tag)).Receive(scorecardResponse, apiError)
+func (c *ScorecardsClient) Get(ctx context.Context, tag string) (Scorecard, error) {
+	scorecardDescriptorResponse := map[string]interface{}{}
+	apiError := ApiError{}
+
+	uri := Route("scorecards", tag+"/descriptor")
+	cl := c.YamlClient().Get(uri)
+	response, err := cl.Receive(scorecardDescriptorResponse, &apiError)
 	if err != nil {
-		return scorecardResponse.Scorecard, errors.New("could not get scorecard: " + err.Error())
+		return Scorecard{}, errors.Join(fmt.Errorf("failed getting scorecard descriptor for %s from %s", tag, uri), err)
 	}
-
-	err = c.client.handleResponseStatus(response, apiError)
+	err = c.client.handleResponseStatus(response, &apiError)
 	if err != nil {
-		return scorecardResponse.Scorecard, errors.Join(errors.New("Failed getting scorecard: "), err)
+		return Scorecard{}, errors.Join(fmt.Errorf("failed handling response status for %s from %s", tag, uri), err)
 	}
 
-	return scorecardResponse.Scorecard, nil
-}
+	tflog.Debug(ctx, fmt.Sprintf("body: %+v", scorecardDescriptorResponse))
 
-func (c *ScorecardsClient) GetFromDescriptor(ctx context.Context, tag string) (*Scorecard, error) {
-	scorecard := &Scorecard{}
-	scorecardDescriptorResponse := ""
-
-	apiError := &ApiError{}
-	response, err := c.Client().Get(Route("scorecards", tag+"/descriptor")).Receive(scorecardDescriptorResponse, apiError)
-	if err != nil {
-		return scorecard, errors.Join(errors.New("Failed getting scorecard descriptor: "), err)
-	}
-
-	err = c.client.handleResponseStatus(response, apiError)
-	if err != nil {
-		return scorecard, errors.Join(errors.New("Failed handling scorecard descriptor status: "), err)
-	}
-	yamlScorecard := map[string]interface{}{}
-	err = yaml.Unmarshal([]byte(scorecardDescriptorResponse), yamlScorecard)
-	if err != nil {
-		return scorecard, errors.Join(errors.New("Failed decoding scorecard descriptor into YAML: "), err)
-	}
-
-	scorecard.Tag = yamlScorecard["tag"].(string)
-	scorecard.Name = yamlScorecard["name"].(string)
-	scorecard.Description = yamlScorecard["description"].(string)
-	scorecard.IsDraft = yamlScorecard["draft"].(bool)
-
-	var rules []ScorecardRule
-	for _, rule := range yamlScorecard["rules"].([]interface{}) {
-		ruleMap := rule.(map[string]interface{})
-		rules = append(rules, ScorecardRule{
-			Title:          ruleMap["title"].(string),
-			Description:    ruleMap["description"].(string),
-			Expression:     ruleMap["expression"].(string),
-			FailureMessage: ruleMap["failureMessage"].(string),
-			LevelName:      ruleMap["levelName"].(string),
-			Weight:         int(ruleMap["weight"].(int64)),
-		})
-	}
-	scorecard.Rules = rules
-
-	ladder := yamlScorecard["ladder"].(map[string]interface{})
-
-	var levels []ScorecardLevelSummary
-	for _, level := range ladder["levels"].([]interface{}) {
-		levelMap := level.(map[string]interface{})
-		levels = append(levels, ScorecardLevelSummary{
-			Name: levelMap["name"].(string),
-			Rank: levelMap["rank"].(int64),
-		})
-	}
-	scorecard.Levels = levels
-
-	scorecard.Filter = ScorecardFilter{
-		Category: yamlScorecard["filter"].(map[string]interface{})["category"].(string),
-		Query:    yamlScorecard["filter"].(map[string]interface{})["query"].(string),
-	}
-	scorecard.Evaluation = ScorecardEvaluation{
-		Window: yamlScorecard["evaluation"].(map[string]interface{})["window"].(int),
-	}
-
-	return scorecard, nil
-}
-
-/***********************************************************************************************************************
- * GET /api/v1/scorecards
- **********************************************************************************************************************/
-
-// ScorecardListParams are the query parameters for the GET /v1/scorecards endpoint.
-type ScorecardListParams struct {
-}
-
-// ScorecardsResponse is the response from the GET /v1/scorecards endpoint.
-type ScorecardsResponse struct {
-	Scorecards []Scorecard `json:"scorecards"`
-}
-
-// List retrieves a list of scorecards based on a query.
-func (c *ScorecardsClient) List(ctx context.Context, params *ScorecardListParams) (*ScorecardsResponse, error) {
-	scorecardsResponse := &ScorecardsResponse{}
-	apiError := &ApiError{}
-
-	response, err := c.Client().Get(Route("scorecards", "")).QueryStruct(&params).Receive(scorecardsResponse, apiError)
-	if err != nil {
-		return nil, errors.New("could not get scorecards: " + err.Error())
-	}
-
-	err = c.client.handleResponseStatus(response, apiError)
-	if err != nil {
-		return nil, err
-	}
-
-	return scorecardsResponse, nil
+	return c.parser.YamlToEntity(scorecardDescriptorResponse)
 }
 
 /***********************************************************************************************************************
  * POST /api/v1/scorecards/descriptor
  **********************************************************************************************************************/
 
-// UpsertScorecardRequest is the request object that is a struct representation of the Scorecard descriptor YAML file.
-// We do this to allow for easier creation of scorecards in Go or Terraform, rather than having to pass through a YAML
-// file or string, and figure out how to tell Terraform to "compare" that data.
-type UpsertScorecardRequest struct {
-	Tag         string          `yaml:"tag"`
-	Name        string          `yaml:"name"`
-	Description string          `yaml:"description"`
-	IsDraft     bool            `yaml:"is_draft"`
-	Rules       []ScorecardRule `yaml:"rules"`
-	Ladder      ScorecardLadder `yaml:"ladder"`
-}
-
 type UpsertScorecardResponse struct {
-	Scorecard *Scorecard `json:"scorecard"`
+	Scorecard Scorecard `json:"scorecard" yaml:"scorecard"`
 }
 
-func (c *ScorecardsClient) Upsert(ctx context.Context, req UpsertScorecardRequest) (*Scorecard, error) {
-	upsertScorecardResponse := &UpsertScorecardResponse{
-		Scorecard: &Scorecard{},
+func (c *ScorecardsClient) Upsert(ctx context.Context, scorecard Scorecard) (Scorecard, error) {
+	upsertResponse := UpsertScorecardResponse{
+		Scorecard: Scorecard{},
 	}
-	apiError := &ApiError{}
+	apiError := ApiError{}
 
 	// The API requires submitting the request as YAML, so we need to marshal it first.
-	bytes, err := yaml.Marshal(req)
+	body, err := scorecard.ToYamlStringReader()
 	if err != nil {
-		return upsertScorecardResponse.Scorecard, errors.New("could not marshal yaml: " + err.Error())
-	}
-	body := strings.NewReader(string(bytes))
-	response, err := c.Client().Post(Route("scorecards", "descriptor")).Body(body).Receive(upsertScorecardResponse, apiError)
-	if err != nil {
-		return upsertScorecardResponse.Scorecard, errors.New("could not upsert scorecard: " + err.Error())
+		return upsertResponse.Scorecard, errors.New("could not marshal yaml: " + err.Error())
 	}
 
-	err = c.client.handleResponseStatus(response, apiError)
+	tflog.Debug(ctx, fmt.Sprintf("CREATE body: %+v", body))
+	response, err := c.Client().
+		Set("Content-Type", "application/yaml;charset=UTF-8").
+		Set("Accept", "application/json").
+		Post(Route("scorecards", "descriptor")).
+		Body(body).
+		Receive(&upsertResponse, &apiError)
 	if err != nil {
-		return upsertScorecardResponse.Scorecard, err
+		return upsertResponse.Scorecard, errors.New("could not upsert scorecard: " + err.Error())
 	}
 
-	return upsertScorecardResponse.Scorecard, nil
+	err = c.client.handleResponseStatus(response, &apiError)
+	if err != nil {
+		return upsertResponse.Scorecard, err
+	}
+
+	// re-fetch the scorecard, since it's not fully returned here
+	return c.Get(ctx, scorecard.Tag)
 }
 
 /***********************************************************************************************************************
@@ -247,15 +169,15 @@ func (c *ScorecardsClient) Upsert(ctx context.Context, req UpsertScorecardReques
 type DeleteScorecardResponse struct{}
 
 func (c *ScorecardsClient) Delete(ctx context.Context, tag string) error {
-	scorecardResponse := &DeleteScorecardResponse{}
-	apiError := &ApiError{}
+	scorecardResponse := DeleteScorecardResponse{}
+	apiError := ApiError{}
 
-	response, err := c.Client().Delete(Route("scorecards", tag)).Receive(scorecardResponse, apiError)
+	response, err := c.Client().Delete(Route("scorecards", tag)).Receive(&scorecardResponse, &apiError)
 	if err != nil {
 		return errors.New("could not delete scorecard: " + err.Error())
 	}
 
-	err = c.client.handleResponseStatus(response, apiError)
+	err = c.client.handleResponseStatus(response, &apiError)
 	if err != nil {
 		return err
 	}

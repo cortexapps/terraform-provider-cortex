@@ -6,7 +6,6 @@ import (
 	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -23,15 +22,6 @@ func NewScorecardDataSource() datasource.DataSource {
 // ScorecardDataSource defines the data source implementation.
 type ScorecardDataSource struct {
 	client *cortex.HttpClient
-}
-
-// ScorecardDataSourceModel describes the data source data model.
-type ScorecardDataSourceModel struct {
-	Id          types.String `tfsdk:"id"`
-	Tag         types.String `tfsdk:"tag"`
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
-	IsDraft     types.Bool   `tfsdk:"is_draft"`
 }
 
 /***********************************************************************************************************************
@@ -92,13 +82,12 @@ func (d *ScorecardDataSource) Read(ctx context.Context, req datasource.ReadReque
 		return
 	}
 
-	httpResponse, err := d.client.Scorecards().Get(ctx, data.Tag.String())
+	entity, err := d.client.Scorecards().Get(ctx, data.Tag.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read scorecard, got error: %s", err))
 		return
 	}
-	data.Id = types.StringValue(httpResponse.Tag)
-	data.Tag = types.StringValue(httpResponse.Tag)
+	data.FromApiModel(ctx, &resp.Diagnostics, &entity)
 
 	// Write to TF state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

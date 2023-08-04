@@ -19,7 +19,7 @@ Entities:
 
 ### Scorecards
 
-Needs more complete acceptance tests. Only basic tests for now.
+- Full data source support
 
 ### Teams
 

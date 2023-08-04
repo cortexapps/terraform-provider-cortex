@@ -81,7 +81,7 @@ func (d *TeamDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	teamResponse, err := d.client.Teams().Get(ctx, data.Tag.String())
+	teamResponse, err := d.client.Teams().Get(ctx, data.Tag.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read team, got error: %s", err))
 		return

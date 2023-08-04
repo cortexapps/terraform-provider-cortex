@@ -122,7 +122,6 @@ func TestUpdateResourceDefinition(t *testing.T) {
 	assert.Equal(t, res.Name, req.Name)
 	assert.Equal(t, res.Description, req.Description)
 	assert.Equal(t, res.Schema, req.Schema)
-
 }
 
 func TestDeleteResourceDefinition(t *testing.T) {
