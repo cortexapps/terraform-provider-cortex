@@ -2,6 +2,9 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.1.7
+
+* Add `domain_parents` support to catalog entities
 * Add `cortex_scorecard` data source for retrieving scorecards
 * Add `cortex_scorecard` resource for managing cortex scorecards
 * Add `cortex_resource_definition` data source for retrieving resource definitions

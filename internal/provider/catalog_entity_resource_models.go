@@ -16,35 +16,36 @@ import (
 
 // CatalogEntityResourceModel describes the resource data model.
 type CatalogEntityResourceModel struct {
-	Id             types.String                      `tfsdk:"id"`
-	Tag            types.String                      `tfsdk:"tag"`
-	Name           types.String                      `tfsdk:"name"`
-	Description    types.String                      `tfsdk:"description"`
-	Type           types.String                      `tfsdk:"type"`
-	Definition     types.String                      `tfsdk:"definition"`
-	Owners         []CatalogEntityOwnerResourceModel `tfsdk:"owners"`
-	Children       []CatalogEntityChildResourceModel `tfsdk:"children"`
-	Groups         []types.String                    `tfsdk:"groups"`
-	Links          []CatalogEntityLinkResourceModel  `tfsdk:"links"`
-	IgnoreMetadata types.Bool                        `tfsdk:"ignore_metadata"`
-	Metadata       types.String                      `tfsdk:"metadata"`
-	Dependencies   []types.Object                    `tfsdk:"dependencies"`
-	Alerts         []types.Object                    `tfsdk:"alerts"`
-	Apm            types.Object                      `tfsdk:"apm"`
-	Dashboards     types.Object                      `tfsdk:"dashboards"`
-	Git            types.Object                      `tfsdk:"git"`
-	Issues         types.Object                      `tfsdk:"issues"`
-	OnCall         types.Object                      `tfsdk:"on_call"`
-	SLOs           types.Object                      `tfsdk:"slos"`
-	StaticAnalysis types.Object                      `tfsdk:"static_analysis"`
-	BugSnag        types.Object                      `tfsdk:"bug_snag"`
-	Checkmarx      types.Object                      `tfsdk:"checkmarx"`
-	FireHydrant    types.Object                      `tfsdk:"firehydrant"`
-	Rollbar        types.Object                      `tfsdk:"rollbar"`
-	Sentry         types.Object                      `tfsdk:"sentry"`
-	Snyk           types.Object                      `tfsdk:"snyk"`
-	Wiz            types.Object                      `tfsdk:"wiz"`
-	Team           types.Object                      `tfsdk:"team"`
+	Id             types.String                             `tfsdk:"id"`
+	Tag            types.String                             `tfsdk:"tag"`
+	Name           types.String                             `tfsdk:"name"`
+	Description    types.String                             `tfsdk:"description"`
+	Type           types.String                             `tfsdk:"type"`
+	Definition     types.String                             `tfsdk:"definition"`
+	Owners         []CatalogEntityOwnerResourceModel        `tfsdk:"owners"`
+	Children       []CatalogEntityChildResourceModel        `tfsdk:"children"`
+	DomainParents  []CatalogEntityDomainParentResourceModel `tfsdk:"domain_parents"`
+	Groups         []types.String                           `tfsdk:"groups"`
+	Links          []CatalogEntityLinkResourceModel         `tfsdk:"links"`
+	IgnoreMetadata types.Bool                               `tfsdk:"ignore_metadata"`
+	Metadata       types.String                             `tfsdk:"metadata"`
+	Dependencies   []types.Object                           `tfsdk:"dependencies"`
+	Alerts         []types.Object                           `tfsdk:"alerts"`
+	Apm            types.Object                             `tfsdk:"apm"`
+	Dashboards     types.Object                             `tfsdk:"dashboards"`
+	Git            types.Object                             `tfsdk:"git"`
+	Issues         types.Object                             `tfsdk:"issues"`
+	OnCall         types.Object                             `tfsdk:"on_call"`
+	SLOs           types.Object                             `tfsdk:"slos"`
+	StaticAnalysis types.Object                             `tfsdk:"static_analysis"`
+	BugSnag        types.Object                             `tfsdk:"bug_snag"`
+	Checkmarx      types.Object                             `tfsdk:"checkmarx"`
+	FireHydrant    types.Object                             `tfsdk:"firehydrant"`
+	Rollbar        types.Object                             `tfsdk:"rollbar"`
+	Sentry         types.Object                             `tfsdk:"sentry"`
+	Snyk           types.Object                             `tfsdk:"snyk"`
+	Wiz            types.Object                             `tfsdk:"wiz"`
+	Team           types.Object                             `tfsdk:"team"`
 }
 
 func getDefaultObjectOptions() basetypes.ObjectAsOptions {
@@ -71,6 +72,10 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 	children := make([]cortex.CatalogEntityChild, len(o.Children))
 	for i, child := range o.Children {
 		children[i] = child.ToApiModel()
+	}
+	domainParents := make([]cortex.CatalogEntityDomainParent, len(o.DomainParents))
+	for i, domainParent := range o.DomainParents {
+		domainParents[i] = domainParent.ToApiModel()
 	}
 	groups := make([]string, len(o.Groups))
 	for i, group := range o.Groups {
@@ -203,6 +208,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		Definition:     definition,
 		Owners:         owners,
 		Children:       children,
+		DomainParents:  domainParents,
 		Groups:         groups,
 		Links:          links,
 		IgnoreMetadata: o.IgnoreMetadata.ValueBool(),
@@ -271,6 +277,16 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 		}
 	} else {
 		o.Children = nil
+	}
+
+	if len(entity.DomainParents) > 0 {
+		o.DomainParents = make([]CatalogEntityDomainParentResourceModel, len(entity.DomainParents))
+		for i, domainParent := range entity.DomainParents {
+			m := CatalogEntityDomainParentResourceModel{}
+			o.DomainParents[i] = m.FromApiModel(&domainParent)
+		}
+	} else {
+		o.DomainParents = nil
 	}
 
 	if len(entity.Groups) > 0 {
@@ -370,6 +386,10 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 	o.Team = team.FromApiModel(ctx, diagnostics, &entity.Team)
 }
 
+/***********************************************************************************************************************
+ * Owners
+ ***********************************************************************************************************************/
+
 // CatalogEntityOwnerResourceModel describes owners of the catalog entity. This can be a user, Slack channel, or group.
 type CatalogEntityOwnerResourceModel struct {
 	Type                 types.String `tfsdk:"type"` // group, user, slack
@@ -439,6 +459,10 @@ func (o *CatalogEntityOwnerResourceModel) FromApiModel(owner *cortex.CatalogEnti
 	return obj
 }
 
+/***********************************************************************************************************************
+ * Children/Parents
+ ***********************************************************************************************************************/
+
 // CatalogEntityChildResourceModel describes a child of the catalog entity.
 type CatalogEntityChildResourceModel struct {
 	Tag types.String `tfsdk:"tag"`
@@ -462,6 +486,33 @@ func (o *CatalogEntityChildResourceModel) FromApiModel(entity *cortex.CatalogEnt
 	}
 }
 
+// CatalogEntityDomainParentResourceModel describes a parent domain of the catalog entity.
+type CatalogEntityDomainParentResourceModel struct {
+	Tag types.String `tfsdk:"tag"`
+}
+
+func (o *CatalogEntityDomainParentResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"tag": types.StringType,
+	}
+}
+
+func (o *CatalogEntityDomainParentResourceModel) ToApiModel() cortex.CatalogEntityDomainParent {
+	return cortex.CatalogEntityDomainParent{
+		Tag: o.Tag.ValueString(),
+	}
+}
+
+func (o *CatalogEntityDomainParentResourceModel) FromApiModel(entity *cortex.CatalogEntityDomainParent) CatalogEntityDomainParentResourceModel {
+	return CatalogEntityDomainParentResourceModel{
+		Tag: types.StringValue(entity.Tag),
+	}
+}
+
+/***********************************************************************************************************************
+ * Links
+ ***********************************************************************************************************************/
+
 type CatalogEntityLinkResourceModel struct {
 	Name types.String `tfsdk:"name"`
 	Type types.String `tfsdk:"type"`
@@ -483,6 +534,10 @@ func (o *CatalogEntityLinkResourceModel) FromApiModel(link *cortex.CatalogEntity
 		Url:  types.StringValue(link.Url),
 	}
 }
+
+/***********************************************************************************************************************
+ * Dependencies
+ ***********************************************************************************************************************/
 
 type CatalogEntityDependencyResourceModel struct {
 	Tag         types.String `tfsdk:"tag"`
@@ -556,6 +611,10 @@ func (o *CatalogEntityDependencyResourceModel) FromApiModel(ctx context.Context,
 	diag.Append(d...)
 	return retObj
 }
+
+/***********************************************************************************************************************
+ * Alerts
+ ***********************************************************************************************************************/
 
 type CatalogEntityAlertResourceModel struct {
 	Type  types.String `tfsdk:"type"`

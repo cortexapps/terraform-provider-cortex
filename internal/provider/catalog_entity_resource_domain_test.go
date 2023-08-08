@@ -113,3 +113,61 @@ resource "cortex_catalog_entity" %[1]q {
 
 }`, tag, name, description)
 }
+
+func TestAccCatalogEntityDomainWithParent(t *testing.T) {
+	tag := "domain-test-with-parent"
+	resourceName := "cortex_catalog_entity." + tag
+	name := "Test Domain With Parent"
+	description := "Domain with parents defined"
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testAccCatalogEntityDomainWithParent(tag, name, description),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "tag", tag),
+					resource.TestCheckResourceAttr(resourceName, "name", name),
+					resource.TestCheckResourceAttr(resourceName, "description", description),
+					resource.TestCheckResourceAttr(resourceName, "type", "domain"),
+					resource.TestCheckResourceAttr(resourceName, "domain_parents.0.tag", "manual-test-domain"),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Update and Read testing
+			{
+				Config: testAccCatalogEntityDomainWithParent(tag, name, description+" 2"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "tag", tag),
+					resource.TestCheckResourceAttr(resourceName, "name", name),
+					resource.TestCheckResourceAttr(resourceName, "description", description+" 2"),
+					resource.TestCheckResourceAttr(resourceName, "type", "domain"),
+					resource.TestCheckResourceAttr(resourceName, "domain_parents.0.tag", "manual-test-domain"),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
+
+func testAccCatalogEntityDomainWithParent(tag string, name string, description string) string {
+	return fmt.Sprintf(`
+resource "cortex_catalog_entity" %[1]q {
+ tag = %[1]q
+ name = %[2]q
+ description = %[3]q
+ type = "domain"
+ domain_parents = [
+   {
+     tag = "manual-test-domain"
+   }
+ ]
+
+}`, tag, name, description)
+}
