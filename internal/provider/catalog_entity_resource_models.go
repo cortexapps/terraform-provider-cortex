@@ -38,6 +38,7 @@ type CatalogEntityResourceModel struct {
 	OnCall         types.Object                             `tfsdk:"on_call"`
 	SLOs           types.Object                             `tfsdk:"slos"`
 	StaticAnalysis types.Object                             `tfsdk:"static_analysis"`
+	CiCd           types.Object                             `tfsdk:"ci_cd"`
 	BugSnag        types.Object                             `tfsdk:"bug_snag"`
 	Checkmarx      types.Object                             `tfsdk:"checkmarx"`
 	FireHydrant    types.Object                             `tfsdk:"firehydrant"`
@@ -160,6 +161,11 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 	if err != nil {
 		fmt.Println("Error parsing Static Analysis configuration: ", err)
 	}
+	ciCd := CatalogEntityCiCdResourceModel{}
+	err = o.CiCd.As(ctx, &ciCd, defaultObjOptions)
+	if err != nil {
+		fmt.Println("Error parsing CI/CD configuration: ", err)
+	}
 	bugSnag := CatalogEntityBugSnagResourceModel{}
 	err = o.BugSnag.As(ctx, &bugSnag, defaultObjOptions)
 	if err != nil {
@@ -228,6 +234,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		OnCall:         onCall.ToApiModel(ctx),
 		SLOs:           serviceLevelObjectives.ToApiModel(ctx),
 		StaticAnalysis: staticAnalysis.ToApiModel(ctx),
+		CiCd:           ciCd.ToApiModel(ctx),
 		BugSnag:        bugSnag.ToApiModel(),
 		Checkmarx:      checkmarx.ToApiModel(),
 		FireHydrant:    firehydrant.ToApiModel(),
@@ -367,6 +374,9 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 
 	staticAnalysis := CatalogEntityStaticAnalysisResourceModel{}
 	o.StaticAnalysis = staticAnalysis.FromApiModel(ctx, diagnostics, &entity.StaticAnalysis)
+
+	ciCd := CatalogEntityCiCdResourceModel{}
+	o.CiCd = ciCd.FromApiModel(ctx, diagnostics, &entity.CiCd)
 
 	bugSnag := CatalogEntityBugSnagResourceModel{}
 	o.BugSnag = bugSnag.FromApiModel(ctx, diagnostics, &entity.BugSnag)
@@ -2668,5 +2678,149 @@ func (o *CatalogEntityStaticAnalysisVeracodeSandboxResourceModel) FromApiModel(e
 	return CatalogEntityStaticAnalysisVeracodeSandboxResourceModel{
 		ApplicationName: types.StringValue(entity.ApplicationName),
 		SandboxName:     types.StringValue(entity.SandboxName),
+	}
+}
+
+/***********************************************************************************************************************
+ * CI/CD
+ **********************************************************************************************************************/
+
+type CatalogEntityCiCdResourceModel struct {
+	Buildkite types.Object `tfsdk:"buildkite"`
+}
+
+func (o *CatalogEntityCiCdResourceModel) AttrTypes() map[string]attr.Type {
+	bk := CatalogEntityCiCdBuildkiteResourceModel{}
+	return map[string]attr.Type{
+		"buildkite": types.ObjectType{AttrTypes: bk.AttrTypes()},
+	}
+}
+
+func (o *CatalogEntityCiCdResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityCiCd {
+	doo := getDefaultObjectOptions()
+
+	bk := CatalogEntityCiCdBuildkiteResourceModel{}
+	o.Buildkite.As(ctx, &bk, doo)
+
+	return cortex.CatalogEntityCiCd{
+		Buildkite: bk.ToApiModel(),
+	}
+}
+
+func (o *CatalogEntityCiCdResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityCiCd) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
+	bk := CatalogEntityCiCdBuildkiteResourceModel{}
+	ob := CatalogEntityCiCdResourceModel{
+		Buildkite: bk.FromApiModel(ctx, diagnostics, &entity.Buildkite),
+	}
+	obj, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), ob)
+	diagnostics.Append(d...)
+	return obj
+}
+
+// Buildkite
+
+type CatalogEntityCiCdBuildkiteResourceModel struct {
+	Pipelines []CatalogEntityCiCdBuildkitePipelineResourceModel `tfsdk:"pipelines"`
+	Tags      []CatalogEntityCiCdBuildkiteTagResourceModel      `tfsdk:"tags"`
+}
+
+func (o *CatalogEntityCiCdBuildkiteResourceModel) AttrTypes() map[string]attr.Type {
+	pp := CatalogEntityCiCdBuildkitePipelineResourceModel{}
+	tg := CatalogEntityCiCdBuildkiteTagResourceModel{}
+	return map[string]attr.Type{
+		"pipelines": types.SetType{ElemType: types.ObjectType{AttrTypes: pp.AttrTypes()}},
+		"tags":      types.SetType{ElemType: types.ObjectType{AttrTypes: tg.AttrTypes()}},
+	}
+}
+
+func (o *CatalogEntityCiCdBuildkiteResourceModel) ToApiModel() cortex.CatalogEntityCiCdBuildkite {
+	var pipelines = make([]cortex.CatalogEntityCiCdBuildkitePipeline, len(o.Pipelines))
+	for i, e := range o.Pipelines {
+		pipelines[i] = e.ToApiModel()
+	}
+	var tags = make([]cortex.CatalogEntityCiCdBuildkiteTag, len(o.Tags))
+	for i, e := range o.Tags {
+		tags[i] = e.ToApiModel()
+	}
+	return cortex.CatalogEntityCiCdBuildkite{
+		Pipelines: pipelines,
+		Tags:      tags,
+	}
+}
+
+func (o *CatalogEntityCiCdBuildkiteResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, bk *cortex.CatalogEntityCiCdBuildkite) types.Object {
+	if !bk.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
+	var pipelines = make([]CatalogEntityCiCdBuildkitePipelineResourceModel, len(bk.Pipelines))
+	for i, e := range bk.Pipelines {
+		pp := CatalogEntityCiCdBuildkitePipelineResourceModel{}
+		pipelines[i] = pp.FromApiModel(&e)
+	}
+	var tags = make([]CatalogEntityCiCdBuildkiteTagResourceModel, len(bk.Tags))
+	for i, e := range bk.Tags {
+		tg := CatalogEntityCiCdBuildkiteTagResourceModel{}
+		tags[i] = tg.FromApiModel(&e)
+	}
+
+	ob := CatalogEntityCiCdBuildkiteResourceModel{
+		Pipelines: pipelines,
+		Tags:      tags,
+	}
+	objectValue, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return objectValue
+}
+
+// Buildkite Pipeline
+
+type CatalogEntityCiCdBuildkitePipelineResourceModel struct {
+	Slug types.String `tfsdk:"slug"`
+}
+
+func (o *CatalogEntityCiCdBuildkitePipelineResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"slug": types.StringType,
+	}
+}
+
+func (o *CatalogEntityCiCdBuildkitePipelineResourceModel) ToApiModel() cortex.CatalogEntityCiCdBuildkitePipeline {
+	return cortex.CatalogEntityCiCdBuildkitePipeline{
+		Slug: o.Slug.ValueString(),
+	}
+}
+
+func (o *CatalogEntityCiCdBuildkitePipelineResourceModel) FromApiModel(pipeline *cortex.CatalogEntityCiCdBuildkitePipeline) CatalogEntityCiCdBuildkitePipelineResourceModel {
+	return CatalogEntityCiCdBuildkitePipelineResourceModel{
+		Slug: types.StringValue(pipeline.Slug),
+	}
+}
+
+// Buildkite Tag
+
+type CatalogEntityCiCdBuildkiteTagResourceModel struct {
+	Tag types.String `tfsdk:"tag"`
+}
+
+func (o *CatalogEntityCiCdBuildkiteTagResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"tag": types.StringType,
+	}
+}
+
+func (o *CatalogEntityCiCdBuildkiteTagResourceModel) ToApiModel() cortex.CatalogEntityCiCdBuildkiteTag {
+	return cortex.CatalogEntityCiCdBuildkiteTag{
+		Tag: o.Tag.ValueString(),
+	}
+}
+
+func (o *CatalogEntityCiCdBuildkiteTagResourceModel) FromApiModel(pipeline *cortex.CatalogEntityCiCdBuildkiteTag) CatalogEntityCiCdBuildkiteTagResourceModel {
+	return CatalogEntityCiCdBuildkiteTagResourceModel{
+		Tag: types.StringValue(pipeline.Tag),
 	}
 }

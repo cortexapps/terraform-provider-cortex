@@ -80,6 +80,10 @@ func (c *CatalogEntityParser) YamlToEntity(yamlEntity map[string]interface{}) (C
 		c.interpolateStaticAnalysis(&entity, info["x-cortex-static-analysis"].(map[string]interface{}))
 	}
 
+	if info["x-cortex-ci-cd"] != nil {
+		c.interpolateCiCd(&entity, info["x-cortex-ci-cd"].(map[string]interface{}))
+	}
+
 	if info["x-cortex-oncall"] != nil {
 		onCallMap := info["x-cortex-oncall"].(map[string]interface{})
 		c.interpolateOnCall(&entity, onCallMap)
@@ -647,6 +651,34 @@ func (c *CatalogEntityParser) interpolateStaticAnalysisVeracode(entity *CatalogE
 				}
 				entity.StaticAnalysis.Veracode.Sandboxes = append(entity.StaticAnalysis.Veracode.Sandboxes, sandboxEntity)
 			}
+		}
+	}
+}
+
+func (c *CatalogEntityParser) interpolateCiCd(entity *CatalogEntityData, ciCdMap map[string]interface{}) {
+	if ciCdMap["buildkite"] != nil {
+		c.interpolateCiCdBuildkite(entity, ciCdMap["buildkite"].(map[string]interface{}))
+	}
+}
+
+func (c *CatalogEntityParser) interpolateCiCdBuildkite(entity *CatalogEntityData, bkMap map[string]interface{}) {
+	entity.CiCd.Buildkite = CatalogEntityCiCdBuildkite{}
+	if bkMap["pipelines"] != nil {
+		pipelines := bkMap["pipelines"].([]interface{})
+		for _, pipeline := range pipelines {
+			pipelineMap := pipeline.(map[string]interface{})
+			entity.CiCd.Buildkite.Pipelines = append(entity.CiCd.Buildkite.Pipelines, CatalogEntityCiCdBuildkitePipeline{
+				Slug: MapFetchToString(pipelineMap, "slug"),
+			})
+		}
+	}
+	if bkMap["tags"] != nil {
+		tags := bkMap["tags"].([]interface{})
+		for _, tag := range tags {
+			tagMap := tag.(map[string]interface{})
+			entity.CiCd.Buildkite.Tags = append(entity.CiCd.Buildkite.Tags, CatalogEntityCiCdBuildkiteTag{
+				Tag: MapFetchToString(tagMap, "tag"),
+			})
 		}
 	}
 }

@@ -235,6 +235,8 @@ func TestAccCatalogEntityResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.veracode.application_names.0", "products-service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.veracode.sandboxes.0.application_name", "products-service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.veracode.sandboxes.0.sandbox_name", "staging"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "ci_cd.buildkite.pipelines.0.slug", "products-pipeline"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "ci_cd.buildkite.tags.0.tag", "products-tag"),
 
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "bug_snag.project", "cortexio/products-service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "sentry.project", "cortexio/products-service"),
@@ -471,6 +473,17 @@ resource "cortex_catalog_entity" "test" {
           application_name = "products-service"
           sandbox_name     = "staging"
         }
+      ]
+    }
+  }
+
+  ci_cd = {
+	buildkite = {
+      pipelines = [
+        { slug = "products-pipeline" }
+	  ]
+      tags = [
+        { tag = "products-tag" }
       ]
     }
   }

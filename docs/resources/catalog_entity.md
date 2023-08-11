@@ -27,6 +27,7 @@ Catalog Entity
 - `bug_snag` (Attributes) BugSnag configuration for the entity. (see [below for nested schema](#nestedatt--bug_snag))
 - `checkmarx` (Attributes) Checkmarx configuration for the entity. (see [below for nested schema](#nestedatt--checkmarx))
 - `children` (Attributes List) List of child entities for the entity. Only used for entities of type `TEAM` or `DOMAIN`. (see [below for nested schema](#nestedatt--children))
+- `ci_cd` (Attributes) CI/CD configuration for the entity. (see [below for nested schema](#nestedatt--ci_cd))
 - `dashboards` (Attributes) Dashboards configuration for the entity. (see [below for nested schema](#nestedatt--dashboards))
 - `definition` (String) Set when the entity is a Resource. These are the properties defined by the Resource Definition, in JSON format in a string (use the `jsonencode` function to convert a JSON object to a string).
 - `dependencies` (Attributes List) List of dependencies for the entity. (see [below for nested schema](#nestedatt--dependencies))
@@ -135,6 +136,39 @@ Optional:
 Required:
 
 - `tag` (String) Tag of the child entity.
+
+
+<a id="nestedatt--ci_cd"></a>
+### Nested Schema for `ci_cd`
+
+Optional:
+
+- `buildkite` (Attributes) Buildkite CI/CD configuration. (see [below for nested schema](#nestedatt--ci_cd--buildkite))
+
+<a id="nestedatt--ci_cd--buildkite"></a>
+### Nested Schema for `ci_cd.buildkite`
+
+Optional:
+
+- `pipelines` (Attributes Set) Buildkite pipelines. (see [below for nested schema](#nestedatt--ci_cd--buildkite--pipelines))
+- `tags` (Attributes Set) Buildkite pipelines. (see [below for nested schema](#nestedatt--ci_cd--buildkite--tags))
+
+<a id="nestedatt--ci_cd--buildkite--pipelines"></a>
+### Nested Schema for `ci_cd.buildkite.pipelines`
+
+Required:
+
+- `slug` (String) Buildkite pipeline slug.
+
+
+<a id="nestedatt--ci_cd--buildkite--tags"></a>
+### Nested Schema for `ci_cd.buildkite.tags`
+
+Required:
+
+- `tag` (String) Buildkite tag.
+
+
 
 
 <a id="nestedatt--dashboards"></a>

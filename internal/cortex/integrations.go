@@ -31,6 +31,7 @@ type CatalogEntityData struct {
 	OnCall         CatalogEntityOnCall         `json:"x-cortex-oncall,omitempty" yaml:"x-cortex-oncall,omitempty"`
 	SLOs           CatalogEntitySLOs           `json:"x-cortex-slos,omitempty" yaml:"x-cortex-slos,omitempty"`
 	StaticAnalysis CatalogEntityStaticAnalysis `json:"x-cortex-static-analysis,omitempty" yaml:"x-cortex-static-analysis,omitempty"`
+	CiCd           CatalogEntityCiCd           `json:"x-cortex-ci-cd,omitempty" yaml:"x-cortex-ci-cd,omitempty"`
 
 	// Integration-specific things
 	BugSnag     CatalogEntityBugSnag     `json:"x-cortex-bugsnag,omitempty" yaml:"x-cortex-bugsnag,omitempty"`
@@ -204,6 +205,18 @@ func (c *CatalogEntityStaticAnalysis) Enabled() bool {
 }
 
 /***********************************************************************************************************************
+ * CI/CD
+ **********************************************************************************************************************/
+
+type CatalogEntityCiCd struct {
+	Buildkite CatalogEntityCiCdBuildkite `json:"buildkite,omitempty" yaml:"buildkite,omitempty"`
+}
+
+func (c *CatalogEntityCiCd) Enabled() bool {
+	return c.Buildkite.Enabled()
+}
+
+/***********************************************************************************************************************
  * Azure DevOps - https://docs.cortex.io/docs/reference/integrations/azuredevops
  **********************************************************************************************************************/
 
@@ -239,6 +252,35 @@ type CatalogEntityBugSnag struct {
 
 func (o *CatalogEntityBugSnag) Enabled() bool {
 	return o.Project != ""
+}
+
+/***********************************************************************************************************************
+ * Buildkite - https://docs.cortex.io/docs/reference/integrations/buildkite
+ **********************************************************************************************************************/
+
+type CatalogEntityCiCdBuildkite struct {
+	Pipelines []CatalogEntityCiCdBuildkitePipeline `json:"pipelines" yaml:"pipelines"`
+	Tags      []CatalogEntityCiCdBuildkiteTag      `json:"tags,omitempty" yaml:"tags,omitempty"`
+}
+
+func (o *CatalogEntityCiCdBuildkite) Enabled() bool {
+	return len(o.Tags) > 0 || len(o.Pipelines) > 0
+}
+
+type CatalogEntityCiCdBuildkitePipeline struct {
+	Slug string `json:"slug" yaml:"slug"`
+}
+
+func (o *CatalogEntityCiCdBuildkitePipeline) Enabled() bool {
+	return o.Slug != ""
+}
+
+type CatalogEntityCiCdBuildkiteTag struct {
+	Tag string `json:"tag" yaml:"tag"`
+}
+
+func (o *CatalogEntityCiCdBuildkiteTag) Enabled() bool {
+	return o.Tag != ""
 }
 
 /***********************************************************************************************************************

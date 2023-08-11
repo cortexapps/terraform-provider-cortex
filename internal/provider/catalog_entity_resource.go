@@ -697,6 +697,42 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
+			"ci_cd": schema.SingleNestedAttribute{
+				MarkdownDescription: "CI/CD configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"buildkite": schema.SingleNestedAttribute{
+						MarkdownDescription: "Buildkite CI/CD configuration.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"pipelines": schema.SetNestedAttribute{
+								MarkdownDescription: "Buildkite pipelines.",
+								Optional:            true,
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"slug": schema.StringAttribute{
+											MarkdownDescription: "Buildkite pipeline slug.",
+											Required:            true,
+										},
+									},
+								},
+							},
+							"tags": schema.SetNestedAttribute{
+								MarkdownDescription: "Buildkite pipelines.",
+								Optional:            true,
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"tag": schema.StringAttribute{
+											MarkdownDescription: "Buildkite tag.",
+											Required:            true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"bug_snag": schema.SingleNestedAttribute{
 				MarkdownDescription: "BugSnag configuration for the entity.",
 				Optional:            true,
