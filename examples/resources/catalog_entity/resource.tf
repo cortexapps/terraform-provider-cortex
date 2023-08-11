@@ -23,6 +23,15 @@ resource "cortex_catalog_entity" "products-service" {
     }
   ]
 
+  slack = {
+    channels = [
+      {
+        name                  = "engineering"
+        notifications_enabled = false
+      }
+    ]
+  }
+
   groups = [
     "production",
     "lang-golang",

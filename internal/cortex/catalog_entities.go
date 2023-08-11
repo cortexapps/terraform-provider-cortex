@@ -51,9 +51,9 @@ type CatalogEntity struct {
 }
 
 type CatalogEntityOwnership struct {
-	Emails        []CatalogEntityEmail        `json:"emails"`
-	Groups        []CatalogEntityGroup        `json:"groups"`
-	SlackChannels []CatalogEntitySlackChannel `json:"slackChannels"`
+	Emails        []CatalogEntityEmail                 `json:"emails"`
+	Groups        []CatalogEntityGroup                 `json:"groups"`
+	SlackChannels []CatalogEntityOwnershipSlackChannel `json:"slackChannels"`
 }
 
 type CatalogEntityEmail struct {
@@ -67,7 +67,7 @@ type CatalogEntityGroup struct {
 	Provider    string `json:"provider" yaml:"provider"`
 }
 
-type CatalogEntitySlackChannel struct {
+type CatalogEntityOwnershipSlackChannel struct {
 	Channel              string `json:"channel" yaml:"channel"`
 	Description          string `json:"description" yaml:"description"`
 	NotificationsEnabled bool   `json:"notificationsEnabled" yaml:"notificationsEnabled"`

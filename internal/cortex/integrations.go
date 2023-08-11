@@ -38,6 +38,7 @@ type CatalogEntityData struct {
 	FireHydrant CatalogEntityFireHydrant `json:"x-cortex-firehydrant,omitempty" yaml:"x-cortex-firehydrant,omitempty"`
 	Rollbar     CatalogEntityRollbar     `json:"x-cortex-rollbar,omitempty" yaml:"x-cortex-rollbar,omitempty"`
 	Sentry      CatalogEntitySentry      `json:"x-cortex-sentry,omitempty" yaml:"x-cortex-sentry,omitempty"`
+	Slack       CatalogEntitySlack       `json:"x-cortex-slack,omitempty" yaml:"x-cortex-slack,omitempty"`
 	Snyk        CatalogEntitySnyk        `json:"x-cortex-snyk,omitempty" yaml:"x-cortex-snyk,omitempty"`
 	Wiz         CatalogEntityWiz         `json:"x-cortex-wiz,omitempty" yaml:"x-cortex-wiz,omitempty"`
 
@@ -491,6 +492,27 @@ type CatalogEntitySentry struct {
 
 func (o *CatalogEntitySentry) Enabled() bool {
 	return o.Project != ""
+}
+
+/***********************************************************************************************************************
+ * Slack - https://docs.cortex.io/docs/reference/integrations/sentry
+ **********************************************************************************************************************/
+
+type CatalogEntitySlack struct {
+	Channels []CatalogEntitySlackChannel `json:"channels,omitempty" yaml:"channels,omitempty"`
+}
+
+func (o *CatalogEntitySlack) Enabled() bool {
+	return len(o.Channels) > 0
+}
+
+type CatalogEntitySlackChannel struct {
+	Name                 string `json:"name" yaml:"name"`
+	NotificationsEnabled bool   `json:"notificationsEnabled,omitempty" yaml:"notificationsEnabled,omitempty"`
+}
+
+func (o *CatalogEntitySlackChannel) Enabled() bool {
+	return o.Name != ""
 }
 
 /***********************************************************************************************************************

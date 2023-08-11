@@ -43,6 +43,7 @@ type CatalogEntityResourceModel struct {
 	FireHydrant    types.Object                             `tfsdk:"firehydrant"`
 	Rollbar        types.Object                             `tfsdk:"rollbar"`
 	Sentry         types.Object                             `tfsdk:"sentry"`
+	Slack          types.Object                             `tfsdk:"slack"`
 	Snyk           types.Object                             `tfsdk:"snyk"`
 	Wiz            types.Object                             `tfsdk:"wiz"`
 	Team           types.Object                             `tfsdk:"team"`
@@ -184,6 +185,11 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 	if err != nil {
 		fmt.Println("Error parsing Sentry configuration: ", err)
 	}
+	slack := CatalogEntitySlackResourceModel{}
+	err = o.Slack.As(ctx, &slack, defaultObjOptions)
+	if err != nil {
+		fmt.Println("Error parsing Slack configuration: ", err)
+	}
 	snyk := CatalogEntitySnykResourceModel{}
 	err = o.Snyk.As(ctx, &snyk, defaultObjOptions)
 	if err != nil {
@@ -227,6 +233,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		FireHydrant:    firehydrant.ToApiModel(),
 		Rollbar:        rollbar.ToApiModel(),
 		Sentry:         sentry.ToApiModel(),
+		Slack:          slack.ToApiModel(),
 		Snyk:           snyk.ToApiModel(),
 		Wiz:            wiz.ToApiModel(),
 		Team:           team.ToApiModel(),
@@ -375,6 +382,9 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 
 	sentry := CatalogEntitySentryResourceModel{}
 	o.Sentry = sentry.FromApiModel(ctx, diagnostics, &entity.Sentry)
+
+	slack := CatalogEntitySlackResourceModel{}
+	o.Slack = slack.FromApiModel(ctx, diagnostics, &entity.Slack)
 
 	snyk := CatalogEntitySnykResourceModel{}
 	o.Snyk = snyk.FromApiModel(ctx, diagnostics, &entity.Snyk)
@@ -1462,6 +1472,75 @@ func (o *CatalogEntitySentryResourceModel) FromApiModel(ctx context.Context, dia
 	obj, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &ob)
 	diagnostics.Append(d...)
 	return obj
+}
+
+/***********************************************************************************************************************
+ * Sentry
+ **********************************************************************************************************************/
+
+type CatalogEntitySlackResourceModel struct {
+	Channels []CatalogEntitySlackChannelResourceModel `tfsdk:"channels"`
+}
+
+func (o *CatalogEntitySlackResourceModel) AttrTypes() map[string]attr.Type {
+	obc := CatalogEntitySlackChannelResourceModel{}
+	return map[string]attr.Type{
+		"channels": types.SetType{ElemType: types.ObjectType{AttrTypes: obc.AttrTypes()}},
+	}
+}
+
+func (o *CatalogEntitySlackResourceModel) ToApiModel() cortex.CatalogEntitySlack {
+	channels := make([]cortex.CatalogEntitySlackChannel, len(o.Channels))
+	for i, c := range o.Channels {
+		channels[i] = c.ToApiModel()
+	}
+	return cortex.CatalogEntitySlack{
+		Channels: channels,
+	}
+}
+
+func (o *CatalogEntitySlackResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntitySlack) types.Object {
+	ob := CatalogEntitySlackResourceModel{}
+	if !entity.Enabled() {
+		return types.ObjectNull(ob.AttrTypes())
+	}
+
+	var channels = make([]CatalogEntitySlackChannelResourceModel, len(entity.Channels))
+	for i, e := range entity.Channels {
+		ch := CatalogEntitySlackChannelResourceModel{}
+		channels[i] = ch.FromApiModel(&e)
+	}
+	ob.Channels = channels
+
+	obj, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return obj
+}
+
+type CatalogEntitySlackChannelResourceModel struct {
+	Name                 types.String `tfsdk:"name"`
+	NotificationsEnabled types.Bool   `tfsdk:"notifications_enabled"`
+}
+
+func (o *CatalogEntitySlackChannelResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"name":                  types.StringType,
+		"notifications_enabled": types.BoolType,
+	}
+}
+
+func (o *CatalogEntitySlackChannelResourceModel) ToApiModel() cortex.CatalogEntitySlackChannel {
+	return cortex.CatalogEntitySlackChannel{
+		Name:                 o.Name.ValueString(),
+		NotificationsEnabled: o.NotificationsEnabled.ValueBool(),
+	}
+}
+
+func (o *CatalogEntitySlackChannelResourceModel) FromApiModel(entity *cortex.CatalogEntitySlackChannel) CatalogEntitySlackChannelResourceModel {
+	return CatalogEntitySlackChannelResourceModel{
+		Name:                 types.StringValue(entity.Name),
+		NotificationsEnabled: types.BoolValue(entity.NotificationsEnabled),
+	}
 }
 
 /***********************************************************************************************************************

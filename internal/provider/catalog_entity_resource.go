@@ -774,6 +774,28 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
+			"slack": schema.SingleNestedAttribute{
+				MarkdownDescription: "Slack configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"channels": schema.SetNestedAttribute{
+						MarkdownDescription: "List of Slack channels for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"name": schema.StringAttribute{
+									MarkdownDescription: "Slack channel name.",
+									Required:            true,
+								},
+								"notifications_enabled": schema.BoolAttribute{
+									MarkdownDescription: "Whether the slack channel should receive notifications.",
+									Optional:            true,
+								},
+							},
+						},
+					},
+				},
+			},
 			"snyk": schema.SingleNestedAttribute{
 				MarkdownDescription: "Snyk configuration for the entity.",
 				Optional:            true,

@@ -2,6 +2,8 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+* Add support for `x-cortex-slack` on catalog entities
+
 ## 0.1.7
 
 * Add `domain_parents` support to catalog entities

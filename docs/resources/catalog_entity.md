@@ -43,6 +43,7 @@ Catalog Entity
 - `owners` (Attributes List) List of owners for the entity. Owners can be users, groups, or Slack channels. (see [below for nested schema](#nestedatt--owners))
 - `rollbar` (Attributes) Rollbar configuration for the entity. (see [below for nested schema](#nestedatt--rollbar))
 - `sentry` (Attributes) Sentry configuration for the entity. (see [below for nested schema](#nestedatt--sentry))
+- `slack` (Attributes) Slack configuration for the entity. (see [below for nested schema](#nestedatt--slack))
 - `slos` (Attributes) Service-level Objectives configuration for the entity. (see [below for nested schema](#nestedatt--slos))
 - `snyk` (Attributes) Snyk configuration for the entity. (see [below for nested schema](#nestedatt--snyk))
 - `static_analysis` (Attributes) Static analysis configuration for the entity. (see [below for nested schema](#nestedatt--static_analysis))
@@ -356,6 +357,26 @@ Required:
 Required:
 
 - `project` (String) Sentry project ID for the entity.
+
+
+<a id="nestedatt--slack"></a>
+### Nested Schema for `slack`
+
+Optional:
+
+- `channels` (Attributes Set) List of Slack channels for the entity. (see [below for nested schema](#nestedatt--slack--channels))
+
+<a id="nestedatt--slack--channels"></a>
+### Nested Schema for `slack.channels`
+
+Required:
+
+- `name` (String) Slack channel name.
+
+Optional:
+
+- `notifications_enabled` (Boolean) Whether the slack channel should receive notifications.
+
 
 
 <a id="nestedatt--slos"></a>

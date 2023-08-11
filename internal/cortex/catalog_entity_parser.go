@@ -101,12 +101,16 @@ func (c *CatalogEntityParser) YamlToEntity(yamlEntity map[string]interface{}) (C
 		c.interpolateFirehydrant(&entity, info["x-cortex-firehydrant"].(map[string]interface{}))
 	}
 
+	if info["x-cortex-rollbar"] != nil {
+		c.interpolateRollbar(&entity, info["x-cortex-rollbar"].(map[string]interface{}))
+	}
+
 	if info["x-cortex-sentry"] != nil {
 		c.interpolateSentry(&entity, info["x-cortex-sentry"].(map[string]interface{}))
 	}
 
-	if info["x-cortex-rollbar"] != nil {
-		c.interpolateRollbar(&entity, info["x-cortex-rollbar"].(map[string]interface{}))
+	if info["x-cortex-slack"] != nil {
+		c.interpolateSlack(&entity, info["x-cortex-slack"].(map[string]interface{}))
 	}
 
 	if info["x-cortex-snyk"] != nil {
@@ -520,6 +524,19 @@ func (c *CatalogEntityParser) interpolateFirehydrant(entity *CatalogEntityData, 
 			if se.Enabled() {
 				entity.FireHydrant.Services = append(entity.FireHydrant.Services, se)
 			}
+		}
+	}
+}
+
+func (c *CatalogEntityParser) interpolateSlack(entity *CatalogEntityData, slackMap map[string]interface{}) {
+	if slackMap["channels"] != nil {
+		channels := slackMap["channels"].([]interface{})
+		for _, channel := range channels {
+			channelMap := channel.(map[string]interface{})
+			entity.Slack.Channels = append(entity.Slack.Channels, CatalogEntitySlackChannel{
+				Name:                 MapFetchToString(channelMap, "name"),
+				NotificationsEnabled: MapFetch(channelMap, "notificationsEnabled", false).(bool),
+			})
 		}
 	}
 }
