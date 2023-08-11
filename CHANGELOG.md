@@ -2,6 +2,8 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.1.8
+
 * Add Buildkite support for Catalog Entities
 * Add support for `x-cortex-slack` on catalog entities
 
