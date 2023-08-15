@@ -225,8 +225,6 @@ func TestAccCatalogEntityResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.azure.repository", "cortexio/products-service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "git.bitbucket.repository", "cortexio/products-service"),
 
-					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.code_cov.repository", "cortexio/products-service"),
-					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.code_cov.provider", "GITHUB"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.mend.application_ids.0", "123456"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.mend.application_ids.1", "123457"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.mend.project_ids.0", "123456"),
@@ -455,10 +453,6 @@ resource "cortex_catalog_entity" "test" {
   }
 
   static_analysis = {
-    code_cov = {
-      repository = "cortexio/products-service"
-      provider   = "GITHUB"
-    }
     mend = {
       application_ids = ["123456", "123457"]
       project_ids     = ["123456", "123457"]
