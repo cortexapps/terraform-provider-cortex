@@ -2,6 +2,10 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.1.9
+
+* Fix detection mechanism for `cortex_catalog_entity_custom_data` and complex data types
+
 ## 0.1.8
 
 * Add Buildkite support for Catalog Entities

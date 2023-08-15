@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"net/http"
+	"reflect"
 	"strings"
 )
 
@@ -40,15 +41,16 @@ func MapFetchToString(m map[string]interface{}, key string) string {
 func InterfaceToString(v interface{}) (string, error) {
 	value := ""
 	// see if the value is a map or a scalar
-	castedValue, ok := v.(*map[string]string)
-	if ok && castedValue != nil {
-		// this is a map, let's convert to JSON
-		sv, err := json.Marshal(castedValue)
+	rt := reflect.TypeOf(v)
+	if rt.Kind() == reflect.Map || rt.Kind() == reflect.Struct || rt.Kind() == reflect.Slice {
+		// this is a map/struct/slice, let's convert to JSON
+		sv, err := json.Marshal(v)
 		if err != nil {
 			return "", err
 		}
 		value = string(sv)
 	} else {
+		// otherwise it's a scalar (int/string) so we can just convert to string
 		value = fmt.Sprintf("%v", v)
 	}
 	return value, nil

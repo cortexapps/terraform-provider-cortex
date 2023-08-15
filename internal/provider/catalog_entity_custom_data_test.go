@@ -92,3 +92,54 @@ func tFactoryBuildCatalogEntityCustomDataResource(tag string, key string, descri
 	}
 	return r
 }
+
+func TestAccCatalogEntityCustomDataCompleteResource(t *testing.T) {
+	entityTag := "manual-test"
+	key := "test-custom-data-complete"
+	resourceTag := entityTag + "-" + key
+	resourceType := "cortex_catalog_entity_custom_data"
+	resourceName := resourceType + "." + resourceTag
+	stub := tFactoryBuildCatalogEntityCustomDataResource(
+		entityTag,
+		key,
+		"A test custom data key",
+		map[string]interface{}{
+			"test": "test",
+			"a": map[string]interface{}{
+				"b": "c",
+			},
+		},
+	)
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: stub.ToTerraform(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "tag", stub.Tag),
+					resource.TestCheckResourceAttr(resourceName, "key", stub.Key),
+					resource.TestCheckResourceAttr(resourceName, "description", stub.Description),
+					resource.TestCheckResourceAttr(resourceName, "value", `{"a":{"b":"c"},"test":"test"}`),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Update and Read testing
+			{
+				Config: stub.ToTerraform(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "tag", stub.Tag),
+					resource.TestCheckResourceAttr(resourceName, "key", stub.Key),
+					resource.TestCheckResourceAttr(resourceName, "description", stub.Description),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
