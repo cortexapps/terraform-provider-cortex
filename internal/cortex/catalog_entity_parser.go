@@ -1,7 +1,6 @@
 package cortex
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 )
@@ -399,7 +398,7 @@ func (c *CatalogEntityParser) interpolatePrometheusSLOs(entity *CatalogEntityDat
 		sloVal := MapFetch(queryMap, "slo", 0.0)
 		sloValFloat64, err := AnyToFloat64(sloVal)
 		if err != nil {
-			return errors.New(fmt.Sprintf("Error converting SLO value to float64: %+v - %+v - %+v", err, sloVal, reflect.TypeOf(sloVal)))
+			return fmt.Errorf("error converting SLO value to float64: %+v - %+v - %+v", err, sloVal, reflect.TypeOf(sloVal))
 		}
 		entity.SLOs.Prometheus = append(entity.SLOs.Prometheus, CatalogEntitySLOPrometheusQuery{
 			ErrorQuery: MapFetchToString(queryMap, "errorQuery"),
