@@ -431,6 +431,7 @@ resource "cortex_catalog_entity" "test" {
     }
     prometheus = [
       {
+		name        = "HTTP 5xx"
         error_query = "sum(rate(http_requests_total{job=\"products-service\", status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"products-service\"}[5m]))"
         total_query = "sum(rate(http_requests_total{job=\"products-service\"}[5m]))"
         slo         = 0.999

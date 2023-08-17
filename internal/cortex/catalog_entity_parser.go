@@ -1,5 +1,11 @@
 package cortex
 
+import (
+	"errors"
+	"fmt"
+	"reflect"
+)
+
 type CatalogEntityParser struct{}
 
 // YamlToEntity converts YAML into a CatalogEntity, from the specification.
@@ -69,7 +75,10 @@ func (c *CatalogEntityParser) YamlToEntity(yamlEntity map[string]interface{}) (C
 
 	if info["x-cortex-slos"] != nil {
 		slosMap := info["x-cortex-slos"].(map[string]interface{})
-		c.interpolateSLOs(&entity, slosMap)
+		err := c.interpolateSLOs(&entity, slosMap)
+		if err != nil {
+			return entity, err
+		}
 	}
 
 	if info["x-cortex-apm"] != nil {
@@ -317,7 +326,7 @@ func (c *CatalogEntityParser) interpolateJira(entity *CatalogEntityData, jiraMap
 	}
 }
 
-func (c *CatalogEntityParser) interpolateSLOs(entity *CatalogEntityData, slosMap map[string]interface{}) {
+func (c *CatalogEntityParser) interpolateSLOs(entity *CatalogEntityData, slosMap map[string]interface{}) error {
 	entity.SLOs = CatalogEntitySLOs{}
 	if slosMap["datadog"] != nil {
 		c.interpolateDataDogSLOs(entity, slosMap["datadog"].([]interface{}))
@@ -329,7 +338,10 @@ func (c *CatalogEntityParser) interpolateSLOs(entity *CatalogEntityData, slosMap
 		c.interpolateLightstepSLOs(entity, slosMap["lightstep"].([]interface{}))
 	}
 	if slosMap["prometheus"] != nil {
-		c.interpolatePrometheusSLOs(entity, slosMap["prometheus"].([]interface{}))
+		err := c.interpolatePrometheusSLOs(entity, slosMap["prometheus"].([]interface{}))
+		if err != nil {
+			return err
+		}
 	}
 	if slosMap["signalfx"] != nil {
 		c.interpolateSignalFXSLOs(entity, slosMap["signalfx"].([]interface{}))
@@ -337,6 +349,7 @@ func (c *CatalogEntityParser) interpolateSLOs(entity *CatalogEntityData, slosMap
 	if slosMap["sumologic"] != nil {
 		c.interpolateSumoLogicSLOs(entity, slosMap["sumologic"].([]interface{}))
 	}
+	return nil
 }
 
 func (c *CatalogEntityParser) interpolateLightstepSLOs(entity *CatalogEntityData, streams []interface{}) {
@@ -379,16 +392,24 @@ func (c *CatalogEntityParser) interpolateDataDogSLOs(entity *CatalogEntityData, 
 	}
 }
 
-func (c *CatalogEntityParser) interpolatePrometheusSLOs(entity *CatalogEntityData, prometheusQueries []interface{}) {
+func (c *CatalogEntityParser) interpolatePrometheusSLOs(entity *CatalogEntityData, prometheusQueries []interface{}) error {
 	entity.SLOs.Prometheus = []CatalogEntitySLOPrometheusQuery{}
 	for _, query := range prometheusQueries {
 		queryMap := query.(map[string]interface{})
+		sloVal := MapFetch(queryMap, "slo", 0.0)
+		sloValFloat64, err := AnyToFloat64(sloVal)
+		if err != nil {
+			return errors.New(fmt.Sprintf("Error converting SLO value to float64: %+v - %+v - %+v", err, sloVal, reflect.TypeOf(sloVal)))
+		}
 		entity.SLOs.Prometheus = append(entity.SLOs.Prometheus, CatalogEntitySLOPrometheusQuery{
 			ErrorQuery: MapFetchToString(queryMap, "errorQuery"),
 			TotalQuery: MapFetchToString(queryMap, "totalQuery"),
-			SLO:        MapFetch(queryMap, "slo", "0.0").(float64),
+			Name:       MapFetchToString(queryMap, "name"),
+			Alias:      MapFetchToString(queryMap, "alias"),
+			SLO:        sloValFloat64,
 		})
 	}
+	return nil
 }
 
 func (c *CatalogEntityParser) interpolateSignalFXSLOs(entity *CatalogEntityData, signalFxSLOs []interface{}) {
