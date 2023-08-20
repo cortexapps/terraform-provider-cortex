@@ -67,7 +67,7 @@ func NewScorecardResourceModel() ScorecardResourceModel {
  * ScorecardResourceModel
  **********************************************************************************************************************/
 
-func (o *ScorecardResourceModel) ToApiModel(ctx context.Context) cortex.Scorecard {
+func (o *ScorecardResourceModel) ToApiModel(ctx context.Context, diagnostics *diag.Diagnostics) cortex.Scorecard {
 	defaultObjOptions := getDefaultObjectOptions()
 
 	rules := make([]cortex.ScorecardRule, len(o.Rules))
@@ -78,19 +78,19 @@ func (o *ScorecardResourceModel) ToApiModel(ctx context.Context) cortex.Scorecar
 	ladder := ScorecardLadderResourceModel{}
 	err := o.Ladder.As(ctx, &ladder, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing scorecard ladder: ", err)
+		diagnostics.AddError("error parsing scorecard ladder", fmt.Sprintf("%+v", err))
 	}
 
 	filter := ScorecardFilterResourceModel{}
 	err = o.Filter.As(ctx, &filter, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing scorecard filter: ", err)
+		diagnostics.AddError("error parsing scorecard filter", fmt.Sprintf("%+v", err))
 	}
 
 	evaluation := ScorecardEvaluationResourceModel{}
 	err = o.Evaluation.As(ctx, &evaluation, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing scorecard evaluation: ", err)
+		diagnostics.AddError("error parsing scorecard evaluation", fmt.Sprintf("%+v", err))
 	}
 
 	return cortex.Scorecard{

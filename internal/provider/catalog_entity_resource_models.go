@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/life4/genesis/slices"
 	"strings"
 )
@@ -54,14 +53,14 @@ func getDefaultObjectOptions() basetypes.ObjectAsOptions {
 	return basetypes.ObjectAsOptions{UnhandledNullAsEmpty: true, UnhandledUnknownAsEmpty: true}
 }
 
-func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.CatalogEntityData {
+func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics *diag.Diagnostics) cortex.CatalogEntityData {
 	defaultObjOptions := getDefaultObjectOptions()
 
 	definition := make(map[string]interface{})
 	if !o.Definition.IsNull() && !o.Definition.IsUnknown() && o.Definition.ValueString() != "" {
 		err := json.Unmarshal([]byte(o.Definition.ValueString()), &definition)
 		if err != nil {
-			fmt.Println("Error parsing x-cortex-definition: ", err)
+			diagnostics.AddError("error parsing x-cortex-definition", fmt.Sprintf("%+v", err))
 			definition = make(map[string]interface{})
 		}
 	} else {
@@ -92,7 +91,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		if !o.Metadata.IsNull() && !o.Metadata.IsUnknown() && o.Metadata.ValueString() != "" {
 			err := json.Unmarshal([]byte(o.Metadata.ValueString()), &metadata)
 			if err != nil {
-				fmt.Println("Error parsing custom metadata: ", err)
+				diagnostics.AddError("error parsing custom metadata", fmt.Sprintf("%+v", err))
 				metadata = make(map[string]interface{})
 			}
 		} else {
@@ -102,7 +101,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 	if !o.Metadata.IsNull() && !o.Metadata.IsUnknown() && o.Metadata.ValueString() != "" {
 		err := json.Unmarshal([]byte(o.Metadata.ValueString()), &metadata)
 		if err != nil {
-			fmt.Println("Error parsing custom metadata: ", err)
+			diagnostics.AddError("error parsing custom metadata", fmt.Sprintf("%+v", err))
 			metadata = make(map[string]interface{})
 		}
 	} else {
@@ -113,103 +112,103 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context) cortex.Cata
 		dep := CatalogEntityDependencyResourceModel{}
 		err := dependency.As(ctx, &dep, defaultObjOptions)
 		if err != nil {
-			fmt.Println("Error parsing dependency: ", err)
+			diagnostics.AddError("error parsing dependency", fmt.Sprintf("%+v", err))
 		}
-		dependencies[i] = dep.ToApiModel()
+		dependencies[i] = dep.ToApiModel(diagnostics)
 	}
 	alerts := make([]cortex.CatalogEntityAlert, len(o.Alerts))
 	for i, alert := range o.Alerts {
 		al := CatalogEntityAlertResourceModel{}
 		err := alert.As(ctx, &al, defaultObjOptions)
 		if err != nil {
-			fmt.Println("Error parsing alert: ", err)
+			diagnostics.AddError("error parsing alert", fmt.Sprintf("%+v", err))
 		}
 		alerts[i] = al.ToApiModel()
 	}
 	dashboards := CatalogEntityDashboardResourceModel{}
 	err := o.Dashboards.As(ctx, &dashboards, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing Dashboards configuration: ", err)
+		diagnostics.AddError("error parsing dashboards configuration", fmt.Sprintf("%+v", err))
 	}
 	apm := CatalogEntityApmResourceModel{}
 	err = o.Apm.As(ctx, &apm, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing APM configuration: ", err)
+		diagnostics.AddError("error parsing APM configuration", fmt.Sprintf("%+v", err))
 	}
 	git := CatalogEntityGitResourceModel{}
 	err = o.Git.As(ctx, &git, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing Git configuration: ", err)
+		diagnostics.AddError("error parsing git configuration", fmt.Sprintf("%+v", err))
 	}
 	issues := CatalogEntityIssuesResourceModel{}
 	err = o.Issues.As(ctx, &issues, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing Issues configuration: ", err)
+		diagnostics.AddError("error parsing issues configuration", fmt.Sprintf("%+v", err))
 	}
 	onCall := CatalogEntityOnCallResourceModel{}
 	err = o.OnCall.As(ctx, &onCall, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing On-Call configuration: ", err)
+		diagnostics.AddError("error parsing on-call configuration", fmt.Sprintf("%+v", err))
 	}
 	serviceLevelObjectives := CatalogEntitySLOsResourceModel{}
 	err = o.SLOs.As(ctx, &serviceLevelObjectives, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing SLO configuration: ", err)
+		diagnostics.AddError("error parsing SLO configuration", fmt.Sprintf("%+v", err))
 	}
 	staticAnalysis := CatalogEntityStaticAnalysisResourceModel{}
 	err = o.StaticAnalysis.As(ctx, &staticAnalysis, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing Static Analysis configuration: ", err)
+		diagnostics.AddError("error parsing static analysis configuration", fmt.Sprintf("%+v", err))
 	}
 	ciCd := CatalogEntityCiCdResourceModel{}
 	err = o.CiCd.As(ctx, &ciCd, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing CI/CD configuration: ", err)
+		diagnostics.AddError("error parsing ci/cd configuration", fmt.Sprintf("%+v", err))
 	}
 	bugSnag := CatalogEntityBugSnagResourceModel{}
 	err = o.BugSnag.As(ctx, &bugSnag, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing BugSnag configuration: ", err)
+		diagnostics.AddError("error parsing bugsnag configuration", fmt.Sprintf("%+v", err))
 	}
 	checkmarx := CatalogEntityCheckmarxResourceModel{}
 	err = o.Checkmarx.As(ctx, &checkmarx, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing Checkmarx configuration: ", err)
+		diagnostics.AddError("error parsing Checkmarx configuration", fmt.Sprintf("%+v", err))
 	}
 	firehydrant := CatalogEntityFireHydrantResourceModel{}
 	err = o.FireHydrant.As(ctx, &firehydrant, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing FireHydrant configuration: ", err)
+		diagnostics.AddError("error parsing FireHydrant configuration", fmt.Sprintf("%+v", err))
 	}
 	rollbar := CatalogEntityRollbarResourceModel{}
 	err = o.Rollbar.As(ctx, &rollbar, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing Rollbar configuration: ", err)
+		diagnostics.AddError("error parsing Rollbar configuration", fmt.Sprintf("%+v", err))
 	}
 	sentry := CatalogEntitySentryResourceModel{}
 	err = o.Sentry.As(ctx, &sentry, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing Sentry configuration: ", err)
+		diagnostics.AddError("error parsing Sentry configuration", fmt.Sprintf("%+v", err))
 	}
 	slack := CatalogEntitySlackResourceModel{}
 	err = o.Slack.As(ctx, &slack, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing Slack configuration: ", err)
+		diagnostics.AddError("error parsing Slack configuration", fmt.Sprintf("%+v", err))
 	}
 	snyk := CatalogEntitySnykResourceModel{}
 	err = o.Snyk.As(ctx, &snyk, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing Snyk configuration: ", err)
+		diagnostics.AddError("error parsing Snyk configuration", fmt.Sprintf("%+v", err))
 	}
 	wiz := CatalogEntityWizResourceModel{}
 	err = o.Wiz.As(ctx, &wiz, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing Wiz configuration: ", err)
+		diagnostics.AddError("error parsing Wiz configuration", fmt.Sprintf("%+v", err))
 	}
 	team := CatalogEntityTeamResourceModel{}
 	err = o.Team.As(ctx, &team, defaultObjOptions)
 	if err != nil {
-		fmt.Println("Error parsing Team configuration: ", err)
+		diagnostics.AddError("error parsing Team configuration", fmt.Sprintf("%+v", err))
 	}
 
 	return cortex.CatalogEntityData{
@@ -577,12 +576,12 @@ func (o *CatalogEntityDependencyResourceModel) AttrTypes() map[string]attr.Type 
 	}
 }
 
-func (o *CatalogEntityDependencyResourceModel) ToApiModel() cortex.CatalogEntityDependency {
+func (o *CatalogEntityDependencyResourceModel) ToApiModel(diagnostics *diag.Diagnostics) cortex.CatalogEntityDependency {
 	metadata := make(map[string]interface{})
 	if !o.Metadata.IsNull() && !o.Metadata.IsUnknown() && o.Metadata.ValueString() != "" {
 		err := json.Unmarshal([]byte(o.Metadata.ValueString()), &metadata)
 		if err != nil {
-			fmt.Println("Error parsing Dependency configuration: ", err)
+			diagnostics.AddError("error parsing dependency metadata", fmt.Sprintf("%+v", err))
 			metadata = nil
 		}
 		if len(metadata) == 0 {
@@ -601,7 +600,7 @@ func (o *CatalogEntityDependencyResourceModel) ToApiModel() cortex.CatalogEntity
 	}
 }
 
-func (o *CatalogEntityDependencyResourceModel) FromApiModel(ctx context.Context, diag *diag.Diagnostics, dependency *cortex.CatalogEntityDependency) types.Object {
+func (o *CatalogEntityDependencyResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, dependency *cortex.CatalogEntityDependency) types.Object {
 	obj := CatalogEntityDependencyResourceModel{
 		Tag:         types.StringValue(dependency.Tag),
 		Description: types.StringValue(dependency.Description),
@@ -619,7 +618,7 @@ func (o *CatalogEntityDependencyResourceModel) FromApiModel(ctx context.Context,
 	if dependency.Metadata != nil && len(dependency.Metadata) > 0 {
 		depMetadata, err := json.Marshal(dependency.Metadata)
 		if err != nil {
-			tflog.Error(ctx, fmt.Sprintf("Error marshalling Dependency metadata: %+v", err))
+			diagnostics.AddError("error marshalling dependency metadata", fmt.Sprintf("%+v", err))
 			depMetadata = []byte{}
 		}
 		obj.Metadata = types.StringValue(string(depMetadata))
@@ -628,7 +627,7 @@ func (o *CatalogEntityDependencyResourceModel) FromApiModel(ctx context.Context,
 	}
 
 	retObj, d := types.ObjectValueFrom(ctx, obj.AttrTypes(), &obj)
-	diag.Append(d...)
+	diagnostics.Append(d...)
 	return retObj
 }
 

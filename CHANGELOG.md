@@ -3,6 +3,7 @@ Changelog for the Cortex terraform provider.
 ## Unreleased
 
 * Better handling of empty values of Description fields across models
+* Catalog Entities: Fast fail during errors if issue in parsing tf configuration occurs
 
 ## 0.1.10
 

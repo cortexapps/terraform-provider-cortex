@@ -226,7 +226,7 @@ func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	clientEntity := data.ToApiModel(ctx)
+	clientEntity := data.ToApiModel(ctx, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -252,7 +252,7 @@ func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	clientEntity := data.ToApiModel(ctx)
+	clientEntity := data.ToApiModel(ctx, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

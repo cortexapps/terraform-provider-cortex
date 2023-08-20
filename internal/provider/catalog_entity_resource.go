@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -35,9 +36,9 @@ type CatalogEntityResource struct {
 	client *cortex.HttpClient
 }
 
-func (r *CatalogEntityResource) toUpsertRequest(ctx context.Context, data *CatalogEntityResourceModel) cortex.UpsertCatalogEntityRequest {
+func (r *CatalogEntityResource) toUpsertRequest(ctx context.Context, diagnostics *diag.Diagnostics, data *CatalogEntityResourceModel) cortex.UpsertCatalogEntityRequest {
 	return cortex.UpsertCatalogEntityRequest{
-		Info: data.ToApiModel(ctx),
+		Info: data.ToApiModel(ctx, diagnostics),
 	}
 }
 
@@ -968,8 +969,14 @@ func (r *CatalogEntityResource) Create(ctx context.Context, req resource.CreateR
 	}
 	oldMetadata := data.Metadata
 
+	// Parse configuration into an upsert entity
+	upsertRequest := r.toUpsertRequest(ctx, &resp.Diagnostics, &data)
+	if resp.Diagnostics.HasError() {
+		// If we have an issue parsing the TF configuration, bail out early
+		return
+	}
+
 	// Issue API request
-	upsertRequest := r.toUpsertRequest(ctx, &data)
 	entity, err := r.client.CatalogEntities().Upsert(ctx, upsertRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read catalog entity, got error: %s", err))
@@ -1031,8 +1038,14 @@ func (r *CatalogEntityResource) Update(ctx context.Context, req resource.UpdateR
 	}
 	oldMetadata := data.Metadata
 
-	// Issue API request)
-	upsertRequest := r.toUpsertRequest(ctx, &data)
+	// Parse configuration into API entity
+	upsertRequest := r.toUpsertRequest(ctx, &resp.Diagnostics, &data)
+	if resp.Diagnostics.HasError() {
+		// If we have an issue parsing the TF configuration, bail out early
+		return
+	}
+
+	// Issue API request to Cortex
 	entity, err := r.client.CatalogEntities().Upsert(ctx, upsertRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read catalog entity, got error: %s", err))
@@ -1075,5 +1088,4 @@ func (r *CatalogEntityResource) Delete(ctx context.Context, req resource.DeleteR
 
 func (r *CatalogEntityResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("tag"), req, resp)
-	//resp.State.SetAttribute(ctx, path.Root("metadata"), types.StringNull())
 }
