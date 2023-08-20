@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/terraform-plugin-go v0.18.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-testing v1.4.0
-	github.com/life4/genesis v1.6.0
+	github.com/life4/genesis v1.7.0
 	github.com/motemen/go-loghttp v0.0.0-20170804080138-974ac5ceac27
 	github.com/stretchr/testify v1.8.4
 	gopkg.in/yaml.v3 v3.0.1

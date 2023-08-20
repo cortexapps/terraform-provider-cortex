@@ -2,6 +2,7 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+* Bump `life4/genesis` from 1.4 to 1.7
 * Better handling of empty values of Description fields across models
 * Catalog Entities: Fast fail during errors if issue in parsing tf configuration occurs
 
