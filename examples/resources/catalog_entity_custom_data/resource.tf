@@ -9,7 +9,7 @@ resource "cortex_catalog_entity_custom_data" "data-with-nested-key" {
   tag         = "products-service"
   key         = "deployment pipeline"
   description = "Deployment pipeline information"
-  value       = jsonencode({
+  value = jsonencode({
     "region" : "us-central1",
     "environments" : [
       "integration",
