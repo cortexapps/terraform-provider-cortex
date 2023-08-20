@@ -23,7 +23,11 @@ func (r *CatalogEntityCustomDataResourceModel) FromApiModel(ctx context.Context,
 	r.Id = types.StringValue(entity.ID())
 	r.Tag = types.StringValue(entity.Tag)
 	r.Key = types.StringValue(entity.Key)
-	r.Description = types.StringValue(entity.Description)
+	if entity.Description != "" {
+		r.Description = types.StringValue(entity.Description)
+	} else {
+		r.Description = types.StringNull()
+	}
 
 	value, err := entity.ValueAsString()
 	if err != nil {

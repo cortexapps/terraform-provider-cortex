@@ -2,6 +2,8 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+* Better handling of empty values of Description fields across models
+
 ## 0.1.10
 
 * Fix casting issue with int values in prometheus SLOs

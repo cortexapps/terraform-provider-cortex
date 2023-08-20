@@ -26,8 +26,12 @@ func (r *ResourceDefinitionResourceModel) FromApiModel(ctx context.Context, diag
 	r.Id = types.StringValue(entity.Type)
 	r.Type = types.StringValue(entity.Type)
 	r.Name = types.StringValue(entity.Name)
-	r.Description = types.StringValue(entity.Description)
 	r.Source = types.StringValue(entity.Source)
+	if entity.Description != "" {
+		r.Description = types.StringValue(entity.Description)
+	} else {
+		r.Description = types.StringNull()
+	}
 
 	schema := make(map[string]interface{})
 	if entity.Schema != nil && len(entity.Schema) > 0 {

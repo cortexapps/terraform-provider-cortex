@@ -255,10 +255,10 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 	} else {
 		o.Type = types.StringValue(entity.Type)
 	}
-	if entity.Description == "" {
-		o.Description = types.StringNull()
-	} else {
+	if entity.Description != "" {
 		o.Description = types.StringValue(entity.Description)
+	} else {
+		o.Description = types.StringNull()
 	}
 
 	// coerce map of unknown types into string

@@ -109,8 +109,12 @@ func (o *ScorecardResourceModel) FromApiModel(ctx context.Context, diagnostics *
 	o.Id = types.StringValue(entity.Tag)
 	o.Tag = types.StringValue(entity.Tag)
 	o.Name = types.StringValue(entity.Name)
-	o.Description = types.StringValue(entity.Description)
 	o.Draft = types.BoolValue(entity.Draft)
+	if entity.Description != "" {
+		o.Description = types.StringValue(entity.Description)
+	} else {
+		o.Description = types.StringNull()
+	}
 
 	ladder := ScorecardLadderResourceModel{}
 	o.Ladder = ladder.FromApiModel(ctx, diagnostics, &entity.Ladder)

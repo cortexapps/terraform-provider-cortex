@@ -22,7 +22,11 @@ func (r *DepartmentResourceModel) FromApiModel(entity cortex.Department) {
 	r.Id = types.StringValue(entity.Tag)
 	r.Tag = types.StringValue(entity.Tag)
 	r.Name = types.StringValue(entity.Name)
-	r.Description = types.StringValue(entity.Description)
+	if entity.Description != "" {
+		r.Description = types.StringValue(entity.Description)
+	} else {
+		r.Description = types.StringNull()
+	}
 	if entity.Members != nil {
 		r.Members = make([]DepartmentMemberResourceModel, len(entity.Members))
 		for i, member := range entity.Members {
@@ -65,11 +69,20 @@ func (o *DepartmentMemberResourceModel) ToApiModel() cortex.DepartmentMember {
 }
 
 func (o *DepartmentMemberResourceModel) FromApiModel(member *cortex.DepartmentMember) DepartmentMemberResourceModel {
-	return DepartmentMemberResourceModel{
-		Name:        types.StringValue(member.Name),
-		Email:       types.StringValue(member.Email),
-		Description: types.StringValue(member.Description),
+	obj := DepartmentMemberResourceModel{
+		Email: types.StringValue(member.Email),
 	}
+	if member.Name != "" {
+		obj.Name = types.StringValue(member.Name)
+	} else {
+		obj.Name = types.StringNull()
+	}
+	if member.Description != "" {
+		obj.Description = types.StringValue(member.Description)
+	} else {
+		obj.Description = types.StringNull()
+	}
+	return obj
 }
 
 /***********************************************************************************************************************
