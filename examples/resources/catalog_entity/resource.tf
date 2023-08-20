@@ -64,7 +64,7 @@ resource "cortex_catalog_entity" "products-service" {
       method      = "POST"
       path        = "/api/v2/variants"
       description = "Creates a new variant"
-      metadata = jsonencode({
+      metadata    = jsonencode({
         "my-key" : "the value",
         "another-key" : {
           "this" : "is",
@@ -176,7 +176,7 @@ resource "cortex_catalog_entity" "products-service" {
       streams = [
         {
           stream_id = "asdf1234567"
-          targets = {
+          targets   = {
             latencies = [
               {
                 percentile = 0.5
@@ -233,7 +233,7 @@ resource "cortex_catalog_entity" "products-service" {
     }
     veracode = {
       application_names = ["products-service"]
-      sandboxes = [
+      sandboxes         = [
         {
           application_name = "products-service"
           sandbox_name     = "staging"

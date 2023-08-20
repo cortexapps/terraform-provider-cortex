@@ -31,13 +31,66 @@ Then commit the changes to `go.mod` and `go.sum`.
 
 ## Using the provider
 
-TODO
+Add the following block into your Terraform files (note that this provider requires Terraform 1.5 or greater):
+
+```terraform
+terraform {
+  required_providers {
+    cortex = {
+      source  = "tfreg.bigcommerce.net/bigcommerce/cortex"
+      version = "=> 0.1"
+    }
+  }
+  required_version = ">= 1.5.0"
+}
+```
+
+You'll need to set the environment variable `CORTEX_API_TOKEN` with your Cortex API token.
+
+You can optionally further configure the provider either inline in terraform:
+
+```terraform
+provider "cortex" {
+  token        = "my-api-token"
+  base_api_url = "https://api.getcortexapp.com" // default value, only set if changing
+}
+```
+
+...or via ENV:
+
+| Key              | Description                        | Default Value                  |
+|------------------|------------------------------------|--------------------------------|
+| CORTEX_API_TOKEN | Your Cortex.io API token           | ""                             |
+| CORTEX_API_URL   | The base API URL for Cortex's API. | "https://api.getcortexapp.com" |
+
+### Resource Types
+
+This provider comes with the following resource types:
+
+* [`cortex_catalog_entity`](docs/resources/catalog_entity.md
+* [`cortex_catalog_entity_custom_data`](docs/resources/catalog_entity_custom_data.md)
+* [`cortex_department`](docs/resources/department.md)
+* [`cortex_resource_definition`](docs/resources/resource_definition.md)
+* [`cortex_scorecard`](docs/resources/scorecard.md)
+
+And the following data sources:
+
+* [`cortex_catalog_entity`](docs/data-sources/catalog_entity.md)
+* [`cortex_catalog_entity_custom_data`](docs/data-sources/catalog_entity_custom_data.md)
+* [`cortex_department`](docs/data-sources/department.md)
+* [`cortex_resource_definition`](docs/data-sources/resource_definition.md)
+* [`cortex_scorecard`](docs/data-sources/scorecard.md)
+* [`cortex_team`](docs/data-sources/team.md)
+
+Examples on each of these can be found in the [examples/](examples/) folder.
 
 ## Developing the Provider
 
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (see [Requirements](#requirements) above).
+If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (
+see [Requirements](#requirements) above).
 
-To compile the provider, run `go install`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
+To compile the provider, run `go install`. This will build the provider and put the provider binary in the `$GOPATH/bin`
+directory.
 
 To generate or update documentation, run `go generate`.
 
