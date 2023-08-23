@@ -108,13 +108,13 @@ func (o *CatalogEntityAlert) Enabled() bool {
 }
 
 type CatalogEntityApm struct {
-	DataDog   CatalogEntityApmDataDog   `json:"datadog,omitempty" yaml:"datadog,omitempty"`
-	Dynatrace CatalogEntityApmDynatrace `json:"dynatrace,omitempty" yaml:"dynatrace,omitempty"`
-	NewRelic  CatalogEntityApmNewRelic  `json:"newrelic,omitempty" yaml:"newrelic,omitempty"`
+	DataDog   CatalogEntityApmDataDog    `json:"datadog,omitempty" yaml:"datadog,omitempty"`
+	Dynatrace CatalogEntityApmDynatrace  `json:"dynatrace,omitempty" yaml:"dynatrace,omitempty"`
+	NewRelic  []CatalogEntityApmNewRelic `json:"newrelic,omitempty" yaml:"newrelic,omitempty"`
 }
 
 func (c *CatalogEntityApm) Enabled() bool {
-	return c.DataDog.Enabled() || c.Dynatrace.Enabled() || c.NewRelic.Enabled()
+	return c.DataDog.Enabled() || c.Dynatrace.Enabled() || len(c.NewRelic) > 0
 }
 
 type CatalogEntityDashboards struct {

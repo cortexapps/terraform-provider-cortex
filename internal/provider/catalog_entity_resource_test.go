@@ -352,9 +352,11 @@ resource "cortex_catalog_entity" "test" {
       entity_ids           = ["mock-slo-id-1", "mock-slo-id-2"]
       entity_name_matchers = ["products-service", "products-service-2"]
     }
-    new_relic = {
-      application_id = 123456
-    }
+    new_relic = [
+		{
+      		application_id = 123456
+    	}
+	]
   }
 
   dashboards = {

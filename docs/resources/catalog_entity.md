@@ -76,7 +76,7 @@ Optional:
 
 - `data_dog` (Attributes) DataDog configuration for the entity. (see [below for nested schema](#nestedatt--apm--data_dog))
 - `dynatrace` (Attributes) Dynatrace configuration for the entity. (see [below for nested schema](#nestedatt--apm--dynatrace))
-- `new_relic` (Attributes) NewRelic configuration for the entity. (see [below for nested schema](#nestedatt--apm--new_relic))
+- `new_relic` (Attributes List) NewRelic configurations for the entity. (see [below for nested schema](#nestedatt--apm--new_relic))
 
 <a id="nestedatt--apm--data_dog"></a>
 ### Nested Schema for `apm.data_dog`

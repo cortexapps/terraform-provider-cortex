@@ -429,17 +429,19 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 							},
 						},
 					},
-					"new_relic": schema.SingleNestedAttribute{
-						MarkdownDescription: "NewRelic configuration for the entity.",
+					"new_relic": schema.ListNestedAttribute{
+						MarkdownDescription: "NewRelic configurations for the entity.",
 						Optional:            true,
-						Attributes: map[string]schema.Attribute{
-							"application_id": schema.Int64Attribute{
-								MarkdownDescription: "NewRelic application ID for the entity.",
-								Optional:            true,
-							},
-							"alias": schema.StringAttribute{
-								MarkdownDescription: "Alias for the service. Only used if opted into multi-account support in New Relic.",
-								Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"application_id": schema.Int64Attribute{
+									MarkdownDescription: "NewRelic application ID for the entity.",
+									Optional:            true,
+								},
+								"alias": schema.StringAttribute{
+									MarkdownDescription: "Alias for the service. Only used if opted into multi-account support in New Relic.",
+									Optional:            true,
+								},
 							},
 						},
 					},

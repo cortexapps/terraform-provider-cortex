@@ -457,7 +457,7 @@ func (c *CatalogEntityParser) interpolateApm(entity *CatalogEntityData, apm map[
 		c.interpolateDynatraceApm(entity, apm["dynatrace"].(map[string]interface{}))
 	}
 	if apm["newrelic"] != nil {
-		c.interpolateNewRelicApm(entity, apm["newrelic"].(map[string]interface{}))
+		c.interpolateNewRelicApm(entity, apm["newrelic"].([]interface{}))
 	}
 }
 
@@ -487,13 +487,16 @@ func (c *CatalogEntityParser) interpolateDynatraceApm(entity *CatalogEntityData,
 	}
 }
 
-func (c *CatalogEntityParser) interpolateNewRelicApm(entity *CatalogEntityData, apm map[string]interface{}) {
-	entity.Apm.NewRelic = CatalogEntityApmNewRelic{}
-	if apm["applicationId"] != nil {
-		entity.Apm.NewRelic.ApplicationID = int64(apm["applicationId"].(int))
-	}
-	if apm["alias"] != nil {
-		entity.Apm.NewRelic.Alias = apm["alias"].(string)
+func (c *CatalogEntityParser) interpolateNewRelicApm(entity *CatalogEntityData, apm []interface{}) {
+	entity.Apm.NewRelic = make([]CatalogEntityApmNewRelic, len(apm))
+	for i, app := range apm {
+		apmMap := app.(map[string]interface{})
+		if apmMap["applicationId"] != nil {
+			entity.Apm.NewRelic[i].ApplicationID = int64(apmMap["applicationId"].(int))
+			if apmMap["alias"] != nil {
+				entity.Apm.NewRelic[i].Alias = apmMap["alias"].(string)
+			}
+		}
 	}
 }
 

@@ -1708,9 +1708,9 @@ func (o *CatalogEntityWizProjectResourceModel) FromApiModel(entity *cortex.Catal
  **********************************************************************************************************************/
 
 type CatalogEntityApmResourceModel struct {
-	DataDog   types.Object `tfsdk:"data_dog"`
-	Dynatrace types.Object `tfsdk:"dynatrace"`
-	NewRelic  types.Object `tfsdk:"new_relic"`
+	DataDog   types.Object   `tfsdk:"data_dog"`
+	Dynatrace types.Object   `tfsdk:"dynatrace"`
+	NewRelic  []types.Object `tfsdk:"new_relic"`
 }
 
 func (o *CatalogEntityApmResourceModel) AttrTypes() map[string]attr.Type {
@@ -1721,7 +1721,7 @@ func (o *CatalogEntityApmResourceModel) AttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"data_dog":  types.ObjectType{AttrTypes: dd.AttrTypes()},
 		"dynatrace": types.ObjectType{AttrTypes: dt.AttrTypes()},
-		"new_relic": types.ObjectType{AttrTypes: nr.AttrTypes()},
+		"new_relic": types.ListType{ElemType: types.ObjectType{AttrTypes: nr.AttrTypes()}},
 	}
 }
 
@@ -1734,14 +1734,17 @@ func (o *CatalogEntityApmResourceModel) ToApiModel(ctx context.Context) cortex.C
 	dt := CatalogEntityApmDynatraceResourceModel{}
 	o.Dynatrace.As(ctx, &dt, defaultObjOptions)
 
-	nr := CatalogEntityApmNewRelicResourceModel{}
-	o.NewRelic.As(ctx, &nr, defaultObjOptions)
-
-	return cortex.CatalogEntityApm{
+	entity := cortex.CatalogEntityApm{
 		DataDog:   dd.ToApiModel(),
 		Dynatrace: dt.ToApiModel(),
-		NewRelic:  nr.ToApiModel(),
 	}
+	entity.NewRelic = make([]cortex.CatalogEntityApmNewRelic, len(o.NewRelic))
+	for i, app := range o.NewRelic {
+		nob := CatalogEntityApmNewRelicResourceModel{}
+		app.As(ctx, &nob, defaultObjOptions)
+		entity.NewRelic[i] = nob.ToApiModel()
+	}
+	return entity
 }
 
 func (o *CatalogEntityApmResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityApm) types.Object {
@@ -1751,12 +1754,17 @@ func (o *CatalogEntityApmResourceModel) FromApiModel(ctx context.Context, diagno
 
 	dd := CatalogEntityApmDataDogResourceModel{}
 	dt := CatalogEntityApmDynatraceResourceModel{}
-	nr := CatalogEntityApmNewRelicResourceModel{}
-
 	obj := CatalogEntityApmResourceModel{
 		DataDog:   dd.FromApiModel(ctx, diagnostics, &entity.DataDog),
 		Dynatrace: dt.FromApiModel(ctx, diagnostics, &entity.Dynatrace),
-		NewRelic:  nr.FromApiModel(ctx, diagnostics, &entity.NewRelic),
+	}
+	//nr := CatalogEntityApmNewRelicResourceModel{}
+	if len(entity.NewRelic) > 0 {
+		obj.NewRelic = make([]types.Object, len(entity.NewRelic))
+		for i, e := range entity.NewRelic {
+			nob := CatalogEntityApmNewRelicResourceModel{}
+			obj.NewRelic[i] = nob.FromApiModel(ctx, diagnostics, &e)
+		}
 	}
 
 	objectValue, d := types.ObjectValueFrom(ctx, obj.AttrTypes(), &obj)
