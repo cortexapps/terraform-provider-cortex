@@ -2,6 +2,8 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+* Bump `life4/genesis` from 1.7 to 1.8
+
 ## 0.1.11
 
 * Handle null description values on catalog entity dependencies 
