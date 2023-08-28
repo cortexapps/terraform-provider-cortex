@@ -602,8 +602,12 @@ func (o *CatalogEntityDependencyResourceModel) ToApiModel(diagnostics *diag.Diag
 
 func (o *CatalogEntityDependencyResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, dependency *cortex.CatalogEntityDependency) types.Object {
 	obj := CatalogEntityDependencyResourceModel{
-		Tag:         types.StringValue(dependency.Tag),
-		Description: types.StringValue(dependency.Description),
+		Tag: types.StringValue(dependency.Tag),
+	}
+	if dependency.Description != "" {
+		obj.Description = types.StringValue(dependency.Description)
+	} else {
+		obj.Description = types.StringNull()
 	}
 	if dependency.Path != "" {
 		obj.Path = types.StringValue(dependency.Path)

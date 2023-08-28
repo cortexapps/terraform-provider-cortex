@@ -2,6 +2,7 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+* Handle null description values on catalog entity dependencies 
 * Adjustments to NewRelic APM to allow for multiple applications
 * Bump `life4/genesis` from 1.4 to 1.7
 * Better handling of empty values of Description fields across models
