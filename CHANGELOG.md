@@ -2,6 +2,7 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+* Bump `hashicorp/terraform-plugin-framework-validators` from 0.11 to 0.12
 * Bump `life4/genesis` from 1.7 to 1.8
 
 ## 0.1.11

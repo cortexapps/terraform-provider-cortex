@@ -7,9 +7,15 @@ on:
   pull_request:
     paths-ignore:
       - 'README.md'
+      - 'CHANGELOG.md'
+      - 'TODO.md'
   push:
+    branches:
+      - 'main'
     paths-ignore:
       - 'README.md'
+      - 'CHANGELOG.md'
+      - 'TODO.md'
 
 # Testing only needs permissions to read the repository contents.
 permissions:
