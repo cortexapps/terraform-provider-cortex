@@ -37,7 +37,7 @@ Add the following block into your Terraform files (note that this provider requi
 terraform {
   required_providers {
     cortex = {
-      source  = "tfreg.bigcommerce.net/bigcommerce/cortex"
+      source  = "cortex/cortex"
       version = "=> 0.1"
     }
   }
