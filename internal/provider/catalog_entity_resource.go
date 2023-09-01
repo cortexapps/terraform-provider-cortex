@@ -813,6 +813,28 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
+			"service_now": schema.SingleNestedAttribute{
+				MarkdownDescription: "ServiceNow configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"services": schema.ListNestedAttribute{
+						MarkdownDescription: "List of ServiceNow services for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"id": schema.Int64Attribute{
+									MarkdownDescription: "ServiceNow service ID.",
+									Optional:            true,
+								},
+								"table_name": schema.StringAttribute{
+									MarkdownDescription: "ServiceNow table name.",
+									Optional:            true,
+								},
+							},
+						},
+					},
+				},
+			},
 			"slack": schema.SingleNestedAttribute{
 				MarkdownDescription: "Slack configuration for the entity.",
 				Optional:            true,

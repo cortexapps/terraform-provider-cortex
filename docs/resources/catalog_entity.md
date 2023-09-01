@@ -44,6 +44,7 @@ Catalog Entity
 - `owners` (Attributes List) List of owners for the entity. Owners can be users, groups, or Slack channels. (see [below for nested schema](#nestedatt--owners))
 - `rollbar` (Attributes) Rollbar configuration for the entity. (see [below for nested schema](#nestedatt--rollbar))
 - `sentry` (Attributes) Sentry configuration for the entity. (see [below for nested schema](#nestedatt--sentry))
+- `service_now` (Attributes) ServiceNow configuration for the entity. (see [below for nested schema](#nestedatt--service_now))
 - `slack` (Attributes) Slack configuration for the entity. (see [below for nested schema](#nestedatt--slack))
 - `slos` (Attributes) Service-level Objectives configuration for the entity. (see [below for nested schema](#nestedatt--slos))
 - `snyk` (Attributes) Snyk configuration for the entity. (see [below for nested schema](#nestedatt--snyk))
@@ -391,6 +392,23 @@ Required:
 Required:
 
 - `project` (String) Sentry project ID for the entity.
+
+
+<a id="nestedatt--service_now"></a>
+### Nested Schema for `service_now`
+
+Optional:
+
+- `services` (Attributes List) List of ServiceNow services for the entity. (see [below for nested schema](#nestedatt--service_now--services))
+
+<a id="nestedatt--service_now--services"></a>
+### Nested Schema for `service_now.services`
+
+Optional:
+
+- `id` (Number) ServiceNow service ID.
+- `table_name` (String) ServiceNow table name.
+
 
 
 <a id="nestedatt--slack"></a>

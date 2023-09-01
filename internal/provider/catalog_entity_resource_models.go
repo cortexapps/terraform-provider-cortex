@@ -43,6 +43,7 @@ type CatalogEntityResourceModel struct {
 	FireHydrant    types.Object                             `tfsdk:"firehydrant"`
 	Rollbar        types.Object                             `tfsdk:"rollbar"`
 	Sentry         types.Object                             `tfsdk:"sentry"`
+	ServiceNow     types.Object                             `tfsdk:"service_now"`
 	Slack          types.Object                             `tfsdk:"slack"`
 	Snyk           types.Object                             `tfsdk:"snyk"`
 	Wiz            types.Object                             `tfsdk:"wiz"`
@@ -190,6 +191,11 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics
 	if err != nil {
 		diagnostics.AddError("error parsing Sentry configuration", fmt.Sprintf("%+v", err))
 	}
+	serviceNow := CatalogEntityServiceNowResourceModel{}
+	err = o.ServiceNow.As(ctx, &serviceNow, defaultObjOptions)
+	if err != nil {
+		diagnostics.AddError("error parsing ServiceNow configuration", fmt.Sprintf("%+v", err))
+	}
 	slack := CatalogEntitySlackResourceModel{}
 	err = o.Slack.As(ctx, &slack, defaultObjOptions)
 	if err != nil {
@@ -239,6 +245,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics
 		FireHydrant:    firehydrant.ToApiModel(),
 		Rollbar:        rollbar.ToApiModel(),
 		Sentry:         sentry.ToApiModel(),
+		ServiceNow:     serviceNow.ToApiModel(),
 		Slack:          slack.ToApiModel(),
 		Snyk:           snyk.ToApiModel(),
 		Wiz:            wiz.ToApiModel(),
@@ -394,6 +401,9 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 
 	slack := CatalogEntitySlackResourceModel{}
 	o.Slack = slack.FromApiModel(ctx, diagnostics, &entity.Slack)
+
+	serviceNow := CatalogEntityServiceNowResourceModel{}
+	o.ServiceNow = serviceNow.FromApiModel(ctx, diagnostics, &entity.ServiceNow)
 
 	snyk := CatalogEntitySnykResourceModel{}
 	o.Snyk = snyk.FromApiModel(ctx, diagnostics, &entity.Snyk)
@@ -1485,6 +1495,69 @@ func (o *CatalogEntitySentryResourceModel) FromApiModel(ctx context.Context, dia
 	obj, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &ob)
 	diagnostics.Append(d...)
 	return obj
+}
+
+/***********************************************************************************************************************
+ * ServiceNow
+ **********************************************************************************************************************/
+
+type CatalogEntityServiceNowResourceModel struct {
+	Services []CatalogEntityServiceNowServiceResourceModel `tfsdk:"services"`
+}
+
+func (o *CatalogEntityServiceNowResourceModel) AttrTypes() map[string]attr.Type {
+	ob := CatalogEntityServiceNowServiceResourceModel{}
+	return map[string]attr.Type{
+		"services": types.ListType{ElemType: types.ObjectType{AttrTypes: ob.AttrTypes()}},
+	}
+}
+
+func (o *CatalogEntityServiceNowResourceModel) ToApiModel() cortex.CatalogEntityServiceNow {
+	return cortex.CatalogEntityServiceNow{}
+}
+
+func (o *CatalogEntityServiceNowResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityServiceNow) types.Object {
+	ob := CatalogEntityServiceNowResourceModel{}
+	if !entity.Enabled() {
+		return types.ObjectNull(ob.AttrTypes())
+	}
+
+	var services = make([]CatalogEntityServiceNowServiceResourceModel, len(entity.Services))
+	for i, e := range entity.Services {
+		ch := CatalogEntityServiceNowServiceResourceModel{}
+		services[i] = ch.FromApiModel(&e)
+	}
+	ob.Services = services
+
+	obj, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return obj
+}
+
+type CatalogEntityServiceNowServiceResourceModel struct {
+	ID        types.Int64  `tfsdk:"id"`
+	TableName types.String `tfsdk:"table_name"`
+}
+
+func (o *CatalogEntityServiceNowServiceResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"id":         types.Int64Type,
+		"table_name": types.StringType,
+	}
+}
+
+func (o *CatalogEntityServiceNowServiceResourceModel) ToApiModel() cortex.CatalogEntityServiceNowService {
+	return cortex.CatalogEntityServiceNowService{
+		ID:        o.ID.ValueInt64(),
+		TableName: o.TableName.ValueString(),
+	}
+}
+
+func (o *CatalogEntityServiceNowServiceResourceModel) FromApiModel(entity *cortex.CatalogEntityServiceNowService) CatalogEntityServiceNowServiceResourceModel {
+	return CatalogEntityServiceNowServiceResourceModel{
+		ID:        types.Int64Value(entity.ID),
+		TableName: types.StringValue(entity.TableName),
+	}
 }
 
 /***********************************************************************************************************************

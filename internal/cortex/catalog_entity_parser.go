@@ -121,6 +121,10 @@ func (c *CatalogEntityParser) YamlToEntity(yamlEntity map[string]interface{}) (C
 		c.interpolateSentry(&entity, info["x-cortex-sentry"].(map[string]interface{}))
 	}
 
+	if info["x-cortex-servicenow"] != nil {
+		c.interpolateServiceNow(&entity, info["x-cortex-servicenow"].(map[string]interface{}))
+	}
+
 	if info["x-cortex-slack"] != nil {
 		c.interpolateSlack(&entity, info["x-cortex-slack"].(map[string]interface{}))
 	}
@@ -504,6 +508,24 @@ func (c *CatalogEntityParser) interpolateNewRelicApm(entity *CatalogEntityData, 
 
 func (c *CatalogEntityParser) interpolateSentry(entity *CatalogEntityData, sentryMap map[string]interface{}) {
 	entity.Sentry.Project = MapFetchToString(sentryMap, "project")
+}
+
+func (c *CatalogEntityParser) interpolateServiceNow(entity *CatalogEntityData, serviceNowMap map[string]interface{}) {
+	if serviceNowMap["services"] != nil {
+		for _, service := range serviceNowMap["services"].([]interface{}) {
+			serviceMap := service.(map[string]interface{})
+			ss := CatalogEntityServiceNowService{}
+			if serviceMap["id"] != nil {
+				ss.ID = MapFetch(serviceMap, "id", 0).(int64)
+			}
+			if serviceMap["tableName"] != nil {
+				ss.TableName = MapFetchToString(serviceMap, "tableName")
+			}
+			if ss.Enabled() {
+				entity.ServiceNow.Services = append(entity.ServiceNow.Services, ss)
+			}
+		}
+	}
 }
 
 func (c *CatalogEntityParser) interpolateRollbar(entity *CatalogEntityData, rollbarMap map[string]interface{}) {

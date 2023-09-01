@@ -39,6 +39,7 @@ type CatalogEntityData struct {
 	FireHydrant CatalogEntityFireHydrant `json:"x-cortex-firehydrant,omitempty" yaml:"x-cortex-firehydrant,omitempty"`
 	Rollbar     CatalogEntityRollbar     `json:"x-cortex-rollbar,omitempty" yaml:"x-cortex-rollbar,omitempty"`
 	Sentry      CatalogEntitySentry      `json:"x-cortex-sentry,omitempty" yaml:"x-cortex-sentry,omitempty"`
+	ServiceNow  CatalogEntityServiceNow  `json:"x-cortex-servicenow,omitempty" yaml:"x-cortex-servicenow,omitempty"`
 	Slack       CatalogEntitySlack       `json:"x-cortex-slack,omitempty" yaml:"x-cortex-slack,omitempty"`
 	Snyk        CatalogEntitySnyk        `json:"x-cortex-snyk,omitempty" yaml:"x-cortex-snyk,omitempty"`
 	Wiz         CatalogEntityWiz         `json:"x-cortex-wiz,omitempty" yaml:"x-cortex-wiz,omitempty"`
@@ -534,6 +535,27 @@ type CatalogEntitySentry struct {
 
 func (o *CatalogEntitySentry) Enabled() bool {
 	return o.Project != ""
+}
+
+/***********************************************************************************************************************
+ * ServiceNow - https://docs.cortex.io/docs/reference/integrations/servicenow
+ **********************************************************************************************************************/
+
+type CatalogEntityServiceNow struct {
+	Services []CatalogEntityServiceNowService `json:"services" yaml:"services"`
+}
+
+func (o *CatalogEntityServiceNow) Enabled() bool {
+	return len(o.Services) > 0
+}
+
+type CatalogEntityServiceNowService struct {
+	ID        int64  `json:"id" yaml:"id"`
+	TableName string `json:"tableName" yaml:"tableName"`
+}
+
+func (o *CatalogEntityServiceNowService) Enabled() bool {
+	return o.ID > 0 || o.TableName != ""
 }
 
 /***********************************************************************************************************************
