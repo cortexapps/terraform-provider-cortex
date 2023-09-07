@@ -309,6 +309,8 @@ func (o *CatalogEntityCheckmarx) Enabled() bool {
 type CatalogEntityStaticAnalysisCodeCov struct {
 	Repository string `json:"repo" yaml:"repo"`
 	Provider   string `json:"provider" yaml:"provider"`
+	Owner      string `json:"owner" yaml:"owner"`
+	Flag       string `json:"flag" yaml:"flag"`
 }
 
 func (o *CatalogEntityStaticAnalysisCodeCov) Enabled() bool {

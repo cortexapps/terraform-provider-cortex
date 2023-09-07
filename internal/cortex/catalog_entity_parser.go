@@ -661,6 +661,8 @@ func (c *CatalogEntityParser) interpolateStaticAnalysisCodeCov(entity *CatalogEn
 	entity.StaticAnalysis.CodeCov = CatalogEntityStaticAnalysisCodeCov{
 		Repository: MapFetchToString(ccMap, "repo"),
 		Provider:   MapFetchToString(ccMap, "provider"),
+		Owner:      MapFetchToString(ccMap, "owner"),
+		Flag:       MapFetchToString(ccMap, "flag"),
 	}
 }
 

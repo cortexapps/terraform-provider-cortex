@@ -2631,12 +2631,16 @@ func (o *CatalogEntityStaticAnalysisResourceModel) FromApiModel(ctx context.Cont
 type CatalogEntityStaticAnalysisCodeCovResourceModel struct {
 	Repository types.String `tfsdk:"repository"`
 	Provider   types.String `tfsdk:"provider"`
+	Owner      types.String `tfsdk:"owner"`
+	Flag       types.String `tfsdk:"flag"`
 }
 
 func (o *CatalogEntityStaticAnalysisCodeCovResourceModel) AttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"provider":   types.StringType,
 		"repository": types.StringType,
+		"owner":      types.StringType,
+		"flag":       types.StringType,
 	}
 }
 
@@ -2644,6 +2648,8 @@ func (o *CatalogEntityStaticAnalysisCodeCovResourceModel) ToApiModel() cortex.Ca
 	return cortex.CatalogEntityStaticAnalysisCodeCov{
 		Repository: o.Repository.ValueString(),
 		Provider:   o.Provider.ValueString(),
+		Owner:      o.Provider.ValueString(),
+		Flag:       o.Flag.ValueString(),
 	}
 }
 
@@ -2655,6 +2661,16 @@ func (o *CatalogEntityStaticAnalysisCodeCovResourceModel) FromApiModel(ctx conte
 	ob := CatalogEntityStaticAnalysisCodeCovResourceModel{
 		Repository: types.StringValue(cov.Repository),
 		Provider:   types.StringValue(cov.Provider),
+	}
+	if cov.Owner != "" {
+		ob.Owner = types.StringValue(cov.Owner)
+	} else {
+		ob.Owner = types.StringNull()
+	}
+	if cov.Flag != "" {
+		ob.Flag = types.StringValue(cov.Flag)
+	} else {
+		ob.Flag = types.StringNull()
 	}
 	objectValue, d := types.ObjectValueFrom(ctx, ob.AttrTypes(), &ob)
 	diagnostics.Append(d...)

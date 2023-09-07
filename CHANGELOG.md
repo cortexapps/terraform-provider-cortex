@@ -2,6 +2,7 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+* Add support for `owner` and `flag` attributes on `code_cov` block
 * Add support for `x-cortex-microsoft-teams`
 * Bump `hashicorp/terraform-plugin-sdk/v2` from 2.28 to 2.29
 * Bump `hashicorp/terraform-plugin-testing` from 1.4.0 to 1.5.1

@@ -583,6 +583,11 @@ Required:
 - `provider` (String) Git provider. One of: `GITHUB`, `GITLAB`, or `BITBUCKET`.
 - `repository` (String) Git repository, in `organization/repository` format.
 
+Optional:
+
+- `flag` (String) Pulls from isolated & categorized coverage reports (optional).
+- `owner` (String) Username from service provider (optional).
+
 
 <a id="nestedatt--static_analysis--mend"></a>
 ### Nested Schema for `static_analysis.mend`

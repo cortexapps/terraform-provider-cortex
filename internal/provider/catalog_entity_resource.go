@@ -639,6 +639,14 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 									stringvalidator.OneOf("GITHUB", "GITLAB", "BITBUCKET"),
 								},
 							},
+							"owner": schema.StringAttribute{
+								MarkdownDescription: "Username from service provider (optional).",
+								Optional:            true,
+							},
+							"flag": schema.StringAttribute{
+								MarkdownDescription: "Pulls from isolated & categorized coverage reports (optional).",
+								Optional:            true,
+							},
 						},
 					},
 					"mend": schema.SingleNestedAttribute{
