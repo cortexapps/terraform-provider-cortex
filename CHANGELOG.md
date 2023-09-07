@@ -2,9 +2,13 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+* Bump `hashicorp/terraform-plugin-sdk/v2` from 2.28 to 2.29
+* Bump `hashicorp/terraform-plugin-testing` from 1.4.0 to 1.5.1
+* Bump `hashicorp/terraform-plugin-go` from 0.18 to 0.19
+* Bump `hashicorp/terraform-plugin-framework` from 1.3.5 to 1.4.0
 * Add `x-cortex-servicenow` support for ServiceNow integration
 * Bump `hashicorp/terraform-plugin-framework-validators` from 0.11 to 0.12
-* Bump `life4/genesis` from 1.7 to 1.8
+* Bump `life4/genesis` from 1.7 to 1.8.1
 
 ## 0.1.11
 
