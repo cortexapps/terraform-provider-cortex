@@ -242,17 +242,46 @@ resource "cortex_catalog_entity" "products-service" {
     }
   }
 
+  ci_cd = {
+    buildkite = {
+      pipelines = [
+        { slug = "products-pipeline" }
+      ]
+      tags = [
+        { tag = "products-tag" }
+      ]
+    }
+  }
+
   bugsnag = {
     project = "products-service"
   }
 
   checkmarx = {
     projects = [
+      { id = "products-service" }
+    ]
+  }
+
+  firehydrant = {
+    services = [
       {
-        id = "products-service"
+        id   = "asdf1234"
+        type = "ID"
+      },
+      {
+        id   = "products-service"
+        type = "SLUG"
       }
     ]
   }
+
+  microsoft_teams = [
+    {
+      name                  = "engineering"
+      notifications_enabled = false
+    }
+  ]
 
   rollbar = {
     project = "products-service"
@@ -267,7 +296,14 @@ resource "cortex_catalog_entity" "products-service" {
       {
         organization = "cortexio"
         project_id   = "products-service"
+        source       = "CODE"
       }
+    ]
+  }
+
+  wiz = {
+    projects = [
+      { project_id = "01234567-e65f-4b7b-a8b1-5b642894ec37" }
     ]
   }
 }

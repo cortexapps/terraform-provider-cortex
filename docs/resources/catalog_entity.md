@@ -40,6 +40,7 @@ Catalog Entity
 - `issues` (Attributes) Issue tracking configuration for the entity. (see [below for nested schema](#nestedatt--issues))
 - `links` (Attributes List) List of links related to the entity. (see [below for nested schema](#nestedatt--links))
 - `metadata` (String) Custom metadata for the entity, in JSON format in a string. (Use the `jsonencode` function to convert a JSON object to a string.)
+- `microsoft_teams` (Attributes List) List of Microsoft Teams channels for the entity. (see [below for nested schema](#nestedatt--microsoft_teams))
 - `on_call` (Attributes) On-call configuration for the entity. (see [below for nested schema](#nestedatt--on_call))
 - `owners` (Attributes List) List of owners for the entity. Owners can be users, groups, or Slack channels. (see [below for nested schema](#nestedatt--owners))
 - `rollbar` (Attributes) Rollbar configuration for the entity. (see [below for nested schema](#nestedatt--rollbar))
@@ -312,6 +313,19 @@ Required:
 - `name` (String) Name of the link.
 - `type` (String) Type of the link. Valid values are `runbook`, `documentation`, `logs`, `dashboard`, `metrics`, `healthcheck`, `OPENAPI`, `ASYNC_API`.
 - `url` (String) URL of the link.
+
+
+<a id="nestedatt--microsoft_teams"></a>
+### Nested Schema for `microsoft_teams`
+
+Required:
+
+- `name` (String) Exact match name of the channel.
+
+Optional:
+
+- `description` (String) Description of the channel.
+- `notifications_enabled` (Boolean) Whether the channel should receive notifications.
 
 
 <a id="nestedatt--on_call"></a>

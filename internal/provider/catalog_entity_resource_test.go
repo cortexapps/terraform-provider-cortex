@@ -510,6 +510,18 @@ resource "cortex_catalog_entity" "test" {
     ]
   }
 
+  microsoft_teams = [
+    {
+      name                  = "engineering"
+      notifications_enabled = false
+    },
+    {
+      name                  = "platform-engineering"
+      description           = "Platform Engineering Team"
+      notifications_enabled = false
+    }
+  ]
+
   rollbar = {
     project = "products-service"
   }

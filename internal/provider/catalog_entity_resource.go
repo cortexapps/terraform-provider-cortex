@@ -793,6 +793,26 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
+			"microsoft_teams": schema.ListNestedAttribute{
+				MarkdownDescription: "List of Microsoft Teams channels for the entity.",
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							MarkdownDescription: "Exact match name of the channel.",
+							Required:            true,
+						},
+						"description": schema.StringAttribute{
+							MarkdownDescription: "Description of the channel.",
+							Optional:            true,
+						},
+						"notifications_enabled": schema.BoolAttribute{
+							MarkdownDescription: "Whether the channel should receive notifications.",
+							Optional:            true,
+						},
+					},
+				},
+			},
 			"rollbar": schema.SingleNestedAttribute{
 				MarkdownDescription: "Rollbar configuration for the entity.",
 				Optional:            true,

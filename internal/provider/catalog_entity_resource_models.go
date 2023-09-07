@@ -41,6 +41,7 @@ type CatalogEntityResourceModel struct {
 	BugSnag        types.Object                             `tfsdk:"bug_snag"`
 	Checkmarx      types.Object                             `tfsdk:"checkmarx"`
 	FireHydrant    types.Object                             `tfsdk:"firehydrant"`
+	MicrosoftTeams []types.Object                           `tfsdk:"microsoft_teams"`
 	Rollbar        types.Object                             `tfsdk:"rollbar"`
 	Sentry         types.Object                             `tfsdk:"sentry"`
 	ServiceNow     types.Object                             `tfsdk:"service_now"`
@@ -181,6 +182,15 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics
 	if err != nil {
 		diagnostics.AddError("error parsing FireHydrant configuration", fmt.Sprintf("%+v", err))
 	}
+	microsoftTeams := make([]cortex.CatalogEntityMicrosoftTeam, len(o.MicrosoftTeams))
+	for i, team := range o.MicrosoftTeams {
+		t := CatalogEntityMicrosoftTeamResourceModel{}
+		err := team.As(ctx, &t, defaultObjOptions)
+		if err != nil {
+			diagnostics.AddError("error parsing microsoft team", fmt.Sprintf("%+v", err))
+		}
+		microsoftTeams[i] = t.ToApiModel()
+	}
 	rollbar := CatalogEntityRollbarResourceModel{}
 	err = o.Rollbar.As(ctx, &rollbar, defaultObjOptions)
 	if err != nil {
@@ -243,6 +253,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics
 		BugSnag:        bugSnag.ToApiModel(),
 		Checkmarx:      checkmarx.ToApiModel(),
 		FireHydrant:    firehydrant.ToApiModel(),
+		MicrosoftTeams: microsoftTeams,
 		Rollbar:        rollbar.ToApiModel(),
 		Sentry:         sentry.ToApiModel(),
 		ServiceNow:     serviceNow.ToApiModel(),
@@ -392,6 +403,16 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 
 	firehydrant := CatalogEntityFireHydrantResourceModel{}
 	o.FireHydrant = firehydrant.FromApiModel(ctx, diagnostics, &entity.FireHydrant)
+
+	if len(entity.MicrosoftTeams) > 0 {
+		o.MicrosoftTeams = make([]types.Object, len(entity.MicrosoftTeams))
+		for i, team := range entity.MicrosoftTeams {
+			m := CatalogEntityMicrosoftTeamResourceModel{}
+			o.MicrosoftTeams[i] = m.FromApiModel(ctx, diagnostics, &team)
+		}
+	} else {
+		o.MicrosoftTeams = nil
+	}
 
 	rollbar := CatalogEntityRollbarResourceModel{}
 	o.Rollbar = rollbar.FromApiModel(ctx, diagnostics, &entity.Rollbar)
@@ -1423,6 +1444,51 @@ func (o *CatalogEntityFireHydrantServiceResourceModel) FromApiModel(service cort
 		ID:   types.StringValue(service.ID),
 		Type: types.StringValue(service.Type),
 	}
+}
+
+/***********************************************************************************************************************
+ * Microsoft Teams
+ **********************************************************************************************************************/
+
+type CatalogEntityMicrosoftTeamResourceModel struct {
+	Name                 types.String `tfsdk:"name"`
+	Description          types.String `tfsdk:"description"`
+	NotificationsEnabled types.Bool   `tfsdk:"notifications_enabled"`
+}
+
+func (o *CatalogEntityMicrosoftTeamResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"name":                  types.StringType,
+		"description":           types.StringType,
+		"notifications_enabled": types.BoolType,
+	}
+}
+
+func (o *CatalogEntityMicrosoftTeamResourceModel) ToApiModel() cortex.CatalogEntityMicrosoftTeam {
+	return cortex.CatalogEntityMicrosoftTeam{
+		Name:                 o.Name.ValueString(),
+		Description:          o.Description.ValueString(),
+		NotificationsEnabled: o.NotificationsEnabled.ValueBool(),
+	}
+}
+
+func (o *CatalogEntityMicrosoftTeamResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityMicrosoftTeam) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
+	ob := CatalogEntityMicrosoftTeamResourceModel{
+		Name:                 types.StringValue(entity.Name),
+		NotificationsEnabled: types.BoolValue(entity.NotificationsEnabled),
+	}
+	if entity.Description != "" {
+		ob.Description = types.StringValue(entity.Description)
+	} else {
+		ob.Description = types.StringNull()
+	}
+	obj, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return obj
 }
 
 /***********************************************************************************************************************

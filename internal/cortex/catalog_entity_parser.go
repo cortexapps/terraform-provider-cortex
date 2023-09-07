@@ -113,6 +113,10 @@ func (c *CatalogEntityParser) YamlToEntity(yamlEntity map[string]interface{}) (C
 		c.interpolateFirehydrant(&entity, info["x-cortex-firehydrant"].(map[string]interface{}))
 	}
 
+	if info["x-cortex-microsoft-teams"] != nil {
+		c.interpolateMicrosoftTeams(&entity, info["x-cortex-microsoft-teams"].([]interface{}))
+	}
+
 	if info["x-cortex-rollbar"] != nil {
 		c.interpolateRollbar(&entity, info["x-cortex-rollbar"].(map[string]interface{}))
 	}
@@ -488,6 +492,17 @@ func (c *CatalogEntityParser) interpolateDynatraceApm(entity *CatalogEntityData,
 		for i, group := range apm["entityNameMatchers"].([]interface{}) {
 			entity.Apm.Dynatrace.EntityNameMatchers[i] = group.(string)
 		}
+	}
+}
+
+func (c *CatalogEntityParser) interpolateMicrosoftTeams(entity *CatalogEntityData, teams []interface{}) {
+	for _, team := range teams {
+		teamMap := team.(map[string]interface{})
+		entity.MicrosoftTeams = append(entity.MicrosoftTeams, CatalogEntityMicrosoftTeam{
+			Name:                 MapFetchToString(teamMap, "name"),
+			Description:          MapFetchToString(teamMap, "description"),
+			NotificationsEnabled: MapFetch(teamMap, "notificationsEnabled", false).(bool),
+		})
 	}
 }
 

@@ -34,15 +34,16 @@ type CatalogEntityData struct {
 	CiCd           CatalogEntityCiCd           `json:"x-cortex-ci-cd,omitempty" yaml:"x-cortex-ci-cd,omitempty"`
 
 	// Integration-specific things
-	BugSnag     CatalogEntityBugSnag     `json:"x-cortex-bugsnag,omitempty" yaml:"x-cortex-bugsnag,omitempty"`
-	Checkmarx   CatalogEntityCheckmarx   `json:"x-cortex-checkmarx,omitempty" yaml:"x-cortex-checkmarx,omitempty"`
-	FireHydrant CatalogEntityFireHydrant `json:"x-cortex-firehydrant,omitempty" yaml:"x-cortex-firehydrant,omitempty"`
-	Rollbar     CatalogEntityRollbar     `json:"x-cortex-rollbar,omitempty" yaml:"x-cortex-rollbar,omitempty"`
-	Sentry      CatalogEntitySentry      `json:"x-cortex-sentry,omitempty" yaml:"x-cortex-sentry,omitempty"`
-	ServiceNow  CatalogEntityServiceNow  `json:"x-cortex-servicenow,omitempty" yaml:"x-cortex-servicenow,omitempty"`
-	Slack       CatalogEntitySlack       `json:"x-cortex-slack,omitempty" yaml:"x-cortex-slack,omitempty"`
-	Snyk        CatalogEntitySnyk        `json:"x-cortex-snyk,omitempty" yaml:"x-cortex-snyk,omitempty"`
-	Wiz         CatalogEntityWiz         `json:"x-cortex-wiz,omitempty" yaml:"x-cortex-wiz,omitempty"`
+	BugSnag        CatalogEntityBugSnag         `json:"x-cortex-bugsnag,omitempty" yaml:"x-cortex-bugsnag,omitempty"`
+	Checkmarx      CatalogEntityCheckmarx       `json:"x-cortex-checkmarx,omitempty" yaml:"x-cortex-checkmarx,omitempty"`
+	FireHydrant    CatalogEntityFireHydrant     `json:"x-cortex-firehydrant,omitempty" yaml:"x-cortex-firehydrant,omitempty"`
+	MicrosoftTeams []CatalogEntityMicrosoftTeam `json:"x-cortex-microsoft-teams,omitempty" yaml:"x-cortex-microsoft-teams,omitempty"`
+	Rollbar        CatalogEntityRollbar         `json:"x-cortex-rollbar,omitempty" yaml:"x-cortex-rollbar,omitempty"`
+	Sentry         CatalogEntitySentry          `json:"x-cortex-sentry,omitempty" yaml:"x-cortex-sentry,omitempty"`
+	ServiceNow     CatalogEntityServiceNow      `json:"x-cortex-servicenow,omitempty" yaml:"x-cortex-servicenow,omitempty"`
+	Slack          CatalogEntitySlack           `json:"x-cortex-slack,omitempty" yaml:"x-cortex-slack,omitempty"`
+	Snyk           CatalogEntitySnyk            `json:"x-cortex-snyk,omitempty" yaml:"x-cortex-snyk,omitempty"`
+	Wiz            CatalogEntityWiz             `json:"x-cortex-wiz,omitempty" yaml:"x-cortex-wiz,omitempty"`
 
 	// Team-specific attributes
 	Team CatalogEntityTeam `json:"team" yaml:"x-cortex-team,omitempty"`
@@ -461,6 +462,27 @@ type CatalogEntityStaticAnalysisMend struct {
 
 func (o *CatalogEntityStaticAnalysisMend) Enabled() bool {
 	return len(o.ApplicationIDs) > 0 || len(o.ProjectIDs) > 0
+}
+
+/***********************************************************************************************************************
+ * Microsoft Teams - https://docs.cortex.io/docs/reference/integrations/microsoftteams
+ **********************************************************************************************************************/
+
+/**
+x-cortex-microsoft-teams:
+    - name: team-engineering # exact match name of the channel
+      description: This is a description for this Teams channel # optional
+      notificationsEnabled: true #optional
+*/
+
+type CatalogEntityMicrosoftTeam struct {
+	Name                 string `json:"name" yaml:"name"`
+	Description          string `json:"description,omitempty" yaml:"description,omitempty"`
+	NotificationsEnabled bool   `json:"notificationsEnabled,omitempty" yaml:"notificationsEnabled,omitempty"`
+}
+
+func (o *CatalogEntityMicrosoftTeam) Enabled() bool {
+	return o.Name != ""
 }
 
 /***********************************************************************************************************************
