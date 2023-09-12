@@ -2,6 +2,8 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.2.0
+
 * Re-license to MIT
 * Add support for `owner` and `flag` attributes on `code_cov` block
 * Add support for `x-cortex-microsoft-teams`
