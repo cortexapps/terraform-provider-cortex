@@ -113,6 +113,10 @@ func (c *CatalogEntityParser) YamlToEntity(yamlEntity map[string]interface{}) (C
 		c.interpolateFirehydrant(&entity, info["x-cortex-firehydrant"].(map[string]interface{}))
 	}
 
+	if info["x-cortex-k8s"] != nil {
+		c.interpolateK8s(&entity, info["x-cortex-k8s"].(map[string]interface{}))
+	}
+
 	if info["x-cortex-microsoft-teams"] != nil {
 		c.interpolateMicrosoftTeams(&entity, info["x-cortex-microsoft-teams"].([]interface{}))
 	}
@@ -297,7 +301,9 @@ func (c *CatalogEntityParser) interpolateGit(entity *CatalogEntityData, gitMap m
 	}
 }
 
-// Issues
+/***********************************************************************************************************************
+ * Issues
+ **********************************************************************************************************************/
 
 func (c *CatalogEntityParser) interpolateIssues(entity *CatalogEntityData, issuesMap map[string]interface{}) {
 	entity.Issues = CatalogEntityIssues{}
@@ -305,6 +311,8 @@ func (c *CatalogEntityParser) interpolateIssues(entity *CatalogEntityData, issue
 		c.interpolateJira(entity, issuesMap["jira"].(map[string]interface{}))
 	}
 }
+
+// Jira
 
 func (c *CatalogEntityParser) interpolateJira(entity *CatalogEntityData, jiraMap map[string]interface{}) {
 	if jiraMap["defaultJql"] != nil {
@@ -333,6 +341,10 @@ func (c *CatalogEntityParser) interpolateJira(entity *CatalogEntityData, jiraMap
 	}
 }
 
+/***********************************************************************************************************************
+ * SLOs
+ **********************************************************************************************************************/
+
 func (c *CatalogEntityParser) interpolateSLOs(entity *CatalogEntityData, slosMap map[string]interface{}) error {
 	entity.SLOs = CatalogEntitySLOs{}
 	if slosMap["datadog"] != nil {
@@ -358,6 +370,8 @@ func (c *CatalogEntityParser) interpolateSLOs(entity *CatalogEntityData, slosMap
 	}
 	return nil
 }
+
+// LightStep
 
 func (c *CatalogEntityParser) interpolateLightstepSLOs(entity *CatalogEntityData, streams []interface{}) {
 	if len(streams) == 0 {
@@ -389,6 +403,8 @@ func (c *CatalogEntityParser) interpolateLightstepSLOs(entity *CatalogEntityData
 	}
 }
 
+// DataDog
+
 func (c *CatalogEntityParser) interpolateDataDogSLOs(entity *CatalogEntityData, slos []interface{}) {
 	entity.SLOs.DataDog = []CatalogEntitySLODataDog{}
 	for _, slo := range slos {
@@ -398,6 +414,8 @@ func (c *CatalogEntityParser) interpolateDataDogSLOs(entity *CatalogEntityData, 
 		})
 	}
 }
+
+// Prometheus
 
 func (c *CatalogEntityParser) interpolatePrometheusSLOs(entity *CatalogEntityData, prometheusQueries []interface{}) error {
 	entity.SLOs.Prometheus = []CatalogEntitySLOPrometheusQuery{}
@@ -419,6 +437,8 @@ func (c *CatalogEntityParser) interpolatePrometheusSLOs(entity *CatalogEntityDat
 	return nil
 }
 
+// SignalFX
+
 func (c *CatalogEntityParser) interpolateSignalFXSLOs(entity *CatalogEntityData, signalFxSLOs []interface{}) {
 	entity.SLOs.SignalFX = []CatalogEntitySLOSignalFX{}
 	for _, slo := range signalFxSLOs {
@@ -433,6 +453,8 @@ func (c *CatalogEntityParser) interpolateSignalFXSLOs(entity *CatalogEntityData,
 	}
 }
 
+// Dynatrace
+
 func (c *CatalogEntityParser) interpolateDynatraceSLOs(entity *CatalogEntityData, slos []interface{}) {
 	entity.SLOs.Dynatrace = []CatalogEntitySLODynatrace{}
 	for _, slo := range slos {
@@ -442,6 +464,8 @@ func (c *CatalogEntityParser) interpolateDynatraceSLOs(entity *CatalogEntityData
 		})
 	}
 }
+
+// SumoLogic
 
 func (c *CatalogEntityParser) interpolateSumoLogicSLOs(entity *CatalogEntityData, slos []interface{}) {
 	entity.SLOs.SumoLogic = []CatalogEntitySLOSumoLogic{}
@@ -453,7 +477,9 @@ func (c *CatalogEntityParser) interpolateSumoLogicSLOs(entity *CatalogEntityData
 	}
 }
 
-// APM
+/***********************************************************************************************************************
+ * APM
+ **********************************************************************************************************************/
 
 func (c *CatalogEntityParser) interpolateApm(entity *CatalogEntityData, apm map[string]interface{}) {
 	entity.Apm = CatalogEntityApm{}
@@ -469,6 +495,8 @@ func (c *CatalogEntityParser) interpolateApm(entity *CatalogEntityData, apm map[
 	}
 }
 
+// DataDog
+
 func (c *CatalogEntityParser) interpolateDataDogApm(entity *CatalogEntityData, apm map[string]interface{}) {
 	entity.Apm.DataDog = CatalogEntityApmDataDog{}
 	if apm["monitors"] != nil {
@@ -478,6 +506,8 @@ func (c *CatalogEntityParser) interpolateDataDogApm(entity *CatalogEntityData, a
 		}
 	}
 }
+
+// Dynatrace
 
 func (c *CatalogEntityParser) interpolateDynatraceApm(entity *CatalogEntityData, apm map[string]interface{}) {
 	entity.Apm.Dynatrace = CatalogEntityApmDynatrace{}
@@ -495,16 +525,7 @@ func (c *CatalogEntityParser) interpolateDynatraceApm(entity *CatalogEntityData,
 	}
 }
 
-func (c *CatalogEntityParser) interpolateMicrosoftTeams(entity *CatalogEntityData, teams []interface{}) {
-	for _, team := range teams {
-		teamMap := team.(map[string]interface{})
-		entity.MicrosoftTeams = append(entity.MicrosoftTeams, CatalogEntityMicrosoftTeam{
-			Name:                 MapFetchToString(teamMap, "name"),
-			Description:          MapFetchToString(teamMap, "description"),
-			NotificationsEnabled: MapFetch(teamMap, "notificationsEnabled", false).(bool),
-		})
-	}
-}
+// NewRelic
 
 func (c *CatalogEntityParser) interpolateNewRelicApm(entity *CatalogEntityData, apm []interface{}) {
 	entity.Apm.NewRelic = make([]CatalogEntityApmNewRelic, len(apm))
@@ -519,11 +540,32 @@ func (c *CatalogEntityParser) interpolateNewRelicApm(entity *CatalogEntityData, 
 	}
 }
 
-// Integrations
+/***********************************************************************************************************************
+ * Microsoft Teams
+ **********************************************************************************************************************/
+
+func (c *CatalogEntityParser) interpolateMicrosoftTeams(entity *CatalogEntityData, teams []interface{}) {
+	for _, team := range teams {
+		teamMap := team.(map[string]interface{})
+		entity.MicrosoftTeams = append(entity.MicrosoftTeams, CatalogEntityMicrosoftTeam{
+			Name:                 MapFetchToString(teamMap, "name"),
+			Description:          MapFetchToString(teamMap, "description"),
+			NotificationsEnabled: MapFetch(teamMap, "notificationsEnabled", false).(bool),
+		})
+	}
+}
+
+/***********************************************************************************************************************
+ * Sentry
+ **********************************************************************************************************************/
 
 func (c *CatalogEntityParser) interpolateSentry(entity *CatalogEntityData, sentryMap map[string]interface{}) {
 	entity.Sentry.Project = MapFetchToString(sentryMap, "project")
 }
+
+/***********************************************************************************************************************
+ * ServiceNow
+ **********************************************************************************************************************/
 
 func (c *CatalogEntityParser) interpolateServiceNow(entity *CatalogEntityData, serviceNowMap map[string]interface{}) {
 	if serviceNowMap["services"] != nil {
@@ -543,13 +585,25 @@ func (c *CatalogEntityParser) interpolateServiceNow(entity *CatalogEntityData, s
 	}
 }
 
+/***********************************************************************************************************************
+ * Rollbar
+ **********************************************************************************************************************/
+
 func (c *CatalogEntityParser) interpolateRollbar(entity *CatalogEntityData, rollbarMap map[string]interface{}) {
 	entity.Rollbar.Project = MapFetchToString(rollbarMap, "project")
 }
 
+/***********************************************************************************************************************
+ * BugSnag
+ **********************************************************************************************************************/
+
 func (c *CatalogEntityParser) interpolateBugSnag(entity *CatalogEntityData, bugSnagMap map[string]interface{}) {
 	entity.BugSnag.Project = MapFetchToString(bugSnagMap, "project")
 }
+
+/***********************************************************************************************************************
+ * Checkmarx
+ **********************************************************************************************************************/
 
 func (c *CatalogEntityParser) interpolateCheckmarx(entity *CatalogEntityData, checkmarxMap map[string]interface{}) {
 	entity.Checkmarx = CatalogEntityCheckmarx{
@@ -570,6 +624,10 @@ func (c *CatalogEntityParser) interpolateCheckmarx(entity *CatalogEntityData, ch
 		}
 	}
 }
+
+/***********************************************************************************************************************
+ * Firehydrant
+ **********************************************************************************************************************/
 
 func (c *CatalogEntityParser) interpolateFirehydrant(entity *CatalogEntityData, firehydrantMap map[string]interface{}) {
 	entity.FireHydrant = CatalogEntityFireHydrant{
@@ -592,6 +650,69 @@ func (c *CatalogEntityParser) interpolateFirehydrant(entity *CatalogEntityData, 
 	}
 }
 
+/***********************************************************************************************************************
+ * Kubernetes
+ **********************************************************************************************************************/
+
+func (c *CatalogEntityParser) interpolateK8s(entity *CatalogEntityData, k8sMap map[string]interface{}) {
+	if k8sMap["deployment"] != nil {
+		c.interpolateK8sDeployment(entity, k8sMap["deployment"].([]interface{}))
+	}
+	if k8sMap["argorollout"] != nil {
+		c.interpolateK8sArgoRollout(entity, k8sMap["argorollout"].([]interface{}))
+	}
+	if k8sMap["statefulset"] != nil {
+		c.interpolateK8sStatefulSet(entity, k8sMap["statefulset"].([]interface{}))
+	}
+	if k8sMap["cronjob"] != nil {
+		c.interpolateK8sCronJob(entity, k8sMap["cronjob"].([]interface{}))
+	}
+}
+
+func (c *CatalogEntityParser) interpolateK8sDeployment(entity *CatalogEntityData, deployments []interface{}) {
+	for _, deployment := range deployments {
+		deploymentMap := deployment.(map[string]interface{})
+		entity.K8s.Deployments = append(entity.K8s.Deployments, CatalogEntityK8sDeployment{
+			Identifier: MapFetchToString(deploymentMap, "identifier"),
+			Cluster:    MapFetchToString(deploymentMap, "cluster"),
+		})
+	}
+}
+
+func (c *CatalogEntityParser) interpolateK8sArgoRollout(entity *CatalogEntityData, deployments []interface{}) {
+	for _, deployment := range deployments {
+		deploymentMap := deployment.(map[string]interface{})
+		entity.K8s.ArgoRollouts = append(entity.K8s.ArgoRollouts, CatalogEntityK8sArgoRollout{
+			Identifier: MapFetchToString(deploymentMap, "identifier"),
+			Cluster:    MapFetchToString(deploymentMap, "cluster"),
+		})
+	}
+}
+
+func (c *CatalogEntityParser) interpolateK8sStatefulSet(entity *CatalogEntityData, deployments []interface{}) {
+	for _, deployment := range deployments {
+		statefulSetMap := deployment.(map[string]interface{})
+		entity.K8s.StatefulSets = append(entity.K8s.StatefulSets, CatalogEntityK8sStatefulSet{
+			Identifier: MapFetchToString(statefulSetMap, "identifier"),
+			Cluster:    MapFetchToString(statefulSetMap, "cluster"),
+		})
+	}
+}
+
+func (c *CatalogEntityParser) interpolateK8sCronJob(entity *CatalogEntityData, cronJobs []interface{}) {
+	for _, cronJob := range cronJobs {
+		cronJobMap := cronJob.(map[string]interface{})
+		entity.K8s.CronJobs = append(entity.K8s.CronJobs, CatalogEntityK8sCronJob{
+			Identifier: MapFetchToString(cronJobMap, "identifier"),
+			Cluster:    MapFetchToString(cronJobMap, "cluster"),
+		})
+	}
+}
+
+/***********************************************************************************************************************
+ * Slack
+ **********************************************************************************************************************/
+
 func (c *CatalogEntityParser) interpolateSlack(entity *CatalogEntityData, slackMap map[string]interface{}) {
 	if slackMap["channels"] != nil {
 		channels := slackMap["channels"].([]interface{})
@@ -604,6 +725,10 @@ func (c *CatalogEntityParser) interpolateSlack(entity *CatalogEntityData, slackM
 		}
 	}
 }
+
+/***********************************************************************************************************************
+ * Snyk
+ **********************************************************************************************************************/
 
 func (c *CatalogEntityParser) interpolateSnyk(entity *CatalogEntityData, snykMap map[string]interface{}) {
 	if snykMap["projects"] != nil {
@@ -619,6 +744,10 @@ func (c *CatalogEntityParser) interpolateSnyk(entity *CatalogEntityData, snykMap
 	}
 }
 
+/***********************************************************************************************************************
+ * Wiz
+ **********************************************************************************************************************/
+
 func (c *CatalogEntityParser) interpolateWiz(entity *CatalogEntityData, wizMap map[string]interface{}) {
 	if wizMap["projects"] != nil {
 		projects := wizMap["projects"].([]interface{})
@@ -631,6 +760,10 @@ func (c *CatalogEntityParser) interpolateWiz(entity *CatalogEntityData, wizMap m
 	}
 }
 
+/***********************************************************************************************************************
+ * Alerts
+ **********************************************************************************************************************/
+
 func (c *CatalogEntityParser) interpolateAlerts(entity *CatalogEntityData, alerts []interface{}) {
 	for _, alert := range alerts {
 		alertMap := alert.(map[string]interface{})
@@ -641,6 +774,10 @@ func (c *CatalogEntityParser) interpolateAlerts(entity *CatalogEntityData, alert
 		})
 	}
 }
+
+/***********************************************************************************************************************
+ * Static Analysis
+ **********************************************************************************************************************/
 
 func (c *CatalogEntityParser) interpolateStaticAnalysis(entity *CatalogEntityData, saMap map[string]interface{}) {
 	if saMap["codecov"] != nil {
@@ -657,6 +794,8 @@ func (c *CatalogEntityParser) interpolateStaticAnalysis(entity *CatalogEntityDat
 	}
 }
 
+// CodeCov
+
 func (c *CatalogEntityParser) interpolateStaticAnalysisCodeCov(entity *CatalogEntityData, ccMap map[string]interface{}) {
 	entity.StaticAnalysis.CodeCov = CatalogEntityStaticAnalysisCodeCov{
 		Repository: MapFetchToString(ccMap, "repo"),
@@ -665,6 +804,8 @@ func (c *CatalogEntityParser) interpolateStaticAnalysisCodeCov(entity *CatalogEn
 		Flag:       MapFetchToString(ccMap, "flag"),
 	}
 }
+
+// Mend
 
 func (c *CatalogEntityParser) interpolateStaticAnalysisMend(entity *CatalogEntityData, data map[string]interface{}) {
 	entity.StaticAnalysis.Mend = CatalogEntityStaticAnalysisMend{}
@@ -682,11 +823,15 @@ func (c *CatalogEntityParser) interpolateStaticAnalysisMend(entity *CatalogEntit
 	}
 }
 
+// SonarQube
+
 func (c *CatalogEntityParser) interpolateStaticAnalysisSonarQube(entity *CatalogEntityData, data map[string]interface{}) {
 	entity.StaticAnalysis.SonarQube = CatalogEntityStaticAnalysisSonarQube{
 		Project: data["project"].(string),
 	}
 }
+
+// Veracode
 
 func (c *CatalogEntityParser) interpolateStaticAnalysisVeracode(entity *CatalogEntityData, mendMap map[string]interface{}) {
 	applicationNames := mendMap["applicationNames"].([]interface{})
@@ -717,11 +862,17 @@ func (c *CatalogEntityParser) interpolateStaticAnalysisVeracode(entity *CatalogE
 	}
 }
 
+/***********************************************************************************************************************
+ * CiCd
+ **********************************************************************************************************************/
+
 func (c *CatalogEntityParser) interpolateCiCd(entity *CatalogEntityData, ciCdMap map[string]interface{}) {
 	if ciCdMap["buildkite"] != nil {
 		c.interpolateCiCdBuildkite(entity, ciCdMap["buildkite"].(map[string]interface{}))
 	}
 }
+
+// Buildkite
 
 func (c *CatalogEntityParser) interpolateCiCdBuildkite(entity *CatalogEntityData, bkMap map[string]interface{}) {
 	entity.CiCd.Buildkite = CatalogEntityCiCdBuildkite{}

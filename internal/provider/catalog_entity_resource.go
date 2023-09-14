@@ -801,6 +801,76 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
+			"k8s": schema.SingleNestedAttribute{
+				MarkdownDescription: "Kubernetes configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"deployments": schema.ListNestedAttribute{
+						MarkdownDescription: "List of K8s deployment configurations for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"identifier": schema.StringAttribute{
+									MarkdownDescription: "Deployment identifier. `namespace/name` as found in Kubernetes.",
+									Required:            true,
+								},
+								"cluster": schema.StringAttribute{
+									MarkdownDescription: "Optional. Kubernetes cluster name.",
+									Optional:            true,
+								},
+							},
+						},
+					},
+					"argo_rollouts": schema.ListNestedAttribute{
+						MarkdownDescription: "List of K8s argo rollout configurations for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"identifier": schema.StringAttribute{
+									MarkdownDescription: "Argo Rollout identifier. `namespace/name` as found in Kubernetes.",
+									Required:            true,
+								},
+								"cluster": schema.StringAttribute{
+									MarkdownDescription: "Optional. Kubernetes cluster name.",
+									Optional:            true,
+								},
+							},
+						},
+					},
+					"stateful_sets": schema.ListNestedAttribute{
+						MarkdownDescription: "List of K8s stateful set configurations for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"identifier": schema.StringAttribute{
+									MarkdownDescription: "Stateful Set identifier. `namespace/name` as found in Kubernetes.",
+									Required:            true,
+								},
+								"cluster": schema.StringAttribute{
+									MarkdownDescription: "Optional. Kubernetes cluster name.",
+									Optional:            true,
+								},
+							},
+						},
+					},
+					"cron_jobs": schema.ListNestedAttribute{
+						MarkdownDescription: "List of K8s cron job configurations for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"identifier": schema.StringAttribute{
+									MarkdownDescription: "Cron Job identifier. `namespace/name` as found in Kubernetes.",
+									Required:            true,
+								},
+								"cluster": schema.StringAttribute{
+									MarkdownDescription: "Optional. Kubernetes cluster name.",
+									Optional:            true,
+								},
+							},
+						},
+					},
+				},
+			},
 			"microsoft_teams": schema.ListNestedAttribute{
 				MarkdownDescription: "List of Microsoft Teams channels for the entity.",
 				Optional:            true,

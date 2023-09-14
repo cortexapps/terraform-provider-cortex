@@ -38,6 +38,7 @@ Catalog Entity
 - `groups` (List of String) List of groups related to the entity.
 - `ignore_metadata` (Boolean) Whether the entity's custom metadata is managed by Terraform. Defaults to `false`. If set to `true`, the provider will ignore any metadata on the Entity and not persist it to state.
 - `issues` (Attributes) Issue tracking configuration for the entity. (see [below for nested schema](#nestedatt--issues))
+- `k8s` (Attributes) Kubernetes configuration for the entity. (see [below for nested schema](#nestedatt--k8s))
 - `links` (Attributes List) List of links related to the entity. (see [below for nested schema](#nestedatt--links))
 - `metadata` (String) Custom metadata for the entity, in JSON format in a string. (Use the `jsonencode` function to convert a JSON object to a string.)
 - `microsoft_teams` (Attributes List) List of Microsoft Teams channels for the entity. (see [below for nested schema](#nestedatt--microsoft_teams))
@@ -302,6 +303,65 @@ Optional:
 - `default_jql` (String) Default JQL to surface issues for the entity.
 - `labels` (List of String) List of Jira labels for the entity.
 - `projects` (List of String) List of Jira projects for the entity.
+
+
+
+<a id="nestedatt--k8s"></a>
+### Nested Schema for `k8s`
+
+Optional:
+
+- `argo_rollouts` (Attributes List) List of K8s argo rollout configurations for the entity. (see [below for nested schema](#nestedatt--k8s--argo_rollouts))
+- `cron_jobs` (Attributes List) List of K8s cron job configurations for the entity. (see [below for nested schema](#nestedatt--k8s--cron_jobs))
+- `deployments` (Attributes List) List of K8s deployment configurations for the entity. (see [below for nested schema](#nestedatt--k8s--deployments))
+- `stateful_sets` (Attributes List) List of K8s stateful set configurations for the entity. (see [below for nested schema](#nestedatt--k8s--stateful_sets))
+
+<a id="nestedatt--k8s--argo_rollouts"></a>
+### Nested Schema for `k8s.argo_rollouts`
+
+Required:
+
+- `identifier` (String) Argo Rollout identifier. `namespace/name` as found in Kubernetes.
+
+Optional:
+
+- `cluster` (String) Optional. Kubernetes cluster name.
+
+
+<a id="nestedatt--k8s--cron_jobs"></a>
+### Nested Schema for `k8s.cron_jobs`
+
+Required:
+
+- `identifier` (String) Cron Job identifier. `namespace/name` as found in Kubernetes.
+
+Optional:
+
+- `cluster` (String) Optional. Kubernetes cluster name.
+
+
+<a id="nestedatt--k8s--deployments"></a>
+### Nested Schema for `k8s.deployments`
+
+Required:
+
+- `identifier` (String) Deployment identifier. `namespace/name` as found in Kubernetes.
+
+Optional:
+
+- `cluster` (String) Optional. Kubernetes cluster name.
+
+
+<a id="nestedatt--k8s--stateful_sets"></a>
+### Nested Schema for `k8s.stateful_sets`
+
+Required:
+
+- `identifier` (String) Stateful Set identifier. `namespace/name` as found in Kubernetes.
+
+Optional:
+
+- `cluster` (String) Optional. Kubernetes cluster name.
 
 
 

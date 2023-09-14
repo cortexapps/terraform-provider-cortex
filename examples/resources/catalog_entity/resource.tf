@@ -276,6 +276,33 @@ resource "cortex_catalog_entity" "products-service" {
     ]
   }
 
+  k8s = {
+    deployments = [
+      {
+        identifier = "core/products-deployment"
+        cluster    = "default"
+      }
+    ]
+    argo_rollouts = [
+      {
+        identifier = "core/products-rollout"
+        cluster    = "default"
+      }
+    ]
+    stateful_sets = [
+      {
+        identifier = "core/products-stateful-set"
+        cluster    = "default"
+      }
+    ]
+    cron_jobs = [
+      {
+        identifier = "core/products-cron-job"
+        cluster    = "default"
+      }
+    ]
+  }
+
   microsoft_teams = [
     {
       name                  = "engineering"

@@ -41,6 +41,7 @@ type CatalogEntityResourceModel struct {
 	BugSnag        types.Object                             `tfsdk:"bug_snag"`
 	Checkmarx      types.Object                             `tfsdk:"checkmarx"`
 	FireHydrant    types.Object                             `tfsdk:"firehydrant"`
+	K8s            types.Object                             `tfsdk:"k8s"`
 	MicrosoftTeams []types.Object                           `tfsdk:"microsoft_teams"`
 	Rollbar        types.Object                             `tfsdk:"rollbar"`
 	Sentry         types.Object                             `tfsdk:"sentry"`
@@ -182,6 +183,11 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics
 	if err != nil {
 		diagnostics.AddError("error parsing FireHydrant configuration", fmt.Sprintf("%+v", err))
 	}
+	k8s := CatalogEntityK8sResourceModel{}
+	err = o.K8s.As(ctx, &k8s, defaultObjOptions)
+	if err != nil {
+		diagnostics.AddError("error parsing K8s configuration", fmt.Sprintf("%+v", err))
+	}
 	microsoftTeams := make([]cortex.CatalogEntityMicrosoftTeam, len(o.MicrosoftTeams))
 	for i, team := range o.MicrosoftTeams {
 		t := CatalogEntityMicrosoftTeamResourceModel{}
@@ -253,6 +259,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics
 		BugSnag:        bugSnag.ToApiModel(),
 		Checkmarx:      checkmarx.ToApiModel(),
 		FireHydrant:    firehydrant.ToApiModel(),
+		K8s:            k8s.ToApiModel(),
 		MicrosoftTeams: microsoftTeams,
 		Rollbar:        rollbar.ToApiModel(),
 		Sentry:         sentry.ToApiModel(),
@@ -403,6 +410,9 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 
 	firehydrant := CatalogEntityFireHydrantResourceModel{}
 	o.FireHydrant = firehydrant.FromApiModel(ctx, diagnostics, &entity.FireHydrant)
+
+	k8s := CatalogEntityK8sResourceModel{}
+	o.K8s = k8s.FromApiModel(ctx, diagnostics, &entity.K8s)
 
 	if len(entity.MicrosoftTeams) > 0 {
 		o.MicrosoftTeams = make([]types.Object, len(entity.MicrosoftTeams))
@@ -1447,6 +1457,207 @@ func (o *CatalogEntityFireHydrantServiceResourceModel) FromApiModel(service cort
 }
 
 /***********************************************************************************************************************
+ * Kubernetes
+ **********************************************************************************************************************/
+
+type CatalogEntityK8sResourceModel struct {
+	Deployments  []CatalogEntityK8sDeploymentResourceModel  `tfsdk:"deployments"`
+	ArgoRollouts []CatalogEntityK8sArgoRolloutResourceModel `tfsdk:"argo_rollouts"`
+	StatefulSets []CatalogEntityK8sStatefulSetResourceModel `tfsdk:"stateful_sets"`
+	CronJobs     []CatalogEntityK8sCronJobResourceModel     `tfsdk:"cron_jobs"`
+}
+
+func (o *CatalogEntityK8sResourceModel) AttrTypes() map[string]attr.Type {
+	de := CatalogEntityK8sDeploymentResourceModel{}
+	ar := CatalogEntityK8sArgoRolloutResourceModel{}
+	ss := CatalogEntityK8sStatefulSetResourceModel{}
+	cj := CatalogEntityK8sCronJobResourceModel{}
+	return map[string]attr.Type{
+		"deployments":   types.ListType{ElemType: types.ObjectType{AttrTypes: de.AttrTypes()}},
+		"argo_rollouts": types.ListType{ElemType: types.ObjectType{AttrTypes: ar.AttrTypes()}},
+		"stateful_sets": types.ListType{ElemType: types.ObjectType{AttrTypes: ss.AttrTypes()}},
+		"cron_jobs":     types.ListType{ElemType: types.ObjectType{AttrTypes: cj.AttrTypes()}},
+	}
+}
+
+func (o *CatalogEntityK8sResourceModel) ToApiModel() cortex.CatalogEntityK8s {
+	deployments := make([]cortex.CatalogEntityK8sDeployment, len(o.Deployments))
+	for i, c := range o.Deployments {
+		deployments[i] = c.ToApiModel()
+	}
+	argoRollouts := make([]cortex.CatalogEntityK8sArgoRollout, len(o.ArgoRollouts))
+	for i, c := range o.ArgoRollouts {
+		argoRollouts[i] = c.ToApiModel()
+	}
+	statefulSets := make([]cortex.CatalogEntityK8sStatefulSet, len(o.StatefulSets))
+	for i, c := range o.StatefulSets {
+		statefulSets[i] = c.ToApiModel()
+	}
+	cronJobs := make([]cortex.CatalogEntityK8sCronJob, len(o.CronJobs))
+	for i, c := range o.CronJobs {
+		cronJobs[i] = c.ToApiModel()
+	}
+
+	return cortex.CatalogEntityK8s{
+		Deployments:  deployments,
+		ArgoRollouts: argoRollouts,
+		StatefulSets: statefulSets,
+		CronJobs:     cronJobs,
+	}
+}
+
+func (o *CatalogEntityK8sResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityK8s) types.Object {
+	ob := CatalogEntityK8sResourceModel{}
+	if !entity.Enabled() {
+		return types.ObjectNull(ob.AttrTypes())
+	}
+
+	var deployments = make([]CatalogEntityK8sDeploymentResourceModel, len(entity.Deployments))
+	for i, e := range entity.Deployments {
+		ch := CatalogEntityK8sDeploymentResourceModel{}
+		deployments[i] = ch.FromApiModel(&e)
+	}
+	ob.Deployments = deployments
+
+	var argoRollouts = make([]CatalogEntityK8sArgoRolloutResourceModel, len(entity.ArgoRollouts))
+	for i, e := range entity.ArgoRollouts {
+		ch := CatalogEntityK8sArgoRolloutResourceModel{}
+		argoRollouts[i] = ch.FromApiModel(&e)
+	}
+	ob.ArgoRollouts = argoRollouts
+
+	var statefulSets = make([]CatalogEntityK8sStatefulSetResourceModel, len(entity.StatefulSets))
+	for i, e := range entity.StatefulSets {
+		ch := CatalogEntityK8sStatefulSetResourceModel{}
+		statefulSets[i] = ch.FromApiModel(&e)
+	}
+	ob.StatefulSets = statefulSets
+
+	var cronJobs = make([]CatalogEntityK8sCronJobResourceModel, len(entity.CronJobs))
+	for i, e := range entity.CronJobs {
+		ch := CatalogEntityK8sCronJobResourceModel{}
+		cronJobs[i] = ch.FromApiModel(&e)
+	}
+	ob.CronJobs = cronJobs
+
+	obj, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return obj
+}
+
+// Deployment
+
+type CatalogEntityK8sDeploymentResourceModel struct {
+	Identifier types.String `tfsdk:"identifier"`
+	Cluster    types.String `tfsdk:"cluster"`
+}
+
+func (o *CatalogEntityK8sDeploymentResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"identifier": types.StringType,
+		"cluster":    types.StringType,
+	}
+}
+
+func (o *CatalogEntityK8sDeploymentResourceModel) ToApiModel() cortex.CatalogEntityK8sDeployment {
+	return cortex.CatalogEntityK8sDeployment{
+		Identifier: o.Identifier.ValueString(),
+		Cluster:    o.Cluster.ValueString(),
+	}
+}
+
+func (o *CatalogEntityK8sDeploymentResourceModel) FromApiModel(entity *cortex.CatalogEntityK8sDeployment) CatalogEntityK8sDeploymentResourceModel {
+	return CatalogEntityK8sDeploymentResourceModel{
+		Identifier: types.StringValue(entity.Identifier),
+		Cluster:    types.StringValue(entity.Cluster),
+	}
+}
+
+// ArgoRollout
+
+type CatalogEntityK8sArgoRolloutResourceModel struct {
+	Identifier types.String `tfsdk:"identifier"`
+	Cluster    types.String `tfsdk:"cluster"`
+}
+
+func (o *CatalogEntityK8sArgoRolloutResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"identifier": types.StringType,
+		"cluster":    types.StringType,
+	}
+}
+
+func (o *CatalogEntityK8sArgoRolloutResourceModel) ToApiModel() cortex.CatalogEntityK8sArgoRollout {
+	return cortex.CatalogEntityK8sArgoRollout{
+		Identifier: o.Identifier.ValueString(),
+		Cluster:    o.Cluster.ValueString(),
+	}
+}
+
+func (o *CatalogEntityK8sArgoRolloutResourceModel) FromApiModel(entity *cortex.CatalogEntityK8sArgoRollout) CatalogEntityK8sArgoRolloutResourceModel {
+	return CatalogEntityK8sArgoRolloutResourceModel{
+		Identifier: types.StringValue(entity.Identifier),
+		Cluster:    types.StringValue(entity.Cluster),
+	}
+}
+
+// StatefulSet
+
+type CatalogEntityK8sStatefulSetResourceModel struct {
+	Identifier types.String `tfsdk:"identifier"`
+	Cluster    types.String `tfsdk:"cluster"`
+}
+
+func (o *CatalogEntityK8sStatefulSetResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"identifier": types.StringType,
+		"cluster":    types.StringType,
+	}
+}
+
+func (o *CatalogEntityK8sStatefulSetResourceModel) ToApiModel() cortex.CatalogEntityK8sStatefulSet {
+	return cortex.CatalogEntityK8sStatefulSet{
+		Identifier: o.Identifier.ValueString(),
+		Cluster:    o.Cluster.ValueString(),
+	}
+}
+
+func (o *CatalogEntityK8sStatefulSetResourceModel) FromApiModel(entity *cortex.CatalogEntityK8sStatefulSet) CatalogEntityK8sStatefulSetResourceModel {
+	return CatalogEntityK8sStatefulSetResourceModel{
+		Identifier: types.StringValue(entity.Identifier),
+		Cluster:    types.StringValue(entity.Cluster),
+	}
+}
+
+// CronJob
+
+type CatalogEntityK8sCronJobResourceModel struct {
+	Identifier types.String `tfsdk:"identifier"`
+	Cluster    types.String `tfsdk:"cluster"`
+}
+
+func (o *CatalogEntityK8sCronJobResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"identifier": types.StringType,
+		"cluster":    types.StringType,
+	}
+}
+
+func (o *CatalogEntityK8sCronJobResourceModel) ToApiModel() cortex.CatalogEntityK8sCronJob {
+	return cortex.CatalogEntityK8sCronJob{
+		Identifier: o.Identifier.ValueString(),
+		Cluster:    o.Cluster.ValueString(),
+	}
+}
+
+func (o *CatalogEntityK8sCronJobResourceModel) FromApiModel(entity *cortex.CatalogEntityK8sCronJob) CatalogEntityK8sCronJobResourceModel {
+	return CatalogEntityK8sCronJobResourceModel{
+		Identifier: types.StringValue(entity.Identifier),
+		Cluster:    types.StringValue(entity.Cluster),
+	}
+}
+
+/***********************************************************************************************************************
  * Microsoft Teams
  **********************************************************************************************************************/
 
@@ -1579,7 +1790,13 @@ func (o *CatalogEntityServiceNowResourceModel) AttrTypes() map[string]attr.Type 
 }
 
 func (o *CatalogEntityServiceNowResourceModel) ToApiModel() cortex.CatalogEntityServiceNow {
-	return cortex.CatalogEntityServiceNow{}
+	services := make([]cortex.CatalogEntityServiceNowService, len(o.Services))
+	for i, c := range o.Services {
+		services[i] = c.ToApiModel()
+	}
+	return cortex.CatalogEntityServiceNow{
+		Services: services,
+	}
 }
 
 func (o *CatalogEntityServiceNowResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityServiceNow) types.Object {

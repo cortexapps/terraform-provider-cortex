@@ -45,6 +45,9 @@ type CatalogEntityData struct {
 	Snyk           CatalogEntitySnyk            `json:"x-cortex-snyk,omitempty" yaml:"x-cortex-snyk,omitempty"`
 	Wiz            CatalogEntityWiz             `json:"x-cortex-wiz,omitempty" yaml:"x-cortex-wiz,omitempty"`
 
+	// Infrastructure, Resources, and Deployments attributes
+	K8s CatalogEntityK8s `json:"x-cortex-k8s,omitempty" yaml:"x-cortex-k8s,omitempty"`
+
 	// Team-specific attributes
 	Team CatalogEntityTeam `json:"team" yaml:"x-cortex-team,omitempty"`
 }
@@ -418,6 +421,57 @@ type CatalogEntityIssuesJira struct {
 
 func (o *CatalogEntityIssuesJira) Enabled() bool {
 	return len(o.Projects) > 0 || len(o.Labels) > 0 || len(o.Components) > 0 || o.DefaultJQL != ""
+}
+
+/***********************************************************************************************************************
+ * Kubernetes - https://docs.cortex.io/docs/reference/integrations/kubernetes
+ **********************************************************************************************************************/
+
+type CatalogEntityK8s struct {
+	Deployments  []CatalogEntityK8sDeployment  `json:"deployment,omitempty" yaml:"deployment,omitempty"`
+	ArgoRollouts []CatalogEntityK8sArgoRollout `json:"argorollout,omitempty" yaml:"argorollout,omitempty"`
+	StatefulSets []CatalogEntityK8sStatefulSet `json:"statefulset,omitempty" yaml:"statefulset,omitempty"`
+	CronJobs     []CatalogEntityK8sCronJob     `json:"cronjob,omitempty" yaml:"cronjob,omitempty"`
+}
+
+func (o *CatalogEntityK8s) Enabled() bool {
+	return len(o.Deployments) > 0 || len(o.ArgoRollouts) > 0 || len(o.StatefulSets) > 0 || len(o.CronJobs) > 0
+}
+
+type CatalogEntityK8sDeployment struct {
+	Identifier string `json:"identifier" yaml:"identifier"`
+	Cluster    string `json:"cluster,omitempty" yaml:"cluster,omitempty"`
+}
+
+func (o *CatalogEntityK8sDeployment) Enabled() bool {
+	return o.Identifier != ""
+}
+
+type CatalogEntityK8sArgoRollout struct {
+	Identifier string `json:"identifier" yaml:"identifier"`
+	Cluster    string `json:"cluster,omitempty" yaml:"cluster,omitempty"`
+}
+
+func (o *CatalogEntityK8sArgoRollout) Enabled() bool {
+	return o.Identifier != ""
+}
+
+type CatalogEntityK8sStatefulSet struct {
+	Identifier string `json:"identifier" yaml:"identifier"`
+	Cluster    string `json:"cluster,omitempty" yaml:"cluster,omitempty"`
+}
+
+func (o *CatalogEntityK8sStatefulSet) Enabled() bool {
+	return o.Identifier != ""
+}
+
+type CatalogEntityK8sCronJob struct {
+	Identifier string `json:"identifier" yaml:"identifier"`
+	Cluster    string `json:"cluster,omitempty" yaml:"cluster,omitempty"`
+}
+
+func (o *CatalogEntityK8sCronJob) Enabled() bool {
+	return o.Identifier != ""
 }
 
 /***********************************************************************************************************************

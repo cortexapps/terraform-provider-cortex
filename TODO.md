@@ -10,6 +10,5 @@ General TODO file of things left to implement.
 Entities:
 
 - x-cortex-infra (AWS, GCP, etc)
-- x-cortex-k8s
 - OpenAPI docs
 - Packages
