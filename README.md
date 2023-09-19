@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- [Terraform](https://www.terraform.io/downloads.html) >= 1.3
+- [Terraform](https://www.terraform.io/downloads.html) >= 1.5
 - [Go](https://golang.org/doc/install) >= 1.20
 
 ## Building The Provider
@@ -14,20 +14,6 @@
 ```shell
 go install
 ```
-
-## Adding Dependencies
-
-This provider uses [Go modules](https://github.com/golang/go/wiki/Modules).
-Please see the Go documentation for the most up to date information about using Go modules.
-
-To add a new dependency `github.com/author/dependency` to your Terraform provider:
-
-```shell
-go get github.com/author/dependency
-go mod tidy
-```
-
-Then commit the changes to `go.mod` and `go.sum`.
 
 ## Using the provider
 
@@ -101,3 +87,17 @@ In order to run the full suite of Acceptance tests, run `make testacc`.
 ```shell
 make testacc
 ```
+
+## Adding Dependencies
+
+This provider uses [Go modules](https://github.com/golang/go/wiki/Modules).
+Please see the Go documentation for the most up to date information about using Go modules.
+
+To add a new dependency `github.com/bigcommerce/dependency` to your Terraform provider:
+
+```shell
+go get github.com/author/dependency
+go mod tidy
+```
+
+Then commit the changes to `go.mod` and `go.sum`.
