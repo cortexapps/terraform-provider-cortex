@@ -36,6 +36,7 @@ type CatalogEntityData struct {
 	// Integration-specific things
 	BugSnag        CatalogEntityBugSnag         `json:"x-cortex-bugsnag,omitempty" yaml:"x-cortex-bugsnag,omitempty"`
 	Checkmarx      CatalogEntityCheckmarx       `json:"x-cortex-checkmarx,omitempty" yaml:"x-cortex-checkmarx,omitempty"`
+	Coralogix      CatalogEntityCoralogix       `json:"x-cortex-coralogix,omitempty" yaml:"x-cortex-coralogix,omitempty"`
 	FireHydrant    CatalogEntityFireHydrant     `json:"x-cortex-firehydrant,omitempty" yaml:"x-cortex-firehydrant,omitempty"`
 	MicrosoftTeams []CatalogEntityMicrosoftTeam `json:"x-cortex-microsoft-teams,omitempty" yaml:"x-cortex-microsoft-teams,omitempty"`
 	Rollbar        CatalogEntityRollbar         `json:"x-cortex-rollbar,omitempty" yaml:"x-cortex-rollbar,omitempty"`
@@ -289,7 +290,28 @@ func (o *CatalogEntityCiCdBuildkiteTag) Enabled() bool {
 }
 
 /***********************************************************************************************************************
- * Checkmarx - https://docs.cortex.io/docs/reference/integrations/checkmarx
+ * Coralogix - https://docs.cortex.io/docs/reference/integrations/coralogix
+ **********************************************************************************************************************/
+
+type CatalogEntityCoralogix struct {
+	Applications []CatalogEntityCoralogixApplication `json:"applications" yaml:"applications"`
+}
+
+func (o *CatalogEntityCoralogix) Enabled() bool {
+	return len(o.Applications) > 0
+}
+
+type CatalogEntityCoralogixApplication struct {
+	Name  string `json:"applicationName,omitempty" yaml:"applicationName"`
+	Alias string `json:"alias,omitempty" yaml:"alias,omitempty"`
+}
+
+func (o *CatalogEntityCoralogixApplication) Enabled() bool {
+	return o.Name != ""
+}
+
+/***********************************************************************************************************************
+ * Coralogix - https://docs.cortex.io/docs/reference/integrations/coralogix
  **********************************************************************************************************************/
 
 type CatalogEntityCheckmarx struct {

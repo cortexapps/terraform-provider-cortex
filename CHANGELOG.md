@@ -2,6 +2,7 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+* Add `x-cortex-coralogix` support
 * Add `x-cortex-k8s` support
 
 ## 0.2.0

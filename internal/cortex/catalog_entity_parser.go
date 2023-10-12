@@ -109,6 +109,10 @@ func (c *CatalogEntityParser) YamlToEntity(yamlEntity map[string]interface{}) (C
 		c.interpolateCheckmarx(&entity, info["x-cortex-checkmarx"].(map[string]interface{}))
 	}
 
+	if info["x-cortex-coralogix"] != nil {
+		c.interpolateCoralogix(&entity, info["x-cortex-coralogix"].(map[string]interface{}))
+	}
+
 	if info["x-cortex-firehydrant"] != nil {
 		c.interpolateFirehydrant(&entity, info["x-cortex-firehydrant"].(map[string]interface{}))
 	}
@@ -621,6 +625,27 @@ func (c *CatalogEntityParser) interpolateCheckmarx(entity *CatalogEntityData, ch
 			if pe.ID > 0 || pe.Name != "" {
 				entity.Checkmarx.Projects = append(entity.Checkmarx.Projects, pe)
 			}
+		}
+	}
+}
+
+/***********************************************************************************************************************
+ * Checkmarx
+ **********************************************************************************************************************/
+
+func (c *CatalogEntityParser) interpolateCoralogix(entity *CatalogEntityData, coralogixMap map[string]interface{}) {
+	entity.Coralogix = CatalogEntityCoralogix{
+		Applications: []CatalogEntityCoralogixApplication{},
+	}
+	if coralogixMap["applications"] != nil {
+		for _, app := range coralogixMap["applications"].([]interface{}) {
+			appMap := app.(map[string]interface{})
+			coralogixApp := CatalogEntityCoralogixApplication{}
+			coralogixApp.Name = MapFetchToString(appMap, "applicationName")
+			if appMap["alias"] != nil {
+				coralogixApp.Alias = MapFetchToString(appMap, "alias")
+			}
+			entity.Coralogix.Applications = append(entity.Coralogix.Applications, coralogixApp)
 		}
 	}
 }

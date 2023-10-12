@@ -28,6 +28,7 @@ Catalog Entity
 - `checkmarx` (Attributes) Checkmarx configuration for the entity. (see [below for nested schema](#nestedatt--checkmarx))
 - `children` (Attributes List) List of child entities for the entity. Only used for entities of type `TEAM` or `DOMAIN`. (see [below for nested schema](#nestedatt--children))
 - `ci_cd` (Attributes) CI/CD configuration for the entity. (see [below for nested schema](#nestedatt--ci_cd))
+- `coralogix` (Attributes) Coralogix configuration for the entity. (see [below for nested schema](#nestedatt--coralogix))
 - `dashboards` (Attributes) Dashboards configuration for the entity. (see [below for nested schema](#nestedatt--dashboards))
 - `definition` (String) Set when the entity is a Resource. These are the properties defined by the Resource Definition, in JSON format in a string (use the `jsonencode` function to convert a JSON object to a string).
 - `dependencies` (Attributes List) List of dependencies for the entity. (see [below for nested schema](#nestedatt--dependencies))
@@ -171,6 +172,26 @@ Required:
 
 - `tag` (String) Buildkite tag.
 
+
+
+
+<a id="nestedatt--coralogix"></a>
+### Nested Schema for `coralogix`
+
+Optional:
+
+- `applications` (Attributes List) List of Coralogix applications for the entity. (see [below for nested schema](#nestedatt--coralogix--applications))
+
+<a id="nestedatt--coralogix--applications"></a>
+### Nested Schema for `coralogix.applications`
+
+Required:
+
+- `name` (String) Coralogix application Name.
+
+Optional:
+
+- `alias` (String) Alias is optional and only relevant if you have opted into multi account support.
 
 
 

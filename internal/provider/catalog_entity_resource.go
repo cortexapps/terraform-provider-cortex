@@ -776,6 +776,28 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
+			"coralogix": schema.SingleNestedAttribute{
+				MarkdownDescription: "Coralogix configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"applications": schema.ListNestedAttribute{
+						MarkdownDescription: "List of Coralogix applications for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"name": schema.StringAttribute{
+									MarkdownDescription: "Coralogix application Name.",
+									Required:            true,
+								},
+								"alias": schema.StringAttribute{
+									MarkdownDescription: "Alias is optional and only relevant if you have opted into multi account support.",
+									Optional:            true,
+								},
+							},
+						},
+					},
+				},
+			},
 			"firehydrant": schema.SingleNestedAttribute{
 				MarkdownDescription: "FireHydrant configuration for the entity.",
 				Optional:            true,

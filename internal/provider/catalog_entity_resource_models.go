@@ -40,6 +40,7 @@ type CatalogEntityResourceModel struct {
 	CiCd           types.Object                             `tfsdk:"ci_cd"`
 	BugSnag        types.Object                             `tfsdk:"bug_snag"`
 	Checkmarx      types.Object                             `tfsdk:"checkmarx"`
+	Coralogix      types.Object                             `tfsdk:"coralogix"`
 	FireHydrant    types.Object                             `tfsdk:"firehydrant"`
 	K8s            types.Object                             `tfsdk:"k8s"`
 	MicrosoftTeams []types.Object                           `tfsdk:"microsoft_teams"`
@@ -178,6 +179,11 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics
 	if err != nil {
 		diagnostics.AddError("error parsing Checkmarx configuration", fmt.Sprintf("%+v", err))
 	}
+	coralogix := CatalogEntityCoralogixResourceModel{}
+	err = o.Coralogix.As(ctx, &coralogix, defaultObjOptions)
+	if err != nil {
+		diagnostics.AddError("error parsing Coralogix configuration", fmt.Sprintf("%+v", err))
+	}
 	firehydrant := CatalogEntityFireHydrantResourceModel{}
 	err = o.FireHydrant.As(ctx, &firehydrant, defaultObjOptions)
 	if err != nil {
@@ -258,6 +264,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics
 		CiCd:           ciCd.ToApiModel(ctx),
 		BugSnag:        bugSnag.ToApiModel(),
 		Checkmarx:      checkmarx.ToApiModel(),
+		Coralogix:      coralogix.ToApiModel(),
 		FireHydrant:    firehydrant.ToApiModel(),
 		K8s:            k8s.ToApiModel(),
 		MicrosoftTeams: microsoftTeams,
@@ -407,6 +414,9 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 
 	checkmarx := CatalogEntityCheckmarxResourceModel{}
 	o.Checkmarx = checkmarx.FromApiModel(ctx, diagnostics, &entity.Checkmarx)
+
+	coralogix := CatalogEntityCoralogixResourceModel{}
+	o.Coralogix = coralogix.FromApiModel(ctx, diagnostics, &entity.Coralogix)
 
 	firehydrant := CatalogEntityFireHydrantResourceModel{}
 	o.FireHydrant = firehydrant.FromApiModel(ctx, diagnostics, &entity.FireHydrant)
@@ -1381,6 +1391,82 @@ func (o *CatalogEntityCheckmarxProjectResourceModel) FromApiModel(project cortex
 	} else {
 		ob.ID = types.Int64Null()
 		ob.Name = types.StringValue(project.Name)
+	}
+	return ob
+}
+
+/***********************************************************************************************************************
+ * Coralogix
+ **********************************************************************************************************************/
+
+type CatalogEntityCoralogixResourceModel struct {
+	Applications []CatalogEntityCoralogixApplicationResourceModel `tfsdk:"applications"`
+}
+
+func (o *CatalogEntityCoralogixResourceModel) AttrTypes() map[string]attr.Type {
+	ob := CatalogEntityCoralogixApplicationResourceModel{}
+	return map[string]attr.Type{
+		"applications": types.ListType{ElemType: types.ObjectType{AttrTypes: ob.AttrTypes()}},
+	}
+}
+
+func (o *CatalogEntityCoralogixResourceModel) ToApiModel() cortex.CatalogEntityCoralogix {
+	applications := make([]cortex.CatalogEntityCoralogixApplication, len(o.Applications))
+	for i, p := range o.Applications {
+		applications[i] = p.ToApiModel()
+	}
+	return cortex.CatalogEntityCoralogix{
+		Applications: applications,
+	}
+}
+
+func (o *CatalogEntityCoralogixResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityCoralogix) types.Object {
+	obj := CatalogEntityCoralogixResourceModel{}
+	if !entity.Enabled() {
+		return types.ObjectNull(obj.AttrTypes())
+	}
+
+	applications := make([]CatalogEntityCoralogixApplicationResourceModel, len(entity.Applications))
+	for i, p := range entity.Applications {
+		po := CatalogEntityCoralogixApplicationResourceModel{}
+		applications[i] = po.FromApiModel(p)
+	}
+	obj.Applications = applications
+
+	objectValue, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &obj)
+	diagnostics.Append(d...)
+	return objectValue
+
+}
+
+type CatalogEntityCoralogixApplicationResourceModel struct {
+	Name  types.String `tfsdk:"name"`
+	Alias types.String `tfsdk:"alias"`
+}
+
+func (o *CatalogEntityCoralogixApplicationResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"name":  types.StringType,
+		"alias": types.StringType,
+	}
+}
+
+func (o *CatalogEntityCoralogixApplicationResourceModel) ToApiModel() cortex.CatalogEntityCoralogixApplication {
+	entity := cortex.CatalogEntityCoralogixApplication{}
+	entity.Name = o.Name.ValueString()
+	if o.Alias.ValueString() != "" {
+		entity.Alias = o.Alias.ValueString()
+	}
+	return entity
+}
+
+func (o *CatalogEntityCoralogixApplicationResourceModel) FromApiModel(application cortex.CatalogEntityCoralogixApplication) CatalogEntityCoralogixApplicationResourceModel {
+	ob := CatalogEntityCoralogixApplicationResourceModel{}
+	ob.Name = types.StringValue(application.Name)
+	if application.Alias == "" {
+		ob.Alias = types.StringNull()
+	} else {
+		ob.Alias = types.StringValue(application.Alias)
 	}
 	return ob
 }

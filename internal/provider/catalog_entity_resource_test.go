@@ -497,6 +497,14 @@ resource "cortex_catalog_entity" "test" {
     ]
   }
 
+  coralogix = {
+    applications = [
+      {
+        name = "products-service"
+      }
+    ]
+  }
+
   firehydrant = {
     services = [
       { 
