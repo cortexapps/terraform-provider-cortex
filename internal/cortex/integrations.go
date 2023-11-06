@@ -83,6 +83,7 @@ func (o *CatalogEntityTeam) Enabled() bool {
 type CatalogEntityTeamMember struct {
 	Name                 string `json:"name" yaml:"name"`
 	Email                string `json:"email" yaml:"email"`
+	Role                 string `json:"role,omitempty" yaml:"role,omitempty"`
 	NotificationsEnabled bool   `json:"notificationsEnabled" yaml:"notificationsEnabled"`
 }
 

@@ -2,6 +2,7 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+* Add the ability to pass `role` in `x-cortex-team.members` attributes
 * Add `x-cortex-coralogix` support
 * Add `x-cortex-k8s` support
 

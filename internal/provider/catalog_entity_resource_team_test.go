@@ -216,8 +216,9 @@ resource "cortex_catalog_entity" %[1]q {
   team = {
     members = [
       {
-        name = "Test"
+        name  = "Test"
         email = "test@cortex.io"
+        role  = "engineering-manager"
       }
     ]
   }
