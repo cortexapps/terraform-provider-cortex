@@ -933,6 +933,7 @@ func (c *CatalogEntityParser) interpolateTeam(entity *CatalogEntityData, teamMap
 			entity.Team.Members = append(entity.Team.Members, CatalogEntityTeamMember{
 				Name:                 MapFetchToString(memberMap, "name"),
 				Email:                MapFetchToString(memberMap, "email"),
+				Role:                 MapFetchToString(memberMap, "role"),
 				NotificationsEnabled: MapFetch(memberMap, "notificationsEnabled", false).(bool),
 			})
 		}

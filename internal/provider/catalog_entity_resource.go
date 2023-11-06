@@ -1042,6 +1042,10 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 									MarkdownDescription: "Name of the team member.",
 									Required:            true,
 								},
+								"role": schema.StringAttribute{
+									MarkdownDescription: "Role of the team member. Optional.",
+									Optional:            true,
+								},
 								"notifications_enabled": schema.BoolAttribute{
 									MarkdownDescription: "Whether the team member should receive notifications.",
 									Optional:            true,

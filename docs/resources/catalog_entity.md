@@ -738,6 +738,7 @@ Required:
 Optional:
 
 - `notifications_enabled` (Boolean) Whether the team member should receive notifications.
+- `role` (String) Role of the team member. Optional.
 
 
 

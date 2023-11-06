@@ -81,6 +81,7 @@ func (o *CatalogEntityTeamResourceModel) FromApiModel(ctx context.Context, diagn
 type CatalogEntityTeamMemberResourceModel struct {
 	Name                 types.String `tfsdk:"name"`
 	Email                types.String `tfsdk:"email"`
+	Role                 types.String `tfsdk:"role"`
 	NotificationsEnabled types.Bool   `tfsdk:"notifications_enabled"`
 }
 
@@ -88,6 +89,7 @@ func (o *CatalogEntityTeamMemberResourceModel) AttrTypes() map[string]attr.Type 
 	return map[string]attr.Type{
 		"name":                  types.StringType,
 		"email":                 types.StringType,
+		"role":                  types.StringType,
 		"notifications_enabled": types.BoolType,
 	}
 }
@@ -96,6 +98,7 @@ func (o *CatalogEntityTeamMemberResourceModel) ToApiModel() cortex.CatalogEntity
 	return cortex.CatalogEntityTeamMember{
 		Name:                 o.Name.ValueString(),
 		Email:                o.Email.ValueString(),
+		Role:                 o.Role.ValueString(),
 		NotificationsEnabled: o.NotificationsEnabled.ValueBool(),
 	}
 }
@@ -105,10 +108,15 @@ func (o *CatalogEntityTeamMemberResourceModel) FromApiModel(entity *cortex.Catal
 	if entity.NotificationsEnabled {
 		notificationsEnabled = types.BoolValue(true)
 	}
+	role := types.StringNull()
+	if entity.Role != "" {
+		role = types.StringValue(entity.Role)
+	}
 
 	return CatalogEntityTeamMemberResourceModel{
 		Name:                 types.StringValue(entity.Name),
 		Email:                types.StringValue(entity.Email),
+		Role:                 role,
 		NotificationsEnabled: notificationsEnabled,
 	}
 }
