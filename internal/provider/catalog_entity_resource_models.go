@@ -43,6 +43,7 @@ type CatalogEntityResourceModel struct {
 	Coralogix      types.Object                             `tfsdk:"coralogix"`
 	FireHydrant    types.Object                             `tfsdk:"firehydrant"`
 	K8s            types.Object                             `tfsdk:"k8s"`
+	LaunchDarkly   types.Object                             `tfsdk:"launch_darkly"`
 	MicrosoftTeams []types.Object                           `tfsdk:"microsoft_teams"`
 	Rollbar        types.Object                             `tfsdk:"rollbar"`
 	Sentry         types.Object                             `tfsdk:"sentry"`
@@ -194,6 +195,11 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics
 	if err != nil {
 		diagnostics.AddError("error parsing K8s configuration", fmt.Sprintf("%+v", err))
 	}
+	launchDarkly := CatalogEntityLaunchDarklyResourceModel{}
+	err = o.LaunchDarkly.As(ctx, &launchDarkly, defaultObjOptions)
+	if err != nil {
+		diagnostics.AddError("error parsing LaunchDarkly configuration", fmt.Sprintf("%+v", err))
+	}
 	microsoftTeams := make([]cortex.CatalogEntityMicrosoftTeam, len(o.MicrosoftTeams))
 	for i, team := range o.MicrosoftTeams {
 		t := CatalogEntityMicrosoftTeamResourceModel{}
@@ -267,6 +273,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics
 		Coralogix:      coralogix.ToApiModel(),
 		FireHydrant:    firehydrant.ToApiModel(),
 		K8s:            k8s.ToApiModel(),
+		LaunchDarkly:   launchDarkly.ToApiModel(),
 		MicrosoftTeams: microsoftTeams,
 		Rollbar:        rollbar.ToApiModel(),
 		Sentry:         sentry.ToApiModel(),
@@ -423,6 +430,9 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 
 	k8s := CatalogEntityK8sResourceModel{}
 	o.K8s = k8s.FromApiModel(ctx, diagnostics, &entity.K8s)
+
+	launchDarkly := CatalogEntityLaunchDarklyResourceModel{}
+	o.LaunchDarkly = launchDarkly.FromApiModel(ctx, diagnostics, &entity.LaunchDarkly)
 
 	if len(entity.MicrosoftTeams) > 0 {
 		o.MicrosoftTeams = make([]types.Object, len(entity.MicrosoftTeams))
@@ -1740,6 +1750,123 @@ func (o *CatalogEntityK8sCronJobResourceModel) FromApiModel(entity *cortex.Catal
 	return CatalogEntityK8sCronJobResourceModel{
 		Identifier: types.StringValue(entity.Identifier),
 		Cluster:    types.StringValue(entity.Cluster),
+	}
+}
+
+/***********************************************************************************************************************
+ * LaunchDarkly
+ **********************************************************************************************************************/
+
+type CatalogEntityLaunchDarklyResourceModel struct {
+	Projects []CatalogEntityLaunchDarklyProjectResourceModel `tfsdk:"projects"`
+}
+
+func (o *CatalogEntityLaunchDarklyResourceModel) AttrTypes() map[string]attr.Type {
+	pp := CatalogEntityLaunchDarklyProjectResourceModel{}
+	return map[string]attr.Type{
+		"projects": types.ListType{ElemType: types.ObjectType{AttrTypes: pp.AttrTypes()}},
+	}
+}
+
+func (o *CatalogEntityLaunchDarklyResourceModel) ToApiModel() cortex.CatalogEntityLaunchDarkly {
+	projects := make([]cortex.CatalogEntityLaunchDarklyProject, len(o.Projects))
+	for i, c := range o.Projects {
+		projects[i] = c.ToApiModel()
+	}
+	return cortex.CatalogEntityLaunchDarkly{
+		Projects: projects,
+	}
+}
+
+func (o *CatalogEntityLaunchDarklyResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityLaunchDarkly) types.Object {
+	ob := CatalogEntityLaunchDarklyResourceModel{}
+	if !entity.Enabled() {
+		return types.ObjectNull(ob.AttrTypes())
+	}
+
+	var projects = make([]CatalogEntityLaunchDarklyProjectResourceModel, len(entity.Projects))
+	for i, e := range entity.Projects {
+		ch := CatalogEntityLaunchDarklyProjectResourceModel{}
+		projects[i] = ch.FromApiModel(&e)
+	}
+	ob.Projects = projects
+
+	obj, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &ob)
+	diagnostics.Append(d...)
+	return obj
+}
+
+// Projects
+
+type CatalogEntityLaunchDarklyProjectResourceModel struct {
+	ID           types.String                                               `tfsdk:"id"`
+	Type         types.String                                               `tfsdk:"type"`
+	Alias        types.String                                               `tfsdk:"alias"`
+	Environments []CatalogEntityLaunchDarklyProjectEnvironmentResourceModel `tfsdk:"environments"`
+}
+
+func (o *CatalogEntityLaunchDarklyProjectResourceModel) AttrTypes() map[string]attr.Type {
+	ob := CatalogEntityLaunchDarklyProjectEnvironmentResourceModel{}
+	return map[string]attr.Type{
+		"id":           types.StringType,
+		"type":         types.StringType,
+		"alias":        types.StringType,
+		"environments": types.ListType{ElemType: types.ObjectType{AttrTypes: ob.AttrTypes()}},
+	}
+}
+
+func (o *CatalogEntityLaunchDarklyProjectResourceModel) ToApiModel() cortex.CatalogEntityLaunchDarklyProject {
+	environments := make([]cortex.CatalogEntityLaunchDarklyProjectEnvironment, len(o.Environments))
+	for i, c := range o.Environments {
+		environments[i] = c.ToApiModel()
+	}
+	return cortex.CatalogEntityLaunchDarklyProject{
+		ID:           o.ID.ValueString(),
+		Type:         o.Type.ValueString(),
+		Alias:        o.Alias.ValueString(),
+		Environments: environments,
+	}
+}
+
+func (o *CatalogEntityLaunchDarklyProjectResourceModel) FromApiModel(entity *cortex.CatalogEntityLaunchDarklyProject) CatalogEntityLaunchDarklyProjectResourceModel {
+	ob := CatalogEntityLaunchDarklyProjectResourceModel{
+		ID:   types.StringValue(entity.ID),
+		Type: types.StringValue(entity.Type),
+	}
+	ob.Environments = make([]CatalogEntityLaunchDarklyProjectEnvironmentResourceModel, len(entity.Environments))
+	for i, e := range entity.Environments {
+		ch := CatalogEntityLaunchDarklyProjectEnvironmentResourceModel{}
+		ob.Environments[i] = ch.FromApiModel(&e)
+	}
+	if entity.Alias != "" {
+		ob.Alias = types.StringValue(entity.Alias)
+	} else {
+		ob.Alias = types.StringNull()
+	}
+	return ob
+}
+
+// Project Environments
+
+type CatalogEntityLaunchDarklyProjectEnvironmentResourceModel struct {
+	Name types.String `tfsdk:"name"`
+}
+
+func (o *CatalogEntityLaunchDarklyProjectEnvironmentResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"name": types.StringType,
+	}
+}
+
+func (o *CatalogEntityLaunchDarklyProjectEnvironmentResourceModel) ToApiModel() cortex.CatalogEntityLaunchDarklyProjectEnvironment {
+	return cortex.CatalogEntityLaunchDarklyProjectEnvironment{
+		Name: o.Name.ValueString(),
+	}
+}
+
+func (o *CatalogEntityLaunchDarklyProjectEnvironmentResourceModel) FromApiModel(entity *cortex.CatalogEntityLaunchDarklyProjectEnvironment) CatalogEntityLaunchDarklyProjectEnvironmentResourceModel {
+	return CatalogEntityLaunchDarklyProjectEnvironmentResourceModel{
+		Name: types.StringValue(entity.Name),
 	}
 }
 

@@ -121,6 +121,10 @@ func (c *CatalogEntityParser) YamlToEntity(yamlEntity map[string]interface{}) (C
 		c.interpolateK8s(&entity, info["x-cortex-k8s"].(map[string]interface{}))
 	}
 
+	if info["x-cortex-launch-darkly"] != nil {
+		c.interpolateLaunchDarkly(&entity, info["x-cortex-launch-darkly"].(map[string]interface{}))
+	}
+
 	if info["x-cortex-microsoft-teams"] != nil {
 		c.interpolateMicrosoftTeams(&entity, info["x-cortex-microsoft-teams"].([]interface{}))
 	}
@@ -731,6 +735,40 @@ func (c *CatalogEntityParser) interpolateK8sCronJob(entity *CatalogEntityData, c
 			Identifier: MapFetchToString(cronJobMap, "identifier"),
 			Cluster:    MapFetchToString(cronJobMap, "cluster"),
 		})
+	}
+}
+
+/***********************************************************************************************************************
+ * LaunchDarkly
+ **********************************************************************************************************************/
+
+func (c *CatalogEntityParser) interpolateLaunchDarkly(entity *CatalogEntityData, ldMap map[string]interface{}) {
+	if ldMap["projects"] != nil {
+		c.interpolateLaunchDarklyProjects(entity, ldMap["projects"].([]interface{}))
+	}
+}
+
+func (c *CatalogEntityParser) interpolateLaunchDarklyProjects(entity *CatalogEntityData, projects []interface{}) {
+	for _, project := range projects {
+		projectMap := project.(map[string]interface{})
+		pe := CatalogEntityLaunchDarklyProject{
+			ID:   MapFetchToString(projectMap, "identifier"),
+			Type: MapFetchToString(projectMap, "identifierType"),
+		}
+		if projectMap["alias"] != nil {
+			pe.Alias = MapFetchToString(projectMap, "alias")
+		}
+
+		if projectMap["environments"] != nil {
+			environments := projectMap["environments"].([]interface{})
+			for _, environment := range environments {
+				environmentMap := environment.(map[string]interface{})
+				pe.Environments = append(pe.Environments, CatalogEntityLaunchDarklyProjectEnvironment{
+					Name: MapFetchToString(environmentMap, "environmentName"),
+				})
+			}
+		}
+		entity.LaunchDarkly.Projects = append(entity.LaunchDarkly.Projects, pe)
 	}
 }
 

@@ -893,6 +893,47 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
+			"launch_darkly": schema.SingleNestedAttribute{
+				MarkdownDescription: "LaunchDarkly configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"projects": schema.ListNestedAttribute{
+						MarkdownDescription: "List of LaunchDarkly projects for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									MarkdownDescription: "LaunchDarkly project ID.",
+									Required:            true,
+								},
+								"type": schema.StringAttribute{
+									MarkdownDescription: "Type of project identifier to use to map to the LaunchDarkly project. Valid values are `ID` or `KEY`.",
+									Required:            true,
+									Validators: []validator.String{
+										stringvalidator.OneOf("ID", "KEY"),
+									},
+								},
+								"environments": schema.ListNestedAttribute{
+									MarkdownDescription: "List of LaunchDarkly environments for the project.",
+									Optional:            true,
+									NestedObject: schema.NestedAttributeObject{
+										Attributes: map[string]schema.Attribute{
+											"name": schema.StringAttribute{
+												MarkdownDescription: "LaunchDarkly environment name.",
+												Required:            true,
+											},
+										},
+									},
+								},
+								"alias": schema.StringAttribute{
+									MarkdownDescription: "Alias is optional and only relevant if you have opted into multi-account support.",
+									Optional:            true,
+								},
+							},
+						},
+					},
+				},
+			},
 			"microsoft_teams": schema.ListNestedAttribute{
 				MarkdownDescription: "List of Microsoft Teams channels for the entity.",
 				Optional:            true,

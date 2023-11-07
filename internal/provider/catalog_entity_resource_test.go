@@ -518,6 +518,20 @@ resource "cortex_catalog_entity" "test" {
     ]
   }
 
+  launch_darkly = {
+    projects = [
+      {
+        id           = "products-service"
+        type         = "KEY"
+        environments = [
+          { name : "staging" },
+          { name : "production" },
+        ]
+      }
+    ]
+  }
+
+
   microsoft_teams = [
     {
       name                  = "engineering"

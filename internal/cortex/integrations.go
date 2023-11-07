@@ -38,6 +38,7 @@ type CatalogEntityData struct {
 	Checkmarx      CatalogEntityCheckmarx       `json:"x-cortex-checkmarx,omitempty" yaml:"x-cortex-checkmarx,omitempty"`
 	Coralogix      CatalogEntityCoralogix       `json:"x-cortex-coralogix,omitempty" yaml:"x-cortex-coralogix,omitempty"`
 	FireHydrant    CatalogEntityFireHydrant     `json:"x-cortex-firehydrant,omitempty" yaml:"x-cortex-firehydrant,omitempty"`
+	LaunchDarkly   CatalogEntityLaunchDarkly    `json:"x-cortex-launch-darkly,omitempty" yaml:"x-cortex-launch-darkly,omitempty"`
 	MicrosoftTeams []CatalogEntityMicrosoftTeam `json:"x-cortex-microsoft-teams,omitempty" yaml:"x-cortex-microsoft-teams,omitempty"`
 	Rollbar        CatalogEntityRollbar         `json:"x-cortex-rollbar,omitempty" yaml:"x-cortex-rollbar,omitempty"`
 	Sentry         CatalogEntitySentry          `json:"x-cortex-sentry,omitempty" yaml:"x-cortex-sentry,omitempty"`
@@ -495,6 +496,37 @@ type CatalogEntityK8sCronJob struct {
 
 func (o *CatalogEntityK8sCronJob) Enabled() bool {
 	return o.Identifier != ""
+}
+
+/***********************************************************************************************************************
+ * LaunchDarkly - https://docs.cortex.io/docs/reference/integrations/launchdarkly
+ **********************************************************************************************************************/
+
+type CatalogEntityLaunchDarkly struct {
+	Projects []CatalogEntityLaunchDarklyProject `json:"projects,omitempty" yaml:"projects,omitempty"`
+}
+
+func (o *CatalogEntityLaunchDarkly) Enabled() bool {
+	return len(o.Projects) > 0
+}
+
+type CatalogEntityLaunchDarklyProject struct {
+	ID           string                                        `json:"identifier" yaml:"identifier"`
+	Type         string                                        `json:"identifierType" yaml:"identifierType"`
+	Alias        string                                        `json:"alias,omitempty" yaml:"alias,omitempty"`
+	Environments []CatalogEntityLaunchDarklyProjectEnvironment `json:"environments,omitempty" yaml:"environments,omitempty"`
+}
+
+func (o *CatalogEntityLaunchDarklyProject) Enabled() bool {
+	return o.ID != "" && o.Type != ""
+}
+
+type CatalogEntityLaunchDarklyProjectEnvironment struct {
+	Name string `json:"environmentName" yaml:"environmentName"`
+}
+
+func (o *CatalogEntityLaunchDarklyProjectEnvironment) Enabled() bool {
+	return o.Name != ""
 }
 
 /***********************************************************************************************************************
