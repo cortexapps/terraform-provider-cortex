@@ -2,6 +2,8 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+* Add `x-cortex-launch-darkly` support
+
 ## 0.2.1
 
 * Add the ability to pass `role` in `x-cortex-team.members` attributes
