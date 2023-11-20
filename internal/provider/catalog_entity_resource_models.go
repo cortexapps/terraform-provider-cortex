@@ -1960,19 +1960,31 @@ func (o *CatalogEntityRollbarResourceModel) FromApiModel(ctx context.Context, di
  **********************************************************************************************************************/
 
 type CatalogEntitySentryResourceModel struct {
-	Project types.String `tfsdk:"project"`
+	Project  types.String                              `tfsdk:"project"`
+	Projects []CatalogEntitySentryProjectResourceModel `tfsdk:"projects"`
 }
 
 func (o *CatalogEntitySentryResourceModel) AttrTypes() map[string]attr.Type {
+	ob := CatalogEntitySentryProjectResourceModel{}
 	return map[string]attr.Type{
-		"project": types.StringType,
+		"project":  types.StringType,
+		"projects": types.ListType{ElemType: types.ObjectType{AttrTypes: ob.AttrTypes()}},
 	}
 }
 
 func (o *CatalogEntitySentryResourceModel) ToApiModel() cortex.CatalogEntitySentry {
-	return cortex.CatalogEntitySentry{
-		Project: o.Project.ValueString(),
+	entity := cortex.CatalogEntitySentry{}
+	if !o.Project.IsNull() && o.Project.ValueString() != "" {
+		entity.Project = o.Project.ValueString()
 	}
+
+	projects := make([]cortex.CatalogEntitySentryProject, len(o.Projects))
+	for i, c := range o.Projects {
+		projects[i] = c.ToApiModel()
+	}
+	entity.Projects = projects
+
+	return entity
 }
 
 func (o *CatalogEntitySentryResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntitySentry) types.Object {
@@ -1981,10 +1993,48 @@ func (o *CatalogEntitySentryResourceModel) FromApiModel(ctx context.Context, dia
 		return types.ObjectNull(ob.AttrTypes())
 	}
 
-	ob.Project = types.StringValue(entity.Project)
+	if entity.Project != "" {
+		ob.Project = types.StringValue(entity.Project)
+	} else {
+		ob.Project = types.StringNull()
+	}
+
+	if len(entity.Projects) > 0 {
+		var projects = make([]CatalogEntitySentryProjectResourceModel, len(entity.Projects))
+		for i, e := range entity.Projects {
+			ch := CatalogEntitySentryProjectResourceModel{}
+			projects[i] = ch.FromApiModel(&e)
+		}
+		ob.Projects = projects
+	} else {
+		ob.Projects = nil
+	}
+
 	obj, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &ob)
 	diagnostics.Append(d...)
 	return obj
+}
+
+type CatalogEntitySentryProjectResourceModel struct {
+	Name types.String `tfsdk:"name"`
+}
+
+func (o *CatalogEntitySentryProjectResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"name": types.StringType,
+	}
+}
+
+func (o *CatalogEntitySentryProjectResourceModel) ToApiModel() cortex.CatalogEntitySentryProject {
+	return cortex.CatalogEntitySentryProject{
+		Name: o.Name.ValueString(),
+	}
+}
+
+func (o *CatalogEntitySentryProjectResourceModel) FromApiModel(entity *cortex.CatalogEntitySentryProject) CatalogEntitySentryProjectResourceModel {
+	return CatalogEntitySentryProjectResourceModel{
+		Name: types.StringValue(entity.Name),
+	}
 }
 
 /***********************************************************************************************************************

@@ -237,7 +237,7 @@ func TestAccCatalogEntityResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "ci_cd.buildkite.tags.0.tag", "products-tag"),
 
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "bug_snag.project", "cortexio/products-service"),
-					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "sentry.project", "cortexio/products-service"),
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "sentry.projects.0.name", "cortexio/products-service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "checkmarx.projects.0.name", "products-service"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "firehydrant.services.0.id", "asdf1234"),
 					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "firehydrant.services.0.type", "ID"),
@@ -549,7 +549,7 @@ resource "cortex_catalog_entity" "test" {
   }
 
   sentry = {
-    project = "cortexio/products-service"
+    projects = [{ name = "cortexio/products-service" }]
   }
 
   snyk = {

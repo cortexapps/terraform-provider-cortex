@@ -335,6 +335,15 @@ resource "cortex_catalog_entity" "products-service" {
 
   sentry = {
     project = "products-service"
+    // or
+    projects = [
+      {
+        name = "products-service"
+      },
+      {
+        name = "projects-sub-service"
+      }
+    ]
   }
 
   snyk = {
