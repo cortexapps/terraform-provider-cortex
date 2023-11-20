@@ -663,11 +663,20 @@ type CatalogEntitySLOSignalFX struct {
  **********************************************************************************************************************/
 
 type CatalogEntitySentry struct {
-	Project string `json:"project" yaml:"project"`
+	Project  string                       `json:"project,omitempty" yaml:"project,omitempty"`
+	Projects []CatalogEntitySentryProject `json:"projects,omitempty" yaml:"projects,omitempty"`
 }
 
 func (o *CatalogEntitySentry) Enabled() bool {
-	return o.Project != ""
+	return o.Project != "" || len(o.Projects) > 0
+}
+
+type CatalogEntitySentryProject struct {
+	Name string `json:"name" yaml:"name"`
+}
+
+func (o *CatalogEntitySentryProject) Enabled() bool {
+	return o.Name != ""
 }
 
 /***********************************************************************************************************************

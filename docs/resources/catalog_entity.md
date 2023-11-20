@@ -515,9 +515,18 @@ Required:
 <a id="nestedatt--sentry"></a>
 ### Nested Schema for `sentry`
 
+Optional:
+
+- `project` (String) (Deprecated) Sentry project ID for the entity. Use `projects` instead.
+- `projects` (Attributes List) List of Sentry projects for the entity. (see [below for nested schema](#nestedatt--sentry--projects))
+
+<a id="nestedatt--sentry--projects"></a>
+### Nested Schema for `sentry.projects`
+
 Required:
 
-- `project` (String) Sentry project ID for the entity.
+- `name` (String) Sentry project ID.
+
 
 
 <a id="nestedatt--service_now"></a>

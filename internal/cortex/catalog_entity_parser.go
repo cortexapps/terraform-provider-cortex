@@ -569,6 +569,18 @@ func (c *CatalogEntityParser) interpolateMicrosoftTeams(entity *CatalogEntityDat
 
 func (c *CatalogEntityParser) interpolateSentry(entity *CatalogEntityData, sentryMap map[string]interface{}) {
 	entity.Sentry.Project = MapFetchToString(sentryMap, "project")
+	if sentryMap["projects"] != nil {
+		for _, project := range sentryMap["projects"].([]interface{}) {
+			projectMap := project.(map[string]interface{})
+			sp := CatalogEntitySentryProject{}
+			if projectMap["name"] != nil {
+				sp.Name = MapFetchToString(projectMap, "name")
+			}
+			if sp.Enabled() {
+				entity.Sentry.Projects = append(entity.Sentry.Projects, sp)
+			}
+		}
+	}
 }
 
 /***********************************************************************************************************************

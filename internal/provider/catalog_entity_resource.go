@@ -969,8 +969,20 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 				Optional:            true,
 				Attributes: map[string]schema.Attribute{
 					"project": schema.StringAttribute{
-						MarkdownDescription: "Sentry project ID for the entity.",
-						Required:            true,
+						MarkdownDescription: "(Deprecated) Sentry project ID for the entity. Use `projects` instead.",
+						Optional:            true,
+					},
+					"projects": schema.ListNestedAttribute{
+						MarkdownDescription: "List of Sentry projects for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"name": schema.StringAttribute{
+									MarkdownDescription: "Sentry project ID.",
+									Required:            true,
+								},
+							},
+						},
 					},
 				},
 			},
