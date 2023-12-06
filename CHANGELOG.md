@@ -2,6 +2,8 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.2.2
+
 * Add `x-cortex-launch-darkly` support
 
 ## 0.2.1
