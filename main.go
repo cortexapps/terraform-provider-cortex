@@ -5,7 +5,7 @@ import (
 	"flag"
 	"log"
 
-	"github.com/bigcommerce/terraform-provider-cortex/internal/provider"
+	"github.com/cortexapps/terraform-provider-cortex/internal/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 )
 
@@ -35,7 +35,7 @@ func main() {
 	flag.Parse()
 
 	err := providerserver.Serve(context.Background(), provider.New(version), providerserver.ServeOpts{
-		Address: "github.com/bigcommerce/cortex",
+		Address: "github.com/cortexapps/cortex",
 		Debug:   debug,
 	})
 

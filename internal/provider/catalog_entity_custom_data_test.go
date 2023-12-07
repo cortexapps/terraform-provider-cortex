@@ -2,7 +2,7 @@ package provider_test
 
 import (
 	"fmt"
-	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
+	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"testing"
 )
