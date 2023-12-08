@@ -220,7 +220,7 @@ func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEnt
 	}
 
 	// coerce violations into an error
-	if len(upsertResponse.Violations) > 0 {
+	if !upsertResponse.Ok && len(upsertResponse.Violations) > 0 {
 		o := ""
 		for _, v := range upsertResponse.Violations {
 			o += v.String() + "\n"
@@ -236,13 +236,10 @@ func (c *CatalogEntitiesClient) Upsert(ctx context.Context, req UpsertCatalogEnt
  * DELETE /api/v1/catalog/:tag - Delete a catalog entity
  **********************************************************************************************************************/
 
-type DeleteCatalogEntityResponse struct{}
-
 func (c *CatalogEntitiesClient) Delete(ctx context.Context, tag string) error {
-	entityResponse := &DeleteCatalogEntityResponse{}
 	apiError := &ApiError{}
 
-	response, err := c.Client().Delete(Route("catalog_entities", tag)).Receive(entityResponse, apiError)
+	response, err := c.Client().Delete(Route("catalog_entities", tag)).Receive(nil, apiError)
 	if err != nil {
 		return errors.New("could not delete catalog entity: " + err.Error())
 	}
