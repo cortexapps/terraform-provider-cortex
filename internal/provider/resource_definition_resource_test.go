@@ -23,7 +23,6 @@ func TestAccResourceDefinitionResourceMinimal(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "type", stub.Type),
 					resource.TestCheckResourceAttr(resourceName, "name", stub.Name),
-					resource.TestCheckResourceAttr(resourceName, "source", "CUSTOM"),
 				),
 			},
 			// ImportState testing
@@ -38,7 +37,6 @@ func TestAccResourceDefinitionResourceMinimal(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "type", stub.Type),
 					resource.TestCheckResourceAttr(resourceName, "name", stub.Name),
-					resource.TestCheckResourceAttr(resourceName, "source", "CUSTOM"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -52,7 +50,6 @@ resource "cortex_resource_definition" %1[1]q {
  type = %[1]q
  name = %[2]q
  description = %[3]q
- source = "CUSTOM"
  schema = jsonencode({
 	"properties": {
 	  "region": {

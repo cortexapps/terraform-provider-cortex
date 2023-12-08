@@ -62,7 +62,7 @@ func (r *ResourceDefinitionResource) Schema(ctx context.Context, req resource.Sc
 			},
 			"source": schema.StringAttribute{
 				MarkdownDescription: "Source of the resource definition. Either \"CORTEX\" or \"CUSTOM\".",
-				Required:            true,
+				Computed:            true,
 				Validators: []validator.String{
 					stringvalidator.OneOfCaseInsensitive("CORTEX", "CUSTOM"),
 				},
