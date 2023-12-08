@@ -492,7 +492,7 @@ Required:
 
 Required:
 
-- `type` (String) Type of owner. Valid values are `EMAIL`, `GROUP`, `OKTA`, or `SLACK`.
+- `type` (String) Type of owner. Valid values are `EMAIL`, `GROUP`, or `SLACK`.
 
 Optional:
 

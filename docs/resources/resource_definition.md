@@ -19,7 +19,6 @@ ResourceDefinition Entity
 
 - `name` (String) Name of the team.
 - `schema` (String) Schema for the resource definition.
-- `source` (String) Source of the resource definition. Either "CORTEX" or "CUSTOM".
 - `type` (String) Unique identifier for the resource definition.
 
 ### Optional
@@ -29,3 +28,4 @@ ResourceDefinition Entity
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `source` (String) Source of the resource definition. Either "CORTEX" or "CUSTOM".
