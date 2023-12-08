@@ -275,7 +275,7 @@ func (c *CatalogEntityParser) interpolateGit(entity *CatalogEntityData, gitMap m
 		githubMap := gitMap["github"].(map[string]interface{})
 		entity.Git.Github = CatalogEntityGitGithub{
 			Repository: MapFetchToString(githubMap, "repository"),
-			BasePath:   MapFetchToString(githubMap, "basePath"),
+			BasePath:   MapFetchToString(githubMap, "basepath"),
 		}
 	} else {
 		entity.Git.Github = CatalogEntityGitGithub{}
@@ -284,7 +284,7 @@ func (c *CatalogEntityParser) interpolateGit(entity *CatalogEntityData, gitMap m
 		gitlabMap := gitMap["gitlab"].(map[string]interface{})
 		entity.Git.Gitlab = CatalogEntityGitGitlab{
 			Repository: MapFetchToString(gitlabMap, "repository"),
-			BasePath:   MapFetchToString(gitlabMap, "basePath"),
+			BasePath:   MapFetchToString(gitlabMap, "basepath"),
 		}
 	} else {
 		entity.Git.Gitlab = CatalogEntityGitGitlab{}
@@ -294,7 +294,7 @@ func (c *CatalogEntityParser) interpolateGit(entity *CatalogEntityData, gitMap m
 		entity.Git.Azure = CatalogEntityGitAzureDevOps{
 			Project:    MapFetchToString(azureMap, "project"),
 			Repository: MapFetchToString(azureMap, "repository"),
-			BasePath:   MapFetchToString(azureMap, "basePath"),
+			BasePath:   MapFetchToString(azureMap, "basepath"),
 		}
 	} else {
 		entity.Git.Azure = CatalogEntityGitAzureDevOps{}
@@ -891,6 +891,7 @@ func (c *CatalogEntityParser) interpolateStaticAnalysisMend(entity *CatalogEntit
 func (c *CatalogEntityParser) interpolateStaticAnalysisSonarQube(entity *CatalogEntityData, data map[string]interface{}) {
 	entity.StaticAnalysis.SonarQube = CatalogEntityStaticAnalysisSonarQube{
 		Project: data["project"].(string),
+		Alias:   data["alias"].(string),
 	}
 }
 

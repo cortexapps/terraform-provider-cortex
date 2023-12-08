@@ -87,10 +87,10 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
-							MarkdownDescription: "Type of owner. Valid values are `EMAIL`, `GROUP`, `OKTA`, or `SLACK`.",
+							MarkdownDescription: "Type of owner. Valid values are `EMAIL`, `GROUP`, or `SLACK`.",
 							Required:            true,
 							Validators: []validator.String{
-								stringvalidator.OneOf("EMAIL", "GROUP", "OKTA", "SLACK"),
+								stringvalidator.OneOfCaseInsensitive("EMAIL", "GROUP", "SLACK"),
 							},
 						},
 						"name": schema.StringAttribute{
@@ -109,7 +109,7 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 							MarkdownDescription: "Provider of the owner. Only allowed if `type` is `group`.",
 							Optional:            true,
 							Validators: []validator.String{
-								stringvalidator.OneOf("ACTIVE_DIRECTORY", "BAMBOO_HR", "CORTEX", "GITHUB", "GOOGLE", "OKTA", "OPSGENIE", "WORKDAY"),
+								stringvalidator.OneOf("ACTIVE_DIRECTORY", "BAMBOO_HR", "CORTEX", "GITHUB", "GITLAB", "GOOGLE", "OKTA", "OPSGENIE", "SERVICE_NOW", "WORKDAY"),
 							},
 						},
 						"channel": schema.StringAttribute{

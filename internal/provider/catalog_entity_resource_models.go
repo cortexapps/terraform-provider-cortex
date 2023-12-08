@@ -483,7 +483,7 @@ type CatalogEntityOwnerResourceModel struct {
 
 func (o *CatalogEntityOwnerResourceModel) ToApiModel() cortex.CatalogEntityOwner {
 	switch strings.ToLower(o.Type.ValueString()) {
-	case "user", "email":
+	case "email":
 		return cortex.CatalogEntityOwner{
 			Type:        o.Type.ValueString(),
 			Name:        o.Name.ValueString(),
@@ -517,7 +517,7 @@ func (o *CatalogEntityOwnerResourceModel) FromApiModel(owner *cortex.CatalogEnti
 	}
 
 	switch strings.ToLower(owner.Type) {
-	case "user", "email":
+	case "email":
 		obj.Email = types.StringValue(owner.Email)
 		obj.Channel = types.StringNull()
 		obj.Name = types.StringValue(owner.Name)
@@ -3078,7 +3078,7 @@ func (o *CatalogEntityStaticAnalysisCodeCovResourceModel) ToApiModel() cortex.Ca
 	return cortex.CatalogEntityStaticAnalysisCodeCov{
 		Repository: o.Repository.ValueString(),
 		Provider:   o.Provider.ValueString(),
-		Owner:      o.Provider.ValueString(),
+		Owner:      o.Owner.ValueString(),
 		Flag:       o.Flag.ValueString(),
 	}
 }

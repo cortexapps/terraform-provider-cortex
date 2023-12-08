@@ -7,7 +7,7 @@ resource "cortex_catalog_entity" "products-service" {
   owners = [
     {
       name  = "John Doe"
-      type  = "user"
+      type  = "email"
       email = "john.doe@cortex.io"
     },
     {
@@ -253,13 +253,13 @@ resource "cortex_catalog_entity" "products-service" {
     }
   }
 
-  bugsnag = {
+  bug_snag = {
     project = "products-service"
   }
 
   checkmarx = {
     projects = [
-      { id = "products-service" }
+      { name = "products-service" }
     ]
   }
 
