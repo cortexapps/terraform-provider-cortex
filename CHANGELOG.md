@@ -2,6 +2,9 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.3.1-alpha.1
+* Fix build
+
 ## 0.3.0
 * Repackage for Terraform registry publishing
 * Don't fail cortex_catalog_entity on linter warnings
