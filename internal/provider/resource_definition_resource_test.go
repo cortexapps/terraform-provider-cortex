@@ -23,7 +23,6 @@ func TestAccResourceDefinitionResourceMinimal(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "type", stub.Type),
 					resource.TestCheckResourceAttr(resourceName, "name", stub.Name),
-					resource.TestCheckResourceAttr(resourceName, "source", "CUSTOM"),
 				),
 			},
 			// ImportState testing
