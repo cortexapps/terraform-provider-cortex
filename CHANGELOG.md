@@ -2,6 +2,10 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.3.1
+* Fix serialization for `git` / `sonarqube` / `codecov`
+* Make owner type case insensitive
+
 ## 0.3.1-alpha.1
 * Fix build
 
