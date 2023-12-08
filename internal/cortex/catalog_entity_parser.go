@@ -889,10 +889,7 @@ func (c *CatalogEntityParser) interpolateStaticAnalysisMend(entity *CatalogEntit
 // SonarQube
 
 func (c *CatalogEntityParser) interpolateStaticAnalysisSonarQube(entity *CatalogEntityData, data map[string]interface{}) {
-	entity.StaticAnalysis.SonarQube = CatalogEntityStaticAnalysisSonarQube{
-		Project: data["project"].(string),
-	}
-
+	entity.StaticAnalysis.SonarQube.Project = data["project"].(string)
 	if data["alias"] != nil {
 		entity.StaticAnalysis.SonarQube.Alias = data["alias"].(string)
 	}
