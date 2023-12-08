@@ -185,12 +185,12 @@ func (c *ResourceDefinitionsClient) Update(ctx context.Context, typeName string,
 type DeleteResourceDefinitionResponse struct{}
 
 func (c *ResourceDefinitionsClient) Delete(ctx context.Context, typeName string) error {
-	scorecardResponse := DeleteResourceDefinitionResponse{}
+	deleteDefinitionResponse := DeleteResourceDefinitionResponse{}
 	apiError := ApiError{}
 
-	response, err := c.Client().Delete(Route("resource_definitions", typeName)).Receive(&scorecardResponse, &apiError)
+	response, err := c.Client().Delete(Route("resource_definitions", typeName)).Receive(&deleteDefinitionResponse, &apiError)
 	if err != nil {
-		return errors.New("could not delete scorecard: " + err.Error())
+		return errors.New("could not delete resource definition: " + err.Error())
 	}
 
 	err = c.client.handleResponseStatus(response, &apiError)
