@@ -2,7 +2,7 @@ package cortex_test
 
 import (
 	"context"
-	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
+	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

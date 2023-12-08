@@ -1,4 +1,4 @@
-module github.com/bigcommerce/terraform-provider-cortex
+module github.com/cortexapps/terraform-provider-cortex
 
 go 1.20
 

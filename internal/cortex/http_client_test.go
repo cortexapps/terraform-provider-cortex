@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
+	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 	"io"

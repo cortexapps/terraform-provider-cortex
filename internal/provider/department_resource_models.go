@@ -1,7 +1,7 @@
 package provider
 
 import (
-	"github.com/bigcommerce/terraform-provider-cortex/internal/cortex"
+	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 

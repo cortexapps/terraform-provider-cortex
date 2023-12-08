@@ -1,7 +1,7 @@
 package provider_test
 
 import (
-	"github.com/bigcommerce/terraform-provider-cortex/internal/provider"
+	"github.com/cortexapps/terraform-provider-cortex/internal/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"os"
