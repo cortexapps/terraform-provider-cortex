@@ -2,6 +2,11 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.3.0
+* Repackage for Terraform registry publishing
+* Don't fail cortex_catalog_entity on linter warnings
+* Don't fail on cortex_catalog_entity deletion empty response
+
 ## 0.2.2
 
 * Add `x-cortex-launch-darkly` support
