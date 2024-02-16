@@ -21,12 +21,17 @@ type CatalogEntityDataSource struct {
 	client *cortex.HttpClient
 }
 
+type CatalogEntityChildSourceModel struct {
+	Tag types.String `tfsdk:"tag"`
+}
+
 // CatalogEntityDataSourceModel describes the data source data model.
 type CatalogEntityDataSourceModel struct {
-	Id          types.String `tfsdk:"id"`
-	Tag         types.String `tfsdk:"tag"`
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
+	Id          types.String                    `tfsdk:"id"`
+	Tag         types.String                    `tfsdk:"tag"`
+	Name        types.String                    `tfsdk:"name"`
+	Description types.String                    `tfsdk:"description"`
+	Children    []CatalogEntityChildSourceModel `tfsdk:"children"`
 }
 
 func (o *CatalogEntityDataSourceModel) FromApiModel(entity cortex.CatalogEntityData) {
@@ -34,6 +39,13 @@ func (o *CatalogEntityDataSourceModel) FromApiModel(entity cortex.CatalogEntityD
 	o.Tag = types.StringValue(entity.Tag)
 	o.Name = types.StringValue(entity.Title)
 	o.Description = types.StringValue(entity.Description)
+
+	children := make([]CatalogEntityChildSourceModel, len(entity.Children))
+	for i, child := range entity.Children {
+		children[i] = CatalogEntityChildSourceModel{Tag: types.StringValue(child.Tag)}
+	}
+
+	o.Children = children
 }
 
 func (d *CatalogEntityDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -63,6 +75,18 @@ func (d *CatalogEntityDataSource) Schema(ctx context.Context, req datasource.Sch
 			"description": schema.StringAttribute{
 				MarkdownDescription: "Description of the entity visible in the Service or Resource Catalog. Markdown is supported.",
 				Computed:            true,
+			},
+			"children": schema.ListNestedAttribute{
+				MarkdownDescription: "List of child entities for the entity. Only used for entities of type `TEAM` or `DOMAIN`.",
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"tag": schema.StringAttribute{
+							MarkdownDescription: "Tag of the child entity.",
+							Required:            true,
+						},
+					},
+				},
 			},
 		},
 	}
