@@ -36,6 +36,7 @@ type CatalogEntityData struct {
 	// Integration-specific things
 	BugSnag        CatalogEntityBugSnag         `json:"x-cortex-bugsnag,omitempty" yaml:"x-cortex-bugsnag,omitempty"`
 	Checkmarx      CatalogEntityCheckmarx       `json:"x-cortex-checkmarx,omitempty" yaml:"x-cortex-checkmarx,omitempty"`
+	CircleCi       CatalogEntityCircleCi        `json:"x-cortex-circle-ci,omitempty" yaml:"x-cortex-circle-ci,omitempty"`
 	Coralogix      CatalogEntityCoralogix       `json:"x-cortex-coralogix,omitempty" yaml:"x-cortex-coralogix,omitempty"`
 	FireHydrant    CatalogEntityFireHydrant     `json:"x-cortex-firehydrant,omitempty" yaml:"x-cortex-firehydrant,omitempty"`
 	LaunchDarkly   CatalogEntityLaunchDarkly    `json:"x-cortex-launch-darkly,omitempty" yaml:"x-cortex-launch-darkly,omitempty"`
@@ -313,7 +314,7 @@ func (o *CatalogEntityCoralogixApplication) Enabled() bool {
 }
 
 /***********************************************************************************************************************
- * Coralogix - https://docs.cortex.io/docs/reference/integrations/coralogix
+ * Checkmarx - https://docs.cortex.io/docs/reference/integrations/checkmarx
  **********************************************************************************************************************/
 
 type CatalogEntityCheckmarx struct {
@@ -327,6 +328,27 @@ type CatalogEntityCheckmarxProject struct {
 
 func (o *CatalogEntityCheckmarx) Enabled() bool {
 	return len(o.Projects) > 0
+}
+
+/***********************************************************************************************************************
+ * CircleCI - https://docs.cortex.io/docs/reference/integrations/circleci
+ **********************************************************************************************************************/
+
+type CatalogEntityCircleCi struct {
+	Projects []CatalogEntityCircleCiProject `json:"projects" yaml:"projects"`
+}
+
+func (o *CatalogEntityCircleCi) Enabled() bool {
+	return len(o.Projects) > 0
+}
+
+type CatalogEntityCircleCiProject struct {
+	Slug  string `json:"projectSlug" yaml:"projectSlug"`
+	Alias string `json:"alias,omitempty" yaml:"alias,omitempty"`
+}
+
+func (o *CatalogEntityCircleCiProject) Enabled() bool {
+	return o.Slug != ""
 }
 
 /***********************************************************************************************************************

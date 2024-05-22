@@ -263,6 +263,12 @@ resource "cortex_catalog_entity" "products-service" {
     ]
   }
 
+  circle_ci = {
+    projects = [
+      { name = "products-service" }
+    ]
+  }
+
   coralogix = {
     applications = [
       { name = "products-service" }
