@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/life4/genesis/slices"
-	"strings"
 )
 
 // CatalogEntityResourceModel describes the resource data model.
@@ -40,6 +41,7 @@ type CatalogEntityResourceModel struct {
 	CiCd           types.Object                             `tfsdk:"ci_cd"`
 	BugSnag        types.Object                             `tfsdk:"bug_snag"`
 	Checkmarx      types.Object                             `tfsdk:"checkmarx"`
+	CircleCi       types.Object                             `tfsdk:"circle_ci"`
 	Coralogix      types.Object                             `tfsdk:"coralogix"`
 	FireHydrant    types.Object                             `tfsdk:"firehydrant"`
 	K8s            types.Object                             `tfsdk:"k8s"`
@@ -180,6 +182,11 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics
 	if err != nil {
 		diagnostics.AddError("error parsing Checkmarx configuration", fmt.Sprintf("%+v", err))
 	}
+	circleci := CatalogEntityCircleCiResourceModel{}
+	err = o.CircleCi.As(ctx, &circleci, defaultObjOptions)
+	if err != nil {
+		diagnostics.AddError("error parsing CircleCI configuration", fmt.Sprintf("%+v", err))
+	}
 	coralogix := CatalogEntityCoralogixResourceModel{}
 	err = o.Coralogix.As(ctx, &coralogix, defaultObjOptions)
 	if err != nil {
@@ -270,6 +277,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics
 		CiCd:           ciCd.ToApiModel(ctx),
 		BugSnag:        bugSnag.ToApiModel(),
 		Checkmarx:      checkmarx.ToApiModel(),
+		CircleCi:       circleci.ToApiModel(),
 		Coralogix:      coralogix.ToApiModel(),
 		FireHydrant:    firehydrant.ToApiModel(),
 		K8s:            k8s.ToApiModel(),
@@ -1401,6 +1409,81 @@ func (o *CatalogEntityCheckmarxProjectResourceModel) FromApiModel(project cortex
 	} else {
 		ob.ID = types.Int64Null()
 		ob.Name = types.StringValue(project.Name)
+	}
+	return ob
+}
+
+/***********************************************************************************************************************
+ * CircleCi
+ **********************************************************************************************************************/
+
+type CatalogEntityCircleCiResourceModel struct {
+	Projects []CatalogEntityCircleCiProjectResourceModel `tfsdk:"projects"`
+}
+
+func (o *CatalogEntityCircleCiResourceModel) AttrTypes() map[string]attr.Type {
+	ob := CatalogEntityCircleCiProjectResourceModel{}
+	return map[string]attr.Type{
+		"projects": types.ListType{ElemType: types.ObjectType{AttrTypes: ob.AttrTypes()}},
+	}
+}
+
+func (o *CatalogEntityCircleCiResourceModel) ToApiModel() cortex.CatalogEntityCircleCi {
+	projects := make([]cortex.CatalogEntityCircleCiProject, len(o.Projects))
+	for i, p := range o.Projects {
+		projects[i] = p.ToApiModel()
+	}
+	return cortex.CatalogEntityCircleCi{
+		Projects: projects,
+	}
+}
+
+func (o *CatalogEntityCircleCiResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityCircleCi) types.Object {
+	obj := CatalogEntityCircleCiResourceModel{}
+	if !entity.Enabled() {
+		return types.ObjectNull(obj.AttrTypes())
+	}
+
+	projects := make([]CatalogEntityCircleCiProjectResourceModel, len(entity.Projects))
+	for i, p := range entity.Projects {
+		po := CatalogEntityCircleCiProjectResourceModel{}
+		projects[i] = po.FromApiModel(p)
+	}
+	obj.Projects = projects
+
+	objectValue, d := types.ObjectValueFrom(ctx, o.AttrTypes(), &obj)
+	diagnostics.Append(d...)
+	return objectValue
+}
+
+type CatalogEntityCircleCiProjectResourceModel struct {
+	Slug  types.String `tfsdk:"slug"`
+	Alias types.String `tfsdk:"alias"`
+}
+
+func (o *CatalogEntityCircleCiProjectResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"slug":  types.StringType,
+		"alias": types.StringType,
+	}
+}
+
+func (o *CatalogEntityCircleCiProjectResourceModel) ToApiModel() cortex.CatalogEntityCircleCiProject {
+	entity := cortex.CatalogEntityCircleCiProject{}
+	entity.Slug = o.Slug.ValueString()
+	if o.Alias.ValueString() != "" {
+		entity.Alias = o.Alias.ValueString()
+	}
+	return entity
+}
+
+func (o *CatalogEntityCircleCiProjectResourceModel) FromApiModel(project cortex.CatalogEntityCircleCiProject) CatalogEntityCircleCiProjectResourceModel {
+	ob := CatalogEntityCircleCiProjectResourceModel{}
+	ob.Slug = types.StringValue(project.Slug)
+	if project.Alias != "" {
+		ob.Alias = types.StringValue(project.Alias)
+	} else {
+		ob.Alias = types.StringNull()
 	}
 	return ob
 }
