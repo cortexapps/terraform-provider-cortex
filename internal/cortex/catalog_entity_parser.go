@@ -109,6 +109,10 @@ func (c *CatalogEntityParser) YamlToEntity(yamlEntity map[string]interface{}) (C
 		c.interpolateCheckmarx(&entity, info["x-cortex-checkmarx"].(map[string]interface{}))
 	}
 
+	if info["x-cortex-circle-ci"] != nil {
+		c.interpolateCircleCi(&entity, info["x-cortex-circle-ci"].(map[string]interface{}))
+	}
+
 	if info["x-cortex-coralogix"] != nil {
 		c.interpolateCoralogix(&entity, info["x-cortex-coralogix"].(map[string]interface{}))
 	}
@@ -955,6 +959,24 @@ func (c *CatalogEntityParser) interpolateCiCdBuildkite(entity *CatalogEntityData
 			tagMap := tag.(map[string]interface{})
 			entity.CiCd.Buildkite.Tags = append(entity.CiCd.Buildkite.Tags, CatalogEntityCiCdBuildkiteTag{
 				Tag: MapFetchToString(tagMap, "tag"),
+			})
+		}
+	}
+}
+
+/***********************************************************************************************************************
+ * CircleCi
+ **********************************************************************************************************************/
+
+func (c *CatalogEntityParser) interpolateCircleCi(entity *CatalogEntityData, cciMap map[string]interface{}) {
+	entity.CircleCi = CatalogEntityCircleCi{}
+	if cciMap["projects"] != nil {
+		projects := cciMap["projects"].([]interface{})
+		for _, project := range projects {
+			projectMap := project.(map[string]interface{})
+			entity.CircleCi.Projects = append(entity.CircleCi.Projects, CatalogEntityCircleCiProject{
+				Slug:  MapFetchToString(projectMap, "projectSlug"),
+				Alias: MapFetchToString(projectMap, "alias"),
 			})
 		}
 	}

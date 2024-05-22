@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -769,6 +770,28 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 								},
 								"name": schema.StringAttribute{
 									MarkdownDescription: "Checkmarx project name. Required if ID is not set.",
+									Optional:            true,
+								},
+							},
+						},
+					},
+				},
+			},
+			"circle_ci": schema.SingleNestedAttribute{
+				MarkdownDescription: "CircleCI configuration for the entity.",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"projects": schema.ListNestedAttribute{
+						MarkdownDescription: "List of CircleCI projects for the entity.",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"slug": schema.StringAttribute{
+									MarkdownDescription: "The slug of the project in CircleCI.",
+									Required:            true,
+								},
+								"alias": schema.StringAttribute{
+									MarkdownDescription: "CircleCI alias. Only relevant if you've opted into multi-account support.",
 									Optional:            true,
 								},
 							},
