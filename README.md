@@ -23,8 +23,8 @@ Add the following block into your Terraform files (note that this provider requi
 terraform {
   required_providers {
     cortex = {
-      source  = "cortex/cortex"
-      version = "=> 0.1"
+      source  = "cortexapps/cortex"
+      version = ">= 0.1"
     }
   }
   required_version = ">= 1.5.0"
