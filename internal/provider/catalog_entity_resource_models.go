@@ -15,43 +15,43 @@ import (
 
 // CatalogEntityResourceModel describes the resource data model.
 type CatalogEntityResourceModel struct {
-	Id             types.String                             `tfsdk:"id"`
-	Tag            types.String                             `tfsdk:"tag"`
-	Name           types.String                             `tfsdk:"name"`
-	Description    types.String                             `tfsdk:"description"`
-	Type           types.String                             `tfsdk:"type"`
-	Definition     types.String                             `tfsdk:"definition"`
-	Owners         []CatalogEntityOwnerResourceModel        `tfsdk:"owners"`
-	Children       []CatalogEntityChildResourceModel        `tfsdk:"children"`
-	Parents  	   []CatalogEntityParentResourceModel       `tfsdk:"parents"`
-	Groups         []types.String                           `tfsdk:"groups"`
-	Links          []CatalogEntityLinkResourceModel         `tfsdk:"links"`
-	IgnoreMetadata types.Bool                               `tfsdk:"ignore_metadata"`
-	Metadata       types.String                             `tfsdk:"metadata"`
-	Dependencies   []types.Object                           `tfsdk:"dependencies"`
-	Alerts         []types.Object                           `tfsdk:"alerts"`
-	Apm            types.Object                             `tfsdk:"apm"`
-	Dashboards     types.Object                             `tfsdk:"dashboards"`
-	Git            types.Object                             `tfsdk:"git"`
-	Issues         types.Object                             `tfsdk:"issues"`
-	OnCall         types.Object                             `tfsdk:"on_call"`
-	SLOs           types.Object                             `tfsdk:"slos"`
-	StaticAnalysis types.Object                             `tfsdk:"static_analysis"`
-	CiCd           types.Object                             `tfsdk:"ci_cd"`
-	BugSnag        types.Object                             `tfsdk:"bug_snag"`
-	Checkmarx      types.Object                             `tfsdk:"checkmarx"`
-	Coralogix      types.Object                             `tfsdk:"coralogix"`
-	FireHydrant    types.Object                             `tfsdk:"firehydrant"`
-	K8s            types.Object                             `tfsdk:"k8s"`
-	LaunchDarkly   types.Object                             `tfsdk:"launch_darkly"`
-	MicrosoftTeams []types.Object                           `tfsdk:"microsoft_teams"`
-	Rollbar        types.Object                             `tfsdk:"rollbar"`
-	Sentry         types.Object                             `tfsdk:"sentry"`
-	ServiceNow     types.Object                             `tfsdk:"service_now"`
-	Slack          types.Object                             `tfsdk:"slack"`
-	Snyk           types.Object                             `tfsdk:"snyk"`
-	Wiz            types.Object                             `tfsdk:"wiz"`
-	Team           types.Object                             `tfsdk:"team"`
+	Id             types.String                       `tfsdk:"id"`
+	Tag            types.String                       `tfsdk:"tag"`
+	Name           types.String                       `tfsdk:"name"`
+	Description    types.String                       `tfsdk:"description"`
+	Type           types.String                       `tfsdk:"type"`
+	Definition     types.String                       `tfsdk:"definition"`
+	Owners         []CatalogEntityOwnerResourceModel  `tfsdk:"owners"`
+	Children       []CatalogEntityChildResourceModel  `tfsdk:"children"`
+	Parents        []CatalogEntityParentResourceModel `tfsdk:"parents"`
+	Groups         []types.String                     `tfsdk:"groups"`
+	Links          []CatalogEntityLinkResourceModel   `tfsdk:"links"`
+	IgnoreMetadata types.Bool                         `tfsdk:"ignore_metadata"`
+	Metadata       types.String                       `tfsdk:"metadata"`
+	Dependencies   []types.Object                     `tfsdk:"dependencies"`
+	Alerts         []types.Object                     `tfsdk:"alerts"`
+	Apm            types.Object                       `tfsdk:"apm"`
+	Dashboards     types.Object                       `tfsdk:"dashboards"`
+	Git            types.Object                       `tfsdk:"git"`
+	Issues         types.Object                       `tfsdk:"issues"`
+	OnCall         types.Object                       `tfsdk:"on_call"`
+	SLOs           types.Object                       `tfsdk:"slos"`
+	StaticAnalysis types.Object                       `tfsdk:"static_analysis"`
+	CiCd           types.Object                       `tfsdk:"ci_cd"`
+	BugSnag        types.Object                       `tfsdk:"bug_snag"`
+	Checkmarx      types.Object                       `tfsdk:"checkmarx"`
+	Coralogix      types.Object                       `tfsdk:"coralogix"`
+	FireHydrant    types.Object                       `tfsdk:"firehydrant"`
+	K8s            types.Object                       `tfsdk:"k8s"`
+	LaunchDarkly   types.Object                       `tfsdk:"launch_darkly"`
+	MicrosoftTeams []types.Object                     `tfsdk:"microsoft_teams"`
+	Rollbar        types.Object                       `tfsdk:"rollbar"`
+	Sentry         types.Object                       `tfsdk:"sentry"`
+	ServiceNow     types.Object                       `tfsdk:"service_now"`
+	Slack          types.Object                       `tfsdk:"slack"`
+	Snyk           types.Object                       `tfsdk:"snyk"`
+	Wiz            types.Object                       `tfsdk:"wiz"`
+	Team           types.Object                       `tfsdk:"team"`
 }
 
 func getDefaultObjectOptions() basetypes.ObjectAsOptions {
@@ -253,7 +253,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics
 		Definition:     definition,
 		Owners:         owners,
 		Children:       children,
-		Parents: 	 	Parents,
+		Parents:        Parents,
 		Groups:         groups,
 		Links:          links,
 		IgnoreMetadata: o.IgnoreMetadata.ValueBool(),
