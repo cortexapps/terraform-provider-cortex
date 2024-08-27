@@ -23,7 +23,7 @@ type CatalogEntityResourceModel struct {
 	Definition     types.String                             `tfsdk:"definition"`
 	Owners         []CatalogEntityOwnerResourceModel        `tfsdk:"owners"`
 	Children       []CatalogEntityChildResourceModel        `tfsdk:"children"`
-	DomainParents  []CatalogEntityDomainParentResourceModel `tfsdk:"domain_parents"`
+	Parents  	   []CatalogEntityParentResourceModel       `tfsdk:"parents"`
 	Groups         []types.String                           `tfsdk:"groups"`
 	Links          []CatalogEntityLinkResourceModel         `tfsdk:"links"`
 	IgnoreMetadata types.Bool                               `tfsdk:"ignore_metadata"`
@@ -79,9 +79,9 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics
 	for i, child := range o.Children {
 		children[i] = child.ToApiModel()
 	}
-	domainParents := make([]cortex.CatalogEntityDomainParent, len(o.DomainParents))
-	for i, domainParent := range o.DomainParents {
-		domainParents[i] = domainParent.ToApiModel()
+	Parents := make([]cortex.CatalogEntityParent, len(o.Parents))
+	for i, parent := range o.Parents {
+		Parents[i] = parent.ToApiModel()
 	}
 	groups := make([]string, len(o.Groups))
 	for i, group := range o.Groups {
@@ -253,7 +253,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics
 		Definition:     definition,
 		Owners:         owners,
 		Children:       children,
-		DomainParents:  domainParents,
+		Parents: 	 	Parents,
 		Groups:         groups,
 		Links:          links,
 		IgnoreMetadata: o.IgnoreMetadata.ValueBool(),
@@ -331,14 +331,14 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 		o.Children = nil
 	}
 
-	if len(entity.DomainParents) > 0 {
-		o.DomainParents = make([]CatalogEntityDomainParentResourceModel, len(entity.DomainParents))
-		for i, domainParent := range entity.DomainParents {
-			m := CatalogEntityDomainParentResourceModel{}
-			o.DomainParents[i] = m.FromApiModel(&domainParent)
+	if len(entity.Parents) > 0 {
+		o.Parents = make([]CatalogEntityParentResourceModel, len(entity.Parents))
+		for i, parent := range entity.Parents {
+			m := CatalogEntityParentResourceModel{}
+			o.Parents[i] = m.FromApiModel(&parent)
 		}
 	} else {
-		o.DomainParents = nil
+		o.Parents = nil
 	}
 
 	if len(entity.Groups) > 0 {
@@ -566,25 +566,25 @@ func (o *CatalogEntityChildResourceModel) FromApiModel(entity *cortex.CatalogEnt
 	}
 }
 
-// CatalogEntityDomainParentResourceModel describes a parent domain of the catalog entity.
-type CatalogEntityDomainParentResourceModel struct {
+// CatalogEntityParentResourceModel describes a parent domain of the catalog entity.
+type CatalogEntityParentResourceModel struct {
 	Tag types.String `tfsdk:"tag"`
 }
 
-func (o *CatalogEntityDomainParentResourceModel) AttrTypes() map[string]attr.Type {
+func (o *CatalogEntityParentResourceModel) AttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"tag": types.StringType,
 	}
 }
 
-func (o *CatalogEntityDomainParentResourceModel) ToApiModel() cortex.CatalogEntityDomainParent {
-	return cortex.CatalogEntityDomainParent{
+func (o *CatalogEntityParentResourceModel) ToApiModel() cortex.CatalogEntityParent {
+	return cortex.CatalogEntityParent{
 		Tag: o.Tag.ValueString(),
 	}
 }
 
-func (o *CatalogEntityDomainParentResourceModel) FromApiModel(entity *cortex.CatalogEntityDomainParent) CatalogEntityDomainParentResourceModel {
-	return CatalogEntityDomainParentResourceModel{
+func (o *CatalogEntityParentResourceModel) FromApiModel(entity *cortex.CatalogEntityParent) CatalogEntityParentResourceModel {
+	return CatalogEntityParentResourceModel{
 		Tag: types.StringValue(entity.Tag),
 	}
 }
