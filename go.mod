@@ -1,6 +1,6 @@
 module github.com/cortexapps/terraform-provider-cortex
 
-go 1.20
+go 1.22
 
 require (
 	github.com/dghubble/sling v1.4.1
