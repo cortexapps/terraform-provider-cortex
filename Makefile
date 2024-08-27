@@ -35,6 +35,9 @@ lint:
 docs:
 	go generate ./...
 
+format:
+	go fmt ./...
+
 # unit tests
 test:
 	go clean -testcache
