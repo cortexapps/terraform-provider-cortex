@@ -135,8 +135,8 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 					},
 				},
 			},
-			"domain_parents": schema.ListNestedAttribute{
-				MarkdownDescription: "List of parent domains for the entity. The list of parents can only be entities of type `DOMAIN`.",
+			"parents": schema.ListNestedAttribute{
+				MarkdownDescription: "List of parents for the entity. The list of parents can only be entities of type `DOMAIN`.",
 				Optional:            true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
