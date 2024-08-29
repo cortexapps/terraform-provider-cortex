@@ -2,7 +2,7 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
-## 0.3.2
+## 0.4.0
 * Deprecate `x-cortex-parents` and use `x-cortex-parents` instead
 - Bump Go version 1.20 -> 1.22
 
