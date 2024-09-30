@@ -24,7 +24,7 @@ terraform {
   required_providers {
     cortex = {
       source  = "cortex/cortex"
-      version = "=> 0.1"
+      version = ">= 0.1"
     }
   }
   required_version = ">= 1.5.0"
