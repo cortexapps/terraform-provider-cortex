@@ -34,7 +34,7 @@ func (r *ResourceDefinitionResourceModel) FromApiModel(ctx context.Context, diag
 	}
 
 	schema := make(map[string]interface{})
-	if entity.Schema != nil && len(entity.Schema) > 0 {
+	if len(entity.Schema) > 0 {
 		schema = entity.Schema
 	}
 	sv, err := json.Marshal(schema)
