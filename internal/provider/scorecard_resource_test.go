@@ -108,34 +108,7 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Read testing without description or filter
 			{
-				Config:             stub.ToTerraformWithoutDescriptionOrFilter(),
-				ExpectNonEmptyPlan: false,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "tag", stub.Tag),
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "name", stub.Name),
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "draft", fmt.Sprintf("%t", stub.Draft)),
-
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.title", "Has a Description"),
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.expression", "description != null"),
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.weight", "1"),
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.level", "Bronze"),
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.failure_message", "The description is required"),
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.description", "The service has a description"),
-
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.name", "Bronze"),
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.rank", "1"),
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.color", "#c38b5f"),
-
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "evaluation.window", "24"),
-
-					// Check that filter exists and has a category, but don't check specific values
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.category", "SERVICE"),
-				),
-			},
-			// Assuming still valid
-			{
-				Config:             stub.ToTerraformWithoutDescriptionOrFilter(),
-				ExpectNonEmptyPlan: true,
+				Config: stub.ToTerraformWithoutDescriptionOrFilter(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "tag", stub.Tag),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "name", stub.Name),
