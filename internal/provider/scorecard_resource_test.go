@@ -132,7 +132,7 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttrSet(stub.ResourceFullName(), "description"),
 
 					// Check that filter exists and has a category, but don't check specific values
-					resource.TestCheckResourceAttrSet(stub.ResourceFullName(), "filter.category", "SERVICE"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.category", "SERVICE"),
 				),
 			},
 			// Read testing
