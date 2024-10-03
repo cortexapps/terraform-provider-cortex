@@ -123,6 +123,7 @@ func (r *ScorecardResource) Schema(ctx context.Context, req resource.SchemaReque
 			"description": schema.StringAttribute{
 				MarkdownDescription: "Description of the scorecard.",
 				Optional:            true,
+				Computed:            true,
 			},
 			"draft": schema.BoolAttribute{
 				MarkdownDescription: "Whether the scorecard is a draft.",
@@ -131,6 +132,7 @@ func (r *ScorecardResource) Schema(ctx context.Context, req resource.SchemaReque
 			"filter": schema.SingleNestedAttribute{
 				MarkdownDescription: "Filter of the scorecard.",
 				Optional:            true,
+				Computed:            true,
 				Attributes: map[string]schema.Attribute{
 					"category": schema.StringAttribute{
 						MarkdownDescription: "By default, Scorecards are evaluated against all services. You can specify the category as RESOURCE to evaluate a Scorecard against resources or DOMAIN to evaluate a Scorecard against domains.",
