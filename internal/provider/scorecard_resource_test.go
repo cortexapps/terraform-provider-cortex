@@ -108,7 +108,7 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Read testing without description or filter
 			{
-				Config: stub.ToTerraform(),
+				Config: stub.ToTerraformWithoutDescriptionOrFilter(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "tag", stub.Tag),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "name", stub.Name),
