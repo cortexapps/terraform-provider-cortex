@@ -131,7 +131,7 @@ func TestAccCatalogEntityDomainWithParent(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "name", name),
 					resource.TestCheckResourceAttr(resourceName, "description", description),
 					resource.TestCheckResourceAttr(resourceName, "type", "domain"),
-					resource.TestCheckResourceAttr(resourceName, "domain_parents.0.tag", "manual-test-domain"),
+					resource.TestCheckResourceAttr(resourceName, "parents.0.tag", "manual-test-domain"),
 				),
 			},
 			// ImportState testing
@@ -148,7 +148,7 @@ func TestAccCatalogEntityDomainWithParent(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "name", name),
 					resource.TestCheckResourceAttr(resourceName, "description", description+" 2"),
 					resource.TestCheckResourceAttr(resourceName, "type", "domain"),
-					resource.TestCheckResourceAttr(resourceName, "domain_parents.0.tag", "manual-test-domain"),
+					resource.TestCheckResourceAttr(resourceName, "parents.0.tag", "manual-test-domain"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -163,7 +163,7 @@ resource "cortex_catalog_entity" %[1]q {
  name = %[2]q
  description = %[3]q
  type = "domain"
- domain_parents = [
+ parents = [
    {
      tag = "manual-test-domain"
    }

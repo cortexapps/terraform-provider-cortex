@@ -2,6 +2,10 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.4.0
+* Deprecate `x-cortex-parents` and use `x-cortex-parents` instead
+- Bump Go version 1.20 -> 1.22
+
 ## 0.3.1
 * Fix serialization for `git` / `sonarqube` / `codecov`
 * Make owner type case insensitive
