@@ -108,8 +108,8 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Read testing without description or filter
 			{
-				Config:                  stub.ToTerraformWithoutDescriptionOrFilter(),
-				ImportStateVerifyIgnore: []string{"description", "filter"},
+				Config:             stub.ToTerraformWithoutDescriptionOrFilter(),
+				ExpectNonEmptyPlan: false,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "tag", stub.Tag),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "name", stub.Name),
@@ -130,6 +130,16 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 
 					// Check that filter exists and has a category, but don't check specific values
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.category", "SERVICE"),
+				),
+			},
+			// Assuming still valid
+			{
+				Config:             stub.ToTerraformWithoutDescriptionOrFilter(),
+				ExpectNonEmptyPlan: true,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "tag", stub.Tag),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "name", stub.Name),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "draft", fmt.Sprintf("%t", stub.Draft)),
 				),
 			},
 			// Read testing
