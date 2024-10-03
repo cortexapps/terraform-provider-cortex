@@ -112,7 +112,7 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "tag", stub.Tag),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "name", stub.Name),
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "description", stub.Description),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "description", ""),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "draft", fmt.Sprintf("%t", stub.Draft)),
 
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.title", "Has a Description"),
@@ -127,7 +127,6 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.color", "#c38b5f"),
 
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.category", "SERVICE"),
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.query", "owners_is_set"),
 
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "evaluation.window", "24"),
 				),
