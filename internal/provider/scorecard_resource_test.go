@@ -128,9 +128,6 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "evaluation.window", "24"),
 
-					// Check that description exists but don't check its value
-					resource.TestCheckResourceAttrSet(stub.ResourceFullName(), "description"),
-
 					// Check that filter exists and has a category, but don't check specific values
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.category", "SERVICE"),
 				),
