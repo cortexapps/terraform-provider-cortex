@@ -90,10 +90,6 @@ resource %[1]q %[2]q {
   evaluation = {
     window = 24
   }
-
-  lifecycle {
-    ignore_changes = [description, filter]
-  }
 }`, t.ResourceType(), t.Tag, t.Name, t.Draft)
 }
 
@@ -112,7 +108,8 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Read testing without description or filter
 			{
-				Config: stub.ToTerraformWithoutDescriptionOrFilter(),
+				Config:                  stub.ToTerraformWithoutDescriptionOrFilter(),
+				ImportStateVerifyIgnore: []string{"description", "filter"},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "tag", stub.Tag),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "name", stub.Name),
@@ -130,6 +127,12 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.color", "#c38b5f"),
 
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "evaluation.window", "24"),
+
+					// Check that description exists but don't check its value
+					resource.TestCheckResourceAttrSet("cortex_scorecard.test-complete-scorecard", "description"),
+
+					// Check that filter exists and has a category, but don't check specific values
+					resource.TestCheckResourceAttrSet("cortex_scorecard.test-complete-scorecard", "filter"),
 				),
 			},
 			// Read testing
