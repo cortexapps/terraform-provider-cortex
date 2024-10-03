@@ -129,10 +129,10 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "evaluation.window", "24"),
 
 					// Check that description exists but don't check its value
-					resource.TestCheckResourceAttrSet("cortex_scorecard.test-complete-scorecard", "description"),
+					resource.TestCheckResourceAttrSet(stub.ResourceFullName(), "description"),
 
 					// Check that filter exists and has a category, but don't check specific values
-					resource.TestCheckResourceAttrSet("cortex_scorecard.test-complete-scorecard", "filter"),
+					resource.TestCheckResourceAttrSet(stub.ResourceFullName(), "filter.category", "SERVICE"),
 				),
 			},
 			// Read testing
