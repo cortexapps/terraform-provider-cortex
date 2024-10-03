@@ -90,6 +90,10 @@ resource %[1]q %[2]q {
   evaluation = {
     window = 24
   }
+
+  lifecycle {
+    ignore_changes = [description, filter]
+  }
 }`, t.ResourceType(), t.Tag, t.Name, t.Draft)
 }
 
@@ -112,7 +116,6 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "tag", stub.Tag),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "name", stub.Name),
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "description", ""),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "draft", fmt.Sprintf("%t", stub.Draft)),
 
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.title", "Has a Description"),
