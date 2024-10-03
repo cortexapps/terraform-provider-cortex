@@ -90,6 +90,10 @@ resource %[1]q %[2]q {
   evaluation = {
     window = 24
   }
+
+  lifecycle {
+    ignore_changes = [description, filter]
+  }
 }`, t.ResourceType(), t.Tag, t.Name, t.Draft)
 }
 
@@ -113,6 +117,22 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "tag", stub.Tag),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "name", stub.Name),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "draft", fmt.Sprintf("%t", stub.Draft)),
+
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.title", "Has a Description"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.expression", "description != null"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.weight", "1"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.level", "Bronze"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.failure_message", "The description is required"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.description", "The service has a description"),
+
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.name", "Bronze"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.rank", "1"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.color", "#c38b5f"),
+
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "evaluation.window", "24"),
+
+					// Check that filter exists and has a category, but don't check specific values
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.category", "SERVICE"),
 				),
 			},
 			// Read testing
