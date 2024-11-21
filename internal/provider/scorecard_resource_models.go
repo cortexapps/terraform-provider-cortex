@@ -133,7 +133,7 @@ func (o *ScorecardResourceModel) FromApiModel(ctx context.Context, diagnostics *
 	o.Evaluation = evaluation.FromApiModel(ctx, diagnostics, &entity.Evaluation)
 }
 
-// sortRulesByLevelAndTitle sorts the rules by level and title for consistent ordering
+// sortRulesByLevelAndTitle sorts the rules by level and title for consistent ordering.
 func sortRulesByLevelAndTitle(rules []ScorecardRuleResourceModel) {
 	sort.SliceStable(rules, func(i, j int) bool {
 		if rules[i].Level == rules[j].Level {
