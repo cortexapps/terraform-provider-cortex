@@ -3,6 +3,8 @@ package provider
 import (
 	"context"
 	"fmt"
+	"sort"
+
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -70,6 +72,7 @@ func NewScorecardResourceModel() ScorecardResourceModel {
 func (o *ScorecardResourceModel) ToApiModel(ctx context.Context, diagnostics *diag.Diagnostics) cortex.Scorecard {
 	defaultObjOptions := getDefaultObjectOptions()
 
+	sortRulesByLevelAndTitle(o.Rules)
 	rules := make([]cortex.ScorecardRule, len(o.Rules))
 	for i, rule := range o.Rules {
 		rules[i] = rule.ToApiModel()
@@ -121,12 +124,23 @@ func (o *ScorecardResourceModel) FromApiModel(ctx context.Context, diagnostics *
 		rules[i] = rrm.FromApiModel(&e)
 	}
 	o.Rules = rules
+	sortRulesByLevelAndTitle(o.Rules)
 
 	filter := ScorecardFilterResourceModel{}
 	o.Filter = filter.FromApiModel(ctx, diagnostics, &entity.Filter)
 
 	evaluation := ScorecardEvaluationResourceModel{}
 	o.Evaluation = evaluation.FromApiModel(ctx, diagnostics, &entity.Evaluation)
+}
+
+// sortRulesByLevelAndTitle sorts the rules by level and title for consistent ordering
+func sortRulesByLevelAndTitle(rules []ScorecardRuleResourceModel) {
+	sort.SliceStable(rules, func(i, j int) bool {
+		if rules[i].Level == rules[j].Level {
+			return rules[i].Title.String() < rules[j].Title.String()
+		}
+		return rules[i].Level.String() < rules[j].Level.String()
+	})
 }
 
 /***********************************************************************************************************************
