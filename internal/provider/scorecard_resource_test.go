@@ -46,7 +46,7 @@ resource %[1]q %[2]q {
       title = "Has long Descriptions"
       expression = "entity.description().length > 100"
       weight = 1
-      level = "SILVER"
+      level = "Silver"
       failure_message = "The description could be longer"
       description = "The service has a long description"
     },
@@ -54,7 +54,7 @@ resource %[1]q %[2]q {
       title = "Has super long Descriptions"
       expression = "entity.description().length > 1000"
       weight = 1
-      level = "GOLD"
+      level = "Gold"
       failure_message = "The description could still be longer"
       description = "The service has a super long description"
     },
@@ -107,7 +107,7 @@ resource %[1]q %[2]q {
       title = "Has long Descriptions"
       expression = "entity.description().length > 100"
       weight = 1
-      level = "SILVER"
+      level = "Silver"
       failure_message = "The description could be longer"
       description = "The service has a long description"
     },
@@ -115,7 +115,7 @@ resource %[1]q %[2]q {
       title = "Has super long Descriptions"
       expression = "entity.description().length > 1000"
       weight = 1
-      level = "GOLD"
+      level = "Gold"
       failure_message = "The description could still be longer"
       description = "The service has a super long description"
     },
