@@ -36,12 +36,28 @@ resource %[1]q %[2]q {
   rules = [
     {
       title = "Has a Description"
-      expression = "description != null"
+      expression = "entity.description() != null"
       weight = 1
       level = "Bronze"
       failure_message = "The description is required"
       description = "The service has a description"
-    }
+    },
+	{
+      title = "Has long Descriptions"
+      expression = "entity.description().length > 100"
+      weight = 1
+      level = "SILVER"
+      failure_message = "The description could be longer"
+      description = "The service has a long description"
+    },
+	{
+      title = "Has super long Descriptions"
+      expression = "entity.description().length > 1000"
+      weight = 1
+      level = "GOLD"
+      failure_message = "The description could still be longer"
+      description = "The service has a super long description"
+    },
   ]
   ladder = {
     levels = [
@@ -49,7 +65,17 @@ resource %[1]q %[2]q {
          name = "Bronze"
          rank = 1
          color = "#c38b5f"
-      }
+      },
+	  {
+         name = "Silver"
+         rank = 2
+         color = "#c0c0c0"
+      },
+	  {
+         name = "Gold"
+         rank = 3
+         color = "#EFBF04"
+      },
     ]
   }
   filter = {
@@ -71,12 +97,28 @@ resource %[1]q %[2]q {
   rules = [
     {
       title = "Has a Description"
-      expression = "description != null"
+      expression = "entity.description() != null"
       weight = 1
       level = "Bronze"
       failure_message = "The description is required"
       description = "The service has a description"
-    }
+    },
+	{
+      title = "Has long Descriptions"
+      expression = "entity.description().length > 100"
+      weight = 1
+      level = "SILVER"
+      failure_message = "The description could be longer"
+      description = "The service has a long description"
+    },
+	{
+      title = "Has super long Descriptions"
+      expression = "entity.description().length > 1000"
+      weight = 1
+      level = "GOLD"
+      failure_message = "The description could still be longer"
+      description = "The service has a super long description"
+    },
   ]
   ladder = {
     levels = [
@@ -84,7 +126,17 @@ resource %[1]q %[2]q {
          name = "Bronze"
          rank = 1
          color = "#c38b5f"
-      }
+      },
+	  {
+         name = "Silver"
+         rank = 2
+         color = "#c0c0c0"
+      },
+	  {
+         name = "Gold"
+         rank = 3
+         color = "#EFBF04"
+      },
     ]
   }
   evaluation = {
@@ -119,7 +171,7 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "draft", fmt.Sprintf("%t", stub.Draft)),
 
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.title", "Has a Description"),
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.expression", "description != null"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.expression", "entity.description() != null"),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.weight", "1"),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.level", "Bronze"),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.failure_message", "The description is required"),
@@ -145,7 +197,7 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "draft", fmt.Sprintf("%t", stub.Draft)),
 
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.title", "Has a Description"),
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.expression", "description != null"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.expression", "entity.description() != null"),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.weight", "1"),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.level", "Bronze"),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.failure_message", "The description is required"),
