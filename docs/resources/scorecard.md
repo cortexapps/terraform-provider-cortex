@@ -19,7 +19,7 @@ Scorecard Entity
 
 - `ladder` (Attributes) Ladder of the scorecard. (see [below for nested schema](#nestedatt--ladder))
 - `name` (String) Name of the scorecard.
-- `rules` (Attributes List) Rules of the scorecard. (see [below for nested schema](#nestedatt--rules))
+- `rules` (Attributes Set) Rules of the scorecard. (see [below for nested schema](#nestedatt--rules))
 - `tag` (String) Unique identifier for the scorecard.
 
 ### Optional

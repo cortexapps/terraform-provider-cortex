@@ -27,6 +27,7 @@ website/node_modules
 
 website/vendor
 vendor/
+build/
 
 # Test exclusions
 !command/test-fixtures/**/*.tfstate

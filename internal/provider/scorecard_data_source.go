@@ -81,7 +81,7 @@ func (d *ScorecardDataSource) Schema(ctx context.Context, req datasource.SchemaR
 					},
 				},
 			},
-			"rules": schema.ListNestedAttribute{
+			"rules": schema.SetNestedAttribute{
 				MarkdownDescription: "Rules of the scorecard.",
 				Computed:            true,
 				NestedObject: schema.NestedAttributeObject{
