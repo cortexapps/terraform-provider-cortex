@@ -28,7 +28,7 @@ Scorecard data source
 - `id` (String) The ID of this resource.
 - `ladder` (Attributes) (see [below for nested schema](#nestedatt--ladder))
 - `name` (String)
-- `rules` (Attributes List) Rules of the scorecard. (see [below for nested schema](#nestedatt--rules))
+- `rules` (Attributes Set) Rules of the scorecard. (see [below for nested schema](#nestedatt--rules))
 
 <a id="nestedatt--evaluation"></a>
 ### Nested Schema for `evaluation`

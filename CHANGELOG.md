@@ -2,6 +2,9 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.4.2
+* Fixes `cortex_scorecard` resource so that `rules` are a set. Order doesn't matter.
+
 ## 0.4.1
 * Fixes `cortex_scorecard` resource so that `description` and `filter` fields can be computed from provider response
 
