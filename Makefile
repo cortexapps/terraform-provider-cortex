@@ -2,7 +2,7 @@ HOSTNAME=github.com
 NAMESPACE=cortexapps
 NAME=cortex
 BINARY=terraform-provider-${NAME}
-VERSION=0.3.2-dev
+VERSION=0.4.3-dev
 
 GOOS?=$(shell go tool dist env | grep GOOS | grep -o '".*"' | sed 's/"//g')
 GOARCH?=$(shell go tool dist env | grep GOARCH | grep -o '".*"' | sed 's/"//g')
@@ -34,6 +34,9 @@ lint:
 
 docs:
 	go generate ./...
+
+format:
+	go fmt ./...
 
 # unit tests
 test:

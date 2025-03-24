@@ -44,9 +44,9 @@ func (c *CatalogEntityParser) YamlToEntity(yamlEntity map[string]interface{}) (C
 		c.interpolateChildren(&entity, info["x-cortex-children"].([]interface{}))
 	}
 
-	entity.DomainParents = []CatalogEntityDomainParent{}
-	if info["x-cortex-domain-parents"] != nil {
-		c.interpolateDomainParents(&entity, info["x-cortex-domain-parents"].([]interface{}))
+	entity.Parents = []CatalogEntityParent{}
+	if info["x-cortex-parents"] != nil {
+		c.interpolateParents(&entity, info["x-cortex-parents"].([]interface{}))
 	}
 
 	entity.Metadata = map[string]interface{}{}
@@ -200,10 +200,10 @@ func (c *CatalogEntityParser) interpolateChildren(entity *CatalogEntityData, chi
 	}
 }
 
-func (c *CatalogEntityParser) interpolateDomainParents(entity *CatalogEntityData, parents []interface{}) {
+func (c *CatalogEntityParser) interpolateParents(entity *CatalogEntityData, parents []interface{}) {
 	for _, parent := range parents {
 		parentMap := parent.(map[string]interface{})
-		entity.DomainParents = append(entity.DomainParents, CatalogEntityDomainParent{
+		entity.Parents = append(entity.Parents, CatalogEntityParent{
 			Tag: MapFetchToString(parentMap, "tag"),
 		})
 	}

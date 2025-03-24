@@ -16,44 +16,44 @@ import (
 
 // CatalogEntityResourceModel describes the resource data model.
 type CatalogEntityResourceModel struct {
-	Id             types.String                             `tfsdk:"id"`
-	Tag            types.String                             `tfsdk:"tag"`
-	Name           types.String                             `tfsdk:"name"`
-	Description    types.String                             `tfsdk:"description"`
-	Type           types.String                             `tfsdk:"type"`
-	Definition     types.String                             `tfsdk:"definition"`
-	Owners         []CatalogEntityOwnerResourceModel        `tfsdk:"owners"`
-	Children       []CatalogEntityChildResourceModel        `tfsdk:"children"`
-	DomainParents  []CatalogEntityDomainParentResourceModel `tfsdk:"domain_parents"`
-	Groups         []types.String                           `tfsdk:"groups"`
-	Links          []CatalogEntityLinkResourceModel         `tfsdk:"links"`
-	IgnoreMetadata types.Bool                               `tfsdk:"ignore_metadata"`
-	Metadata       types.String                             `tfsdk:"metadata"`
-	Dependencies   []types.Object                           `tfsdk:"dependencies"`
-	Alerts         []types.Object                           `tfsdk:"alerts"`
-	Apm            types.Object                             `tfsdk:"apm"`
-	Dashboards     types.Object                             `tfsdk:"dashboards"`
-	Git            types.Object                             `tfsdk:"git"`
-	Issues         types.Object                             `tfsdk:"issues"`
-	OnCall         types.Object                             `tfsdk:"on_call"`
-	SLOs           types.Object                             `tfsdk:"slos"`
-	StaticAnalysis types.Object                             `tfsdk:"static_analysis"`
-	CiCd           types.Object                             `tfsdk:"ci_cd"`
-	BugSnag        types.Object                             `tfsdk:"bug_snag"`
-	Checkmarx      types.Object                             `tfsdk:"checkmarx"`
-	CircleCi       types.Object                             `tfsdk:"circle_ci"`
-	Coralogix      types.Object                             `tfsdk:"coralogix"`
-	FireHydrant    types.Object                             `tfsdk:"firehydrant"`
-	K8s            types.Object                             `tfsdk:"k8s"`
-	LaunchDarkly   types.Object                             `tfsdk:"launch_darkly"`
-	MicrosoftTeams []types.Object                           `tfsdk:"microsoft_teams"`
-	Rollbar        types.Object                             `tfsdk:"rollbar"`
-	Sentry         types.Object                             `tfsdk:"sentry"`
-	ServiceNow     types.Object                             `tfsdk:"service_now"`
-	Slack          types.Object                             `tfsdk:"slack"`
-	Snyk           types.Object                             `tfsdk:"snyk"`
-	Wiz            types.Object                             `tfsdk:"wiz"`
-	Team           types.Object                             `tfsdk:"team"`
+	Id             types.String                       `tfsdk:"id"`
+	Tag            types.String                       `tfsdk:"tag"`
+	Name           types.String                       `tfsdk:"name"`
+	Description    types.String                       `tfsdk:"description"`
+	Type           types.String                       `tfsdk:"type"`
+	Definition     types.String                       `tfsdk:"definition"`
+	Owners         []CatalogEntityOwnerResourceModel  `tfsdk:"owners"`
+	Children       []CatalogEntityChildResourceModel  `tfsdk:"children"`
+	Parents        []CatalogEntityParentResourceModel `tfsdk:"parents"`
+	Groups         []types.String                     `tfsdk:"groups"`
+	Links          []CatalogEntityLinkResourceModel   `tfsdk:"links"`
+	IgnoreMetadata types.Bool                         `tfsdk:"ignore_metadata"`
+	Metadata       types.String                       `tfsdk:"metadata"`
+	Dependencies   []types.Object                     `tfsdk:"dependencies"`
+	Alerts         []types.Object                     `tfsdk:"alerts"`
+	Apm            types.Object                       `tfsdk:"apm"`
+	Dashboards     types.Object                       `tfsdk:"dashboards"`
+	Git            types.Object                       `tfsdk:"git"`
+	Issues         types.Object                       `tfsdk:"issues"`
+	OnCall         types.Object                       `tfsdk:"on_call"`
+	SLOs           types.Object                       `tfsdk:"slos"`
+	StaticAnalysis types.Object                       `tfsdk:"static_analysis"`
+	CiCd           types.Object                       `tfsdk:"ci_cd"`
+	BugSnag        types.Object                       `tfsdk:"bug_snag"`
+	Checkmarx      types.Object                       `tfsdk:"checkmarx"`
+	CircleCi       types.Object                       `tfsdk:"circle_ci"`
+	Coralogix      types.Object                       `tfsdk:"coralogix"`
+	FireHydrant    types.Object                       `tfsdk:"firehydrant"`
+	K8s            types.Object                       `tfsdk:"k8s"`
+	LaunchDarkly   types.Object                       `tfsdk:"launch_darkly"`
+	MicrosoftTeams []types.Object                     `tfsdk:"microsoft_teams"`
+	Rollbar        types.Object                       `tfsdk:"rollbar"`
+	Sentry         types.Object                       `tfsdk:"sentry"`
+	ServiceNow     types.Object                       `tfsdk:"service_now"`
+	Slack          types.Object                       `tfsdk:"slack"`
+	Snyk           types.Object                       `tfsdk:"snyk"`
+	Wiz            types.Object                       `tfsdk:"wiz"`
+	Team           types.Object                       `tfsdk:"team"`
 }
 
 func getDefaultObjectOptions() basetypes.ObjectAsOptions {
@@ -81,9 +81,9 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics
 	for i, child := range o.Children {
 		children[i] = child.ToApiModel()
 	}
-	domainParents := make([]cortex.CatalogEntityDomainParent, len(o.DomainParents))
-	for i, domainParent := range o.DomainParents {
-		domainParents[i] = domainParent.ToApiModel()
+	Parents := make([]cortex.CatalogEntityParent, len(o.Parents))
+	for i, parent := range o.Parents {
+		Parents[i] = parent.ToApiModel()
 	}
 	groups := make([]string, len(o.Groups))
 	for i, group := range o.Groups {
@@ -260,7 +260,7 @@ func (o *CatalogEntityResourceModel) ToApiModel(ctx context.Context, diagnostics
 		Definition:     definition,
 		Owners:         owners,
 		Children:       children,
-		DomainParents:  domainParents,
+		Parents:        Parents,
 		Groups:         groups,
 		Links:          links,
 		IgnoreMetadata: o.IgnoreMetadata.ValueBool(),
@@ -308,7 +308,7 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 	}
 
 	// coerce map of unknown types into string
-	if entity.Definition != nil && len(entity.Definition) > 0 {
+	if len(entity.Definition) > 0 {
 		definition, err := json.Marshal(entity.Definition)
 		if err != nil {
 			diagnostics.AddError("Error parsing definition: %s", err.Error())
@@ -339,14 +339,14 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 		o.Children = nil
 	}
 
-	if len(entity.DomainParents) > 0 {
-		o.DomainParents = make([]CatalogEntityDomainParentResourceModel, len(entity.DomainParents))
-		for i, domainParent := range entity.DomainParents {
-			m := CatalogEntityDomainParentResourceModel{}
-			o.DomainParents[i] = m.FromApiModel(&domainParent)
+	if len(entity.Parents) > 0 {
+		o.Parents = make([]CatalogEntityParentResourceModel, len(entity.Parents))
+		for i, parent := range entity.Parents {
+			m := CatalogEntityParentResourceModel{}
+			o.Parents[i] = m.FromApiModel(&parent)
 		}
 	} else {
-		o.DomainParents = nil
+		o.Parents = nil
 	}
 
 	if len(entity.Groups) > 0 {
@@ -369,7 +369,7 @@ func (o *CatalogEntityResourceModel) FromApiModel(ctx context.Context, diagnosti
 	}
 
 	// coerce map of unknown types into string
-	if entity.Metadata != nil && len(entity.Metadata) > 0 {
+	if len(entity.Metadata) > 0 {
 		metadata, err := json.Marshal(entity.Metadata)
 		if err != nil {
 			diagnostics.AddError("Error parsing metadata: %s", err.Error())
@@ -574,25 +574,25 @@ func (o *CatalogEntityChildResourceModel) FromApiModel(entity *cortex.CatalogEnt
 	}
 }
 
-// CatalogEntityDomainParentResourceModel describes a parent domain of the catalog entity.
-type CatalogEntityDomainParentResourceModel struct {
+// CatalogEntityParentResourceModel describes a parent domain of the catalog entity.
+type CatalogEntityParentResourceModel struct {
 	Tag types.String `tfsdk:"tag"`
 }
 
-func (o *CatalogEntityDomainParentResourceModel) AttrTypes() map[string]attr.Type {
+func (o *CatalogEntityParentResourceModel) AttrTypes() map[string]attr.Type {
 	return map[string]attr.Type{
 		"tag": types.StringType,
 	}
 }
 
-func (o *CatalogEntityDomainParentResourceModel) ToApiModel() cortex.CatalogEntityDomainParent {
-	return cortex.CatalogEntityDomainParent{
+func (o *CatalogEntityParentResourceModel) ToApiModel() cortex.CatalogEntityParent {
+	return cortex.CatalogEntityParent{
 		Tag: o.Tag.ValueString(),
 	}
 }
 
-func (o *CatalogEntityDomainParentResourceModel) FromApiModel(entity *cortex.CatalogEntityDomainParent) CatalogEntityDomainParentResourceModel {
-	return CatalogEntityDomainParentResourceModel{
+func (o *CatalogEntityParentResourceModel) FromApiModel(entity *cortex.CatalogEntityParent) CatalogEntityParentResourceModel {
+	return CatalogEntityParentResourceModel{
 		Tag: types.StringValue(entity.Tag),
 	}
 }
@@ -688,7 +688,7 @@ func (o *CatalogEntityDependencyResourceModel) FromApiModel(ctx context.Context,
 	} else {
 		obj.Method = types.StringNull()
 	}
-	if dependency.Metadata != nil && len(dependency.Metadata) > 0 {
+	if len(dependency.Metadata) > 0 {
 		depMetadata, err := json.Marshal(dependency.Metadata)
 		if err != nil {
 			diagnostics.AddError("error marshalling dependency metadata", fmt.Sprintf("%+v", err))

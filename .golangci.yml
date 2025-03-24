@@ -1,7 +1,11 @@
 # Visit https://golangci-lint.run/ for usage documentation
 # and information on other useful linters
+run:
+  concurrency: 4
+  allow-parallel-runners: true
+  timeout: 4m
 issues:
-  max-per-linter: 0
+  exclude-dirs-use-default: true
   max-same-issues: 0
 
 linters:
@@ -9,7 +13,7 @@ linters:
   enable:
     - durationcheck
     - errcheck
-    - exportloopref
+    - copyloopvar
     - godot
     - gofmt
     - gosimple
@@ -19,8 +23,7 @@ linters:
     - nilerr
     - predeclared
     - staticcheck
-    - tenv
     - unconvert
     - unparam
     - unused
-    - vet
+    - govet

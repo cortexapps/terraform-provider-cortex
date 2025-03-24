@@ -23,9 +23,11 @@ website/node_modules
 .idea
 *.iml
 *.test
+*.env
 
 website/vendor
 vendor/
+build/
 
 # Test exclusions
 !command/test-fixtures/**/*.tfstate

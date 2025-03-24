@@ -2,6 +2,16 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.4.2
+* Fixes `cortex_scorecard` resource so that `rules` are a set. Order doesn't matter.
+
+## 0.4.1
+* Fixes `cortex_scorecard` resource so that `description` and `filter` fields can be computed from provider response
+
+## 0.4.0
+* Deprecate `x-cortex-parents` and use `x-cortex-parents` instead
+- Bump Go version 1.20 -> 1.22
+
 ## 0.3.1
 * Fix serialization for `git` / `sonarqube` / `codecov`
 * Make owner type case insensitive

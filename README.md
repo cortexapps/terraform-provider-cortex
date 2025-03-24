@@ -24,7 +24,7 @@ terraform {
   required_providers {
     cortex = {
       source  = "cortex/cortex"
-      version = "=> 0.1"
+      version = ">= 0.1"
     }
   }
   required_version = ">= 1.5.0"
@@ -77,6 +77,37 @@ see [Requirements](#requirements) above).
 
 To compile the provider, run `go install`. This will build the provider and put the provider binary in the `$GOPATH/bin`
 directory.
+
+To be able to use the **locally installed provider**, 
+
+1. Run `go build -o build/terraform-provider-cortex .`
+This will build the binary and put it in the `build/` directory.
+
+2. Create a `~/.terraformrc` file that lets you override the default provider location:
+```terraform
+provider_installation {
+  dev_overrides {
+    "cortexlocal/cortex" = "<path/to/terraform-provider-cortex/build"
+  }
+  direct {}
+}
+```
+
+3. Use the `provider` as:
+
+```terraform
+terraform {
+  required_providers {
+    cortex = {
+      source  = "cortexlocal/cortex"
+    }
+  }
+}
+```
+
+### Documentation
+
+```shell
 
 To generate or update documentation, run `go generate`.
 
