@@ -44,4 +44,4 @@ jobs:
         env:
           TF_ACC: "1"
           CORTEX_API_TOKEN: ${{ secrets.CORTEX_API_TOKEN }}
-        run: make testacc
+        run: go test -v -cover ./...

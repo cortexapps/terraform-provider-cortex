@@ -66,4 +66,4 @@ jobs:
           cache: true
       - run: go mod download
       - name: Unit tests
-        run: make test
+        run: go test -v -cover ./...
