@@ -127,7 +127,6 @@ resource %[1]q %[2]q {
     ]
   }
   filter = {
-    category = "SERVICE"
     query = "owners_is_set"
   }
   evaluation = {
@@ -220,7 +219,6 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.1.rank", "2"),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.1.color", "#c3c3c3"),
 
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.category", "SERVICE"),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.query", "owners_is_set"),
 
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "evaluation.window", "24"),
