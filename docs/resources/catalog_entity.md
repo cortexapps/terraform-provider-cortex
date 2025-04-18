@@ -28,6 +28,7 @@ Catalog Entity
 - `checkmarx` (Attributes) Checkmarx configuration for the entity. (see [below for nested schema](#nestedatt--checkmarx))
 - `children` (Attributes List) List of child entities for the entity. Only used for entities of type `TEAM` or `DOMAIN`. (see [below for nested schema](#nestedatt--children))
 - `ci_cd` (Attributes) CI/CD configuration for the entity. (see [below for nested schema](#nestedatt--ci_cd))
+- `circle_ci` (Attributes) CircleCI configuration for the entity. (see [below for nested schema](#nestedatt--circle_ci))
 - `coralogix` (Attributes) Coralogix configuration for the entity. (see [below for nested schema](#nestedatt--coralogix))
 - `dashboards` (Attributes) Dashboards configuration for the entity. (see [below for nested schema](#nestedatt--dashboards))
 - `definition` (String) Set when the entity is a Resource. These are the properties defined by the Resource Definition, in JSON format in a string (use the `jsonencode` function to convert a JSON object to a string).
@@ -173,6 +174,26 @@ Required:
 
 - `tag` (String) Buildkite tag.
 
+
+
+
+<a id="nestedatt--circle_ci"></a>
+### Nested Schema for `circle_ci`
+
+Optional:
+
+- `projects` (Attributes List) List of CircleCI projects for the entity. (see [below for nested schema](#nestedatt--circle_ci--projects))
+
+<a id="nestedatt--circle_ci--projects"></a>
+### Nested Schema for `circle_ci.projects`
+
+Required:
+
+- `slug` (String) The slug of the project in CircleCI.
+
+Optional:
+
+- `alias` (String) CircleCI alias. Only relevant if you've opted into multi-account support.
 
 
 

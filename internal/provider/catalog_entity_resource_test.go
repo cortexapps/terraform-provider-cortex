@@ -3,8 +3,9 @@ package provider_test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestAccCatalogEntityResourceMinimal(t *testing.T) {

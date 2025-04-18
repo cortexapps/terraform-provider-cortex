@@ -53,7 +53,6 @@ resource %[1]q %[2]q {
     ]
   }
   filter = {
-    category = "SERVICE"
     query = "owners_is_set"
   }
   evaluation = {
@@ -130,9 +129,6 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.color", "#c38b5f"),
 
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "evaluation.window", "24"),
-
-					// Check that filter exists and has a category, but don't check specific values
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.category", "SERVICE"),
 				),
 			},
 			// Read testing
@@ -155,7 +151,6 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.rank", "1"),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.color", "#c38b5f"),
 
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.category", "SERVICE"),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.query", "owners_is_set"),
 
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "evaluation.window", "24"),
