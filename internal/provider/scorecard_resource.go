@@ -141,6 +141,7 @@ func (r *ScorecardResource) Schema(ctx context.Context, req resource.SchemaReque
 					"category": schema.StringAttribute{
 						MarkdownDescription: "By default, Scorecards are evaluated against all services. You can specify the category as RESOURCE to evaluate a Scorecard against resources or DOMAIN to evaluate a Scorecard against domains.",
 						Optional:            true,
+						DeprecationMessage:  "`category` is deprecated and will be removed in a future release.  Forthcoming filters will use the include/exclude functionality that is more commonly used",
 					},
 					"query": schema.StringAttribute{
 						MarkdownDescription: "A CQL query that is run against the category; only entities matching this query will be evaluated by the Scorecard.",

@@ -84,5 +84,5 @@ Optional:
 
 Optional:
 
-- `category` (String) By default, Scorecards are evaluated against all services. You can specify the category as RESOURCE to evaluate a Scorecard against resources or DOMAIN to evaluate a Scorecard against domains.
+- `category` (String, Deprecated) By default, Scorecards are evaluated against all services. You can specify the category as RESOURCE to evaluate a Scorecard against resources or DOMAIN to evaluate a Scorecard against domains.
 - `query` (String) A CQL query that is run against the category; only entities matching this query will be evaluated by the Scorecard.
