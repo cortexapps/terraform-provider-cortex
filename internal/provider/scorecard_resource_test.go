@@ -96,6 +96,46 @@ resource %[1]q %[2]q {
 }`, t.ResourceType(), t.Tag, t.Name, t.Draft)
 }
 
+func (t *testScorecardResource) ToTerraformWithoutDraft() string {
+	return fmt.Sprintf(`
+resource %[1]q %[2]q {
+  tag = %[2]q
+  name = %[3]q
+  description = %[4]q
+  rules = [
+    {
+      title = "Has a Description"
+      expression = "description != null"
+      weight = 1
+      level = "Bronze"
+      failure_message = "The description is required"
+      description = "The service has a description"
+    }
+  ]
+  ladder = {
+    levels = [
+      {
+         name = "Bronze"
+         rank = 1
+         color = "#c38b5f"
+      },
+      {
+         name = "Silver"
+         rank = 2
+		 color = "#c3c3c3"
+	  }
+    ]
+  }
+  filter = {
+    category = "SERVICE"
+    query = "owners_is_set"
+  }
+  evaluation = {
+    window = 24
+  }
+}`, t.ResourceType(), t.Tag, t.Name, t.Description)
+}
+
 /***********************************************************************************************************************
  * Tests
  **********************************************************************************************************************/
@@ -151,6 +191,36 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.rank", "1"),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.color", "#c38b5f"),
 
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.query", "owners_is_set"),
+
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "evaluation.window", "24"),
+				),
+			},
+			// Read testing
+			{
+				Config: stub.ToTerraformWithoutDraft(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "tag", stub.Tag),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "name", stub.Name),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "description", stub.Description),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "draft", "false"),
+
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.title", "Has a Description"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.expression", "description != null"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.weight", "1"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.level", "Bronze"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.failure_message", "The description is required"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "rules.0.description", "The service has a description"),
+
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.name", "Bronze"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.rank", "1"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.color", "#c38b5f"),
+
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.1.name", "Silver"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.1.rank", "2"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.1.color", "#c3c3c3"),
+
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.category", "SERVICE"),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.query", "owners_is_set"),
 
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "evaluation.window", "24"),

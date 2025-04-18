@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -129,6 +130,8 @@ func (r *ScorecardResource) Schema(ctx context.Context, req resource.SchemaReque
 			"draft": schema.BoolAttribute{
 				MarkdownDescription: "Whether the scorecard is a draft.",
 				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(false),
 			},
 			"filter": schema.SingleNestedAttribute{
 				MarkdownDescription: "Filter of the scorecard.",
