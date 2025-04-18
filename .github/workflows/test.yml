@@ -5,13 +5,7 @@ name: Tests
 # Optionally, you can turn it on using a schedule for regular testing.
 on:
   pull_request:
-  push:
-    branches:
-      - "main"
-    paths-ignore:
-      - "README.md"
-      - "CHANGELOG.md"
-      - "TODO.md"
+  workflow_call:
 
 # Testing only needs permissions to read the repository contents.
 permissions:
@@ -31,7 +25,7 @@ jobs:
           cache: true
       - uses: hashicorp/setup-terraform@v3.1.2
         with:
-          terraform_version: ${{ matrix.terraform }}
+          terraform_version: "1.10.*"
           terraform_wrapper: false
       - run: go mod download
       - run: go build -v .
@@ -50,7 +44,7 @@ jobs:
           cache: true
       - uses: hashicorp/setup-terraform@v3.1.2
         with:
-          terraform_version: ${{ matrix.terraform }}
+          terraform_version: "1.10.*"
           terraform_wrapper: false
       - run: go generate ./...
       - name: git diff
@@ -58,31 +52,18 @@ jobs:
           git diff --compact-summary --exit-code || \
             (echo; echo "Unexpected difference in directories after code generation. Run 'go generate ./...' command and commit."; exit 1)
 
-  # Run acceptance tests in a matrix with Terraform CLI versions
+  # Run unit tests
   test:
-    name: Terraform Provider Acceptance Tests
+    name: Unit Test
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        # list whatever Terraform versions here you would like to support
-        terraform:
-          - "1.10.*"
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: actions/setup-go@v5.3.0
         with:
           go-version-file: "go.mod"
           cache: true
-      - uses: hashicorp/setup-terraform@v3.1.2
-        with:
-          terraform_version: ${{ matrix.terraform }}
-          terraform_wrapper: false
       - run: go mod download
-      - env:
-          TF_ACC: "1"
-          CORTEX_API_TOKEN: ${{ secrets.CORTEX_API_TOKEN }}
-        run: go test -v -cover ./... # later, change to: ./internal/provider/
-        timeout-minutes: 10
+      - name: Unit tests
+        run: go test -v -cover ./...

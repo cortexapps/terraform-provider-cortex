@@ -46,4 +46,4 @@ test:
 # acceptance tests
 testacc:
 	go clean -testcache
-	TF_LOG=$(TF_LOG) TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m
+	TF_LOG=$(TF_LOG) TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 10m
