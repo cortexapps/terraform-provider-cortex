@@ -11,7 +11,7 @@ provider "cortex" {
 }
 
 resource "cortex_catalog_entity_openapi" "test_service_oas1" {
-  entity_tag = "fiserv-coo-proxy"
+  entity_tag = "test-service"
   spec       = <<EOF
 {
     "openapi": "3.0.0",
