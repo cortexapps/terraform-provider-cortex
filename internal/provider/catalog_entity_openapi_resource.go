@@ -60,14 +60,14 @@ func (r *CatalogEntityOpenAPIResource) Schema(_ context.Context, _ resource.Sche
 		Description: "Manages OpenAPI specifications for Cortex catalog entities.",
 		Attributes: map[string]schema.Attribute{
 			"entity_tag": schema.StringAttribute{
-				Description: "The tag of the catalog entity.",
+				Description: "The tag or ID of the catalog entity that the OpenAPI specification will be associated with.",
 				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"spec": schema.StringAttribute{
-				Description: "The OpenAPI specification in YAML format.",
+				Description: "The OpenAPI specification in YAML or JSON format.",
 				Required:    true,
 			},
 			"id": schema.StringAttribute{

@@ -1,18 +1,18 @@
 terraform {
   required_providers {
     cortex = {
-      source  = "cortexlocal/cortex"
+      source = "cortexlocal/cortex"
     }
   }
 }
 
 provider "cortex" {
-  token        = "access-token-here"
+  token = "access-token-here"
 }
 
 resource "cortex_catalog_entity_openapi" "test_service_oas1" {
-    entity_tag = "fiserv-coo-proxy"
-    spec = <<EOF
+  entity_tag = "fiserv-coo-proxy"
+  spec       = <<EOF
 {
     "openapi": "3.0.0",
     "info": {
