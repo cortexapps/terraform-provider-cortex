@@ -106,6 +106,7 @@ func (p *CortexProvider) Resources(ctx context.Context) []func() resource.Resour
 		NewScorecardResource,
 		NewResourceDefinitionResource,
 		NewCatalogEntityCustomDataResource,
+		NewCatalogEntityOpenAPIResource,
 	}
 }
 
