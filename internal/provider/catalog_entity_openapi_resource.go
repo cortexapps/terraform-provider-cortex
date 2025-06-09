@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"encoding/json"
+
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -12,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -105,6 +108,33 @@ func (r *CatalogEntityOpenAPIResource) Create(ctx context.Context, req resource.
 	resp.Diagnostics.Append(diags...)
 }
 
+func normalizeSpec(spec string) (string, error) {
+	// Try to unmarshal as JSON first
+	var data interface{}
+	err := json.Unmarshal([]byte(spec), &data)
+	if err == nil {
+		// If it was JSON, convert to YAML
+		yamlBytes, err := yaml.Marshal(data)
+		if err != nil {
+			return "", fmt.Errorf("failed to convert JSON to YAML: %v", err)
+		}
+		return string(yamlBytes), nil
+	}
+
+	// If it wasn't JSON, try YAML
+	err = yaml.Unmarshal([]byte(spec), &data)
+	if err != nil {
+		return "", fmt.Errorf("spec is neither valid JSON nor YAML: %v", err)
+	}
+
+	// Re-marshal as YAML to ensure consistent formatting
+	yamlBytes, err := yaml.Marshal(data)
+	if err != nil {
+		return "", fmt.Errorf("failed to normalize YAML: %v", err)
+	}
+	return string(yamlBytes), nil
+}
+
 func (r *CatalogEntityOpenAPIResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state CatalogEntityOpenAPIResourceModel
 	diags := req.State.Get(ctx, &state)
@@ -127,7 +157,16 @@ func (r *CatalogEntityOpenAPIResource) Read(ctx context.Context, req resource.Re
 		return
 	}
 
-	state.Spec = types.StringValue(openAPISpec.Spec)
+	normalizedSpec, err := normalizeSpec(openAPISpec.Spec)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error normalizing OpenAPI specification",
+			fmt.Sprintf("Could not normalize OpenAPI specification: %s", err.Error()),
+		)
+		return
+	}
+
+	state.Spec = types.StringValue(normalizedSpec)
 	state.Id = types.StringValue(openAPISpec.ID())
 
 	diags = resp.State.Set(ctx, state)

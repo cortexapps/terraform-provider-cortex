@@ -9,27 +9,33 @@ import (
 
 func TestAccCatalogEntityOpenAPIResource(t *testing.T) {
 	entityTag := "test-service"
-	spec := `openapi: 3.0.0
-info:
-  title: Test API
-  version: 1.0.0
+	spec := `info:
+    title: Test API
+    version: 1.0.0
+openapi: 3.0.0
 paths:
-  /test:
-    get:
-      responses:
-        '200':
-          description: OK`
+    /test:
+        get:
+            responses:
+                "200":
+                    description: OK
+servers:
+    - url: /
+`
 
-	updatedSpec := `openapi: 3.0.0
-info:
-  title: Updated Test API
-  version: 1.0.1
+	updatedSpec := `info:
+    title: Updated Test API
+    version: 1.0.1
+openapi: 3.0.0
 paths:
-  /test:
-    get:
-      responses:
-        '200':
-          description: OK`
+    /test:
+        get:
+            responses:
+                "200":
+                    description: OK
+servers:
+    - url: /
+`
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
