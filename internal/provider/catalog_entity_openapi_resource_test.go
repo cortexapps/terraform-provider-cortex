@@ -9,28 +9,9 @@ import (
 
 func TestAccCatalogEntityOpenAPIResource(t *testing.T) {
 	entityTag := "test-service"
-	spec := `openapi: 3.0.0
-info:
-  title: Test API
-  version: 1.0.0
-paths:
-  /test:
-    get:
-      responses:
-        '200':
-          description: OK`
+	spec := `{"info":{"title":"Test API","version":"1.0.0"},"paths":{"/test":{"get":{"responses":{"200":{"description":"OK"}}}}},"openapi":"3.0.0","servers":[{"url":"/"}]}`
 
-	updatedSpec := `openapi: 3.0.0
-info:
-  title: Updated Test API
-  version: 1.0.1
-paths:
-  /test:
-    get:
-      responses:
-        '200':
-          description: OK`
-
+	updatedSpec := `{"info":{"title":"UpdatedTest API","version":"1.0.1"},"paths":{"/test":{"get":{"responses":{"200":{"description":"OK"}}}}},"openapi":"3.0.0","servers":[{"url":"/"}]}`
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,

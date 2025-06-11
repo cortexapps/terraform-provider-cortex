@@ -7,7 +7,7 @@ terraform {
 }
 
 provider "cortex" {
-  token = "access-token-here"
+  token = "access-token-here" # or set CORTEX_API_TOKEN env var
 }
 
 resource "cortex_catalog_entity_openapi" "test_service_oas1" {
