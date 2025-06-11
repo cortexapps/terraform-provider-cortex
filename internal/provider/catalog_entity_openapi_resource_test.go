@@ -5,9 +5,6 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
-
-	"github.com/google/go-cmp/cmp"
 )
 
 func TestAccCatalogEntityOpenAPIResource(t *testing.T) {
@@ -23,19 +20,6 @@ func TestAccCatalogEntityOpenAPIResource(t *testing.T) {
 			{
 				Config: testAccCatalogEntityOpenAPIResourceConfig(entityTag, spec),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.ComposeTestCheckFunc(
-						func(s *terraform.State) error {
-							rs := s.RootModule().Resources["cortex_catalog_entity_openapi.test"]
-							actual := rs.Primary.Attributes["spec"]
-							expected := spec
-
-							if diff := cmp.Diff(expected, actual); diff != "" {
-								t.Errorf("attribute mismatch (-expected +actual):\n%s", diff)
-							}
-
-							return nil
-						},
-					),
 					resource.TestCheckResourceAttr("cortex_catalog_entity_openapi.test", "entity_tag", entityTag),
 					resource.TestCheckResourceAttr("cortex_catalog_entity_openapi.test", "spec", spec),
 					resource.TestCheckResourceAttr("cortex_catalog_entity_openapi.test", "id", entityTag),
