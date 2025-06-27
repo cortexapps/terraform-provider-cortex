@@ -41,6 +41,7 @@ type Team struct {
 	SlackChannels     []TeamSlackChannel `json:"slackChannels,omitempty"`
 	Links             []TeamLink         `json:"links,omitempty"`
 	TeamTag           string             `json:"teamTag"`
+	CortexTeam        TeamCortexManaged  `json:"cortexTeam,omitempty"`
 }
 
 type TeamMetadata struct {
@@ -50,9 +51,9 @@ type TeamMetadata struct {
 }
 
 type TeamMember struct {
-	Description string `json:"description,omitempty"`
-	Name        string `json:"name"`
-	Email       string `json:"email"`
+	Description string `json:"description,omitempty" tfsdk:"description"`
+	Name        string `json:"name" tfsdk:"name"`
+	Email       string `json:"email" tfsdk:"email"`
 }
 
 type TeamLink struct {
@@ -63,8 +64,8 @@ type TeamLink struct {
 }
 
 type TeamSlackChannel struct {
-	Name                 string `json:"name"`
-	NotificationsEnabled bool   `json:"notificationsEnabled"`
+	Name                 string `json:"name" tfsdk:"name"`
+	NotificationsEnabled bool   `json:"notificationsEnabled" tfsdk:"notifications_enabled"`
 }
 
 type TeamIdpGroup struct {
