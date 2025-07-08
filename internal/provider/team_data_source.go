@@ -23,9 +23,9 @@ type TeamDataSource struct {
 
 // TeamDataSourceModel describes the data source data model.
 type TeamDataSourceModel struct {
-	Id            types.String           `tfsdk:"id"`
-	Tag           types.String           `tfsdk:"tag"`
-	Members       []cortex.TeamMember    `tfsdk:"members"`
+	Id            types.String              `tfsdk:"id"`
+	Tag           types.String              `tfsdk:"tag"`
+	Members       []cortex.TeamMember       `tfsdk:"members"`
 	SlackChannels []cortex.TeamSlackChannel `tfsdk:"slack_channels"`
 }
 
@@ -123,17 +123,8 @@ func (d *TeamDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	data.Id = types.StringValue(teamResponse.TeamTag)
 	data.Tag = types.StringValue(teamResponse.TeamTag)
 
-	if teamResponse.CortexTeam.Members != nil {
-		data.Members = teamResponse.CortexTeam.Members
-	} else {
-		data.Members = nil
-	}
-
-	if teamResponse.SlackChannels != nil {
-		data.SlackChannels = teamResponse.SlackChannels
-	} else {
-		data.SlackChannels = nil
-	}
+	data.Members = teamResponse.CortexTeam.Members
+	data.SlackChannels = teamResponse.SlackChannels
 
 	// Write to TF state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
