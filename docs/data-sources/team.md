@@ -22,3 +22,23 @@ Team data source
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `members` (Attributes List) List of team members. (see [below for nested schema](#nestedatt--members))
+- `slack_channels` (Attributes List) List of Slack channels associated with the team. (see [below for nested schema](#nestedatt--slack_channels))
+
+<a id="nestedatt--members"></a>
+### Nested Schema for `members`
+
+Read-Only:
+
+- `description` (String)
+- `email` (String)
+- `name` (String)
+
+
+<a id="nestedatt--slack_channels"></a>
+### Nested Schema for `slack_channels`
+
+Read-Only:
+
+- `name` (String)
+- `notifications_enabled` (Boolean)
