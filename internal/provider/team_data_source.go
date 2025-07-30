@@ -23,8 +23,10 @@ type TeamDataSource struct {
 
 // TeamDataSourceModel describes the data source data model.
 type TeamDataSourceModel struct {
-	Id  types.String `tfsdk:"id"`
-	Tag types.String `tfsdk:"tag"`
+	Id            types.String              `tfsdk:"id"`
+	Tag           types.String              `tfsdk:"tag"`
+	Members       []cortex.TeamMember       `tfsdk:"members"`
+	SlackChannels []cortex.TeamSlackChannel `tfsdk:"slack_channels"`
 }
 
 func (d *TeamDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -46,6 +48,37 @@ func (d *TeamDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 			// Computed
 			"id": schema.StringAttribute{
 				Computed: true,
+			},
+			"members": schema.ListNestedAttribute{
+				MarkdownDescription: "List of team members.",
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Computed: true,
+						},
+						"email": schema.StringAttribute{
+							Computed: true,
+						},
+						"description": schema.StringAttribute{
+							Computed: true,
+						},
+					},
+				},
+			},
+			"slack_channels": schema.ListNestedAttribute{
+				MarkdownDescription: "List of Slack channels associated with the team.",
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Computed: true,
+						},
+						"notifications_enabled": schema.BoolAttribute{
+							Computed: true,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -86,8 +119,12 @@ func (d *TeamDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read team, got error: %s", err))
 		return
 	}
+
 	data.Id = types.StringValue(teamResponse.TeamTag)
 	data.Tag = types.StringValue(teamResponse.TeamTag)
+
+	data.Members = teamResponse.CortexTeam.Members
+	data.SlackChannels = teamResponse.SlackChannels
 
 	// Write to TF state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
