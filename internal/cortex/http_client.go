@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/dghubble/sling"
-	"github.com/motemen/go-loghttp"
-	_ "github.com/motemen/go-loghttp/global" // Just this line!
 	"net/http"
 	"net/url"
 	"os"
+
+	"github.com/dghubble/sling"
+	"github.com/motemen/go-loghttp"
+	_ "github.com/motemen/go-loghttp/global" // Just this line!
 )
 
 const (
@@ -151,6 +152,10 @@ func (c *HttpClient) CatalogEntities() CatalogEntitiesClientInterface {
 
 func (c *HttpClient) CatalogEntityCustomData() CatalogEntityCustomDataClientInterface {
 	return &CatalogEntityCustomDataClient{client: c}
+}
+
+func (c *HttpClient) CatalogEntityOpenAPI() CatalogEntityOpenAPIClientInterface {
+	return &CatalogEntityOpenAPIClient{client: c}
 }
 
 func (c *HttpClient) Teams() TeamsClientInterface {

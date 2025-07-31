@@ -1,0 +1,40 @@
+# Runs acceptance tests on merge to main
+name: Acceptance Tests
+
+on:
+  push:
+    branches:
+      - "main"
+    paths-ignore:
+      - "README.md"
+      - "CHANGELOG.md"
+      - "TODO.md"
+
+permissions:
+  contents: read
+
+
+jobs:
+  build-and-test:
+    uses: ./.github/workflows/test.yml
+  acceptance-test:
+    name: Terraform Provider Acceptance Tests
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-go@v5.3.0
+        with:
+          go-version-file: "go.mod"
+          cache: true
+      - uses: hashicorp/setup-terraform@v3.1.2
+        with:
+          terraform_version: "1.10.*"
+          terraform_wrapper: false
+      - run: go mod download
+      - name: Acceptance tests
+        env:
+          TF_ACC: "1"
+          CORTEX_API_TOKEN: ${{ secrets.CORTEX_API_TOKEN }}
+        run: go test -v -cover ./...

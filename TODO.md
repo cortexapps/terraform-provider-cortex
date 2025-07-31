@@ -10,5 +10,4 @@ General TODO file of things left to implement.
 Entities:
 
 - x-cortex-infra (AWS, GCP, etc)
-- OpenAPI docs
 - Packages

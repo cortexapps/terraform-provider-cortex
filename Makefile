@@ -2,7 +2,7 @@ HOSTNAME=github.com
 NAMESPACE=cortexapps
 NAME=cortex
 BINARY=terraform-provider-${NAME}
-VERSION=0.4.1-dev
+VERSION=0.4.4-dev
 
 GOOS?=$(shell go env | grep GOOS | cut -d '=' -f2 | tr -d "'")
 GOARCH?=$(shell go env | grep GOARCH | cut -d '=' -f2 | tr -d "'")
@@ -46,4 +46,4 @@ test:
 # acceptance tests
 testacc:
 	go clean -testcache
-	TF_LOG=$(TF_LOG) TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m
+	TF_LOG=$(TF_LOG) TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 10m
