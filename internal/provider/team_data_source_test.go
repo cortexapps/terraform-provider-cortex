@@ -35,7 +35,7 @@ func TestAccTeamDataSource(t *testing.T) {
 	stub := TestTeamDataSource{
 		Tag: "test-team",
 		Members: []cortex.TeamMember{
-			{Name: "Test User", Email: "test@example.com"},
+			{Name: "Test", Email: "test@cortex.io"},
 		},
 		SlackChannels: []cortex.TeamSlackChannel{
 			{Name: "test-channel", NotificationsEnabled: true},
