@@ -84,5 +84,23 @@ Optional:
 
 Optional:
 
-- `category` (String, Deprecated) By default, Scorecards are evaluated against all services. You can specify the category as RESOURCE to evaluate a Scorecard against resources or DOMAIN to evaluate a Scorecard against domains.
-- `query` (String) A CQL query that is run against the category; only entities matching this query will be evaluated by the Scorecard.
+- `groups` (Attributes) Filter by entity groups. (see [below for nested schema](#nestedatt--filter--groups))
+- `query` (String) A CQL query that is run against the filtered entities; only entities matching this query will be evaluated by the Scorecard.
+- `types` (Attributes) Filter by entity types. (see [below for nested schema](#nestedatt--filter--types))
+
+<a id="nestedatt--filter--groups"></a>
+### Nested Schema for `filter.groups`
+
+Optional:
+
+- `exclude` (Set of String) Entity groups to exclude from the scorecard evaluation.
+- `include` (Set of String) Entity groups to include in the scorecard evaluation.
+
+
+<a id="nestedatt--filter--types"></a>
+### Nested Schema for `filter.types`
+
+Optional:
+
+- `exclude` (Set of String) Entity types to exclude from the scorecard evaluation.
+- `include` (Set of String) Entity types to include in the scorecard evaluation.

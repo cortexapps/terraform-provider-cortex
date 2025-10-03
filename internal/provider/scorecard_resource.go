@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -138,13 +139,40 @@ func (r *ScorecardResource) Schema(ctx context.Context, req resource.SchemaReque
 				Optional:            true,
 				Computed:            true,
 				Attributes: map[string]schema.Attribute{
-					"category": schema.StringAttribute{
-						MarkdownDescription: "By default, Scorecards are evaluated against all services. You can specify the category as RESOURCE to evaluate a Scorecard against resources or DOMAIN to evaluate a Scorecard against domains.",
+					"types": schema.SingleNestedAttribute{
+						MarkdownDescription: "Filter by entity types.",
 						Optional:            true,
-						DeprecationMessage:  "`category` is deprecated and will be removed in a future release.  Forthcoming filters will use the include/exclude functionality that is more commonly used",
+						Attributes: map[string]schema.Attribute{
+							"include": schema.SetAttribute{
+								MarkdownDescription: "Entity types to include in the scorecard evaluation.",
+								ElementType:         types.StringType,
+								Optional:            true,
+							},
+							"exclude": schema.SetAttribute{
+								MarkdownDescription: "Entity types to exclude from the scorecard evaluation.",
+								ElementType:         types.StringType,
+								Optional:            true,
+							},
+						},
+					},
+					"groups": schema.SingleNestedAttribute{
+						MarkdownDescription: "Filter by entity groups.",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"include": schema.SetAttribute{
+								MarkdownDescription: "Entity groups to include in the scorecard evaluation.",
+								ElementType:         types.StringType,
+								Optional:            true,
+							},
+							"exclude": schema.SetAttribute{
+								MarkdownDescription: "Entity groups to exclude from the scorecard evaluation.",
+								ElementType:         types.StringType,
+								Optional:            true,
+							},
+						},
 					},
 					"query": schema.StringAttribute{
-						MarkdownDescription: "A CQL query that is run against the category; only entities matching this query will be evaluated by the Scorecard.",
+						MarkdownDescription: "A CQL query that is run against the filtered entities; only entities matching this query will be evaluated by the Scorecard.",
 						Optional:            true,
 					},
 				},
