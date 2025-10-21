@@ -75,6 +75,9 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 			"type": schema.StringAttribute{
 				MarkdownDescription: "Set when the entity is a Resource or Team. This must match a tag of a valid Resource Definition or be \"team\" or \"domain\".",
 				Optional:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"definition": schema.StringAttribute{
 				MarkdownDescription: "Set when the entity is a Resource. These are the properties defined by the Resource Definition, in JSON format in a string (use the `jsonencode` function to convert a JSON object to a string).",
