@@ -55,7 +55,7 @@ Catalog Entity
 - `snyk` (Attributes) Snyk configuration for the entity. (see [below for nested schema](#nestedatt--snyk))
 - `static_analysis` (Attributes) Static analysis configuration for the entity. (see [below for nested schema](#nestedatt--static_analysis))
 - `team` (Attributes) Team configuration for the entity. Only used for entities of type `TEAM`. (see [below for nested schema](#nestedatt--team))
-- `type` (String) Set when the entity is a Resource or Team. This must match a tag of a valid Resource Definition or be "team" or "domain".
+- `type` (String) Set when the entity is a Resource or Team. This must match a tag of a valid Resource Definition or be "team" or "domain". **Note:** Changing this attribute will force replacement of the resource.
 - `wiz` (Attributes) Wiz configuration for the entity. (see [below for nested schema](#nestedatt--wiz))
 
 ### Read-Only

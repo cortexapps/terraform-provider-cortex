@@ -2,6 +2,29 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.4.7
+* Updates to `cortex_catalog_entity` resource to force resource recreation when the type is changed.
+
+## 0.4.6
+* Version bump in Makefile
+
+## 0.4.5
+* Fix acceptance tests
+* Enhance team data source to return team members and slack channels
+* Fix readme provider source and version pinning
+* Bump github.com/life4/genesis from 1.8.1 to 1.10.2
+
+## 0.4.4
+* Fix for broken integration test
+* Add support for an Open API specification to be associated with an Entity
+
+## 0.4.3
+* Remove category usage in tests, add deprecation for scorecard category field
+* Make `draft` optional for scorecards
+* Update test requirements for PRs and `main` branch
+* Fix CI Suite, support CircleCI stanza for catalog entities
+* Move CI suite to Terraform 1.10
+
 ## 0.4.2
 * Fixes `cortex_scorecard` resource so that `rules` are a set. Order doesn't matter.
 
@@ -10,7 +33,7 @@ Changelog for the Cortex terraform provider.
 
 ## 0.4.0
 * Deprecate `x-cortex-parents` and use `x-cortex-parents` instead
-- Bump Go version 1.20 -> 1.22
+* Bump Go version 1.20 -> 1.22
 
 ## 0.3.1
 * Fix serialization for `git` / `sonarqube` / `codecov`
