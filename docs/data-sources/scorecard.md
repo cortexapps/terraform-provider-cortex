@@ -43,8 +43,27 @@ Read-Only:
 
 Read-Only:
 
-- `category` (String)
+- `groups` (Attributes) (see [below for nested schema](#nestedatt--filter--groups))
 - `query` (String)
+- `types` (Attributes) (see [below for nested schema](#nestedatt--filter--types))
+
+<a id="nestedatt--filter--groups"></a>
+### Nested Schema for `filter.groups`
+
+Read-Only:
+
+- `exclude` (Set of String)
+- `include` (Set of String)
+
+
+<a id="nestedatt--filter--types"></a>
+### Nested Schema for `filter.types`
+
+Read-Only:
+
+- `exclude` (Set of String)
+- `include` (Set of String)
+
 
 
 <a id="nestedatt--ladder"></a>

@@ -2,6 +2,31 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 
+## 0.5.0
+
+### Breaking Changes
+* **Scorecard Filter V2**: Migrated scorecard `filter` to new V2 format
+  - **REMOVED**: `category` field (use `types.include`/`types.exclude` instead)
+  - **ADDED**: `types` object with `include` and `exclude` string sets for filtering by entity types
+  - **ADDED**: `groups` object with `include` and `exclude` string sets for filtering by entity groups
+  - **CHANGED**: `query` field remains but works with the new filter structure
+  - Migration example:
+    ```hcl
+    # Old (V1) - DEPRECATED
+    filter = {
+      category = "SERVICE"
+      query    = "description != null"
+    }
+
+    # New (V2) - Required
+    filter = {
+      types = {
+        include = ["service"]
+      }
+      query = "description != null"
+    }
+    ```
+
 ## 0.4.7
 * Updates to `cortex_catalog_entity` resource to force resource recreation when the type is changed.
 

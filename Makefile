@@ -2,7 +2,7 @@ HOSTNAME=github.com
 NAMESPACE=cortexapps
 NAME=cortex
 BINARY=terraform-provider-${NAME}
-VERSION=0.4.7-dev
+VERSION=0.5.0-dev
 
 GOOS?=$(shell go env | grep GOOS | cut -d '=' -f2 | tr -d "'")
 GOARCH?=$(shell go env | grep GOARCH | cut -d '=' -f2 | tr -d "'")
