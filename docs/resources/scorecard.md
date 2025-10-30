@@ -102,5 +102,5 @@ Optional:
 
 Optional:
 
-- `exclude` (Set of String) Entity types to exclude from the scorecard evaluation.
-- `include` (Set of String) Entity types to include in the scorecard evaluation.
+- `exclude` (Set of String) Entity types to exclude from the scorecard evaluation. Cannot be used with include.
+- `include` (Set of String) Entity types to include in the scorecard evaluation. Cannot be used with exclude.

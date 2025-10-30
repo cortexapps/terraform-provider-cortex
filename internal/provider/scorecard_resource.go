@@ -6,11 +6,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -144,14 +146,20 @@ func (r *ScorecardResource) Schema(ctx context.Context, req resource.SchemaReque
 						Optional:            true,
 						Attributes: map[string]schema.Attribute{
 							"include": schema.SetAttribute{
-								MarkdownDescription: "Entity types to include in the scorecard evaluation.",
+								MarkdownDescription: "Entity types to include in the scorecard evaluation. Cannot be used with exclude.",
 								ElementType:         types.StringType,
 								Optional:            true,
+								Validators: []validator.Set{
+									setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("exclude")),
+								},
 							},
 							"exclude": schema.SetAttribute{
-								MarkdownDescription: "Entity types to exclude from the scorecard evaluation.",
+								MarkdownDescription: "Entity types to exclude from the scorecard evaluation. Cannot be used with include.",
 								ElementType:         types.StringType,
 								Optional:            true,
+								Validators: []validator.Set{
+									setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("include")),
+								},
 							},
 						},
 					},

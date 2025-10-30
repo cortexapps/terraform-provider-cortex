@@ -37,7 +37,7 @@ resource "cortex_scorecard" "dora-metrics" {
     types = {
       include = ["service"]
     }
-    query = "description != null"
+    query = "entity.description() != null"
   }
   evaluation = {
     window = 24
