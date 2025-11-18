@@ -487,6 +487,7 @@ type CatalogEntityOwnerResourceModel struct {
 	Email                types.String `tfsdk:"email"`
 	Channel              types.String `tfsdk:"channel"` // for slack, do not add # to beginning
 	NotificationsEnabled types.Bool   `tfsdk:"notifications_enabled"`
+	Inheritance          types.String `tfsdk:"inheritance"` // APPEND, FALLBACK, or NONE
 }
 
 func (o *CatalogEntityOwnerResourceModel) ToApiModel() cortex.CatalogEntityOwner {
@@ -497,6 +498,7 @@ func (o *CatalogEntityOwnerResourceModel) ToApiModel() cortex.CatalogEntityOwner
 			Name:        o.Name.ValueString(),
 			Description: o.Description.ValueString(),
 			Email:       o.Email.ValueString(),
+			Inheritance: o.Inheritance.ValueString(),
 		}
 	case "slack":
 		return cortex.CatalogEntityOwner{
@@ -504,6 +506,7 @@ func (o *CatalogEntityOwnerResourceModel) ToApiModel() cortex.CatalogEntityOwner
 			Description:          o.Description.ValueString(),
 			Channel:              o.Channel.ValueString(),
 			NotificationsEnabled: o.NotificationsEnabled.ValueBool(),
+			Inheritance:          o.Inheritance.ValueString(),
 		}
 	}
 	return cortex.CatalogEntityOwner{
@@ -511,6 +514,7 @@ func (o *CatalogEntityOwnerResourceModel) ToApiModel() cortex.CatalogEntityOwner
 		Name:        o.Name.ValueString(),
 		Description: o.Description.ValueString(),
 		Provider:    o.Provider.ValueString(),
+		Inheritance: o.Inheritance.ValueString(),
 	}
 }
 
@@ -522,6 +526,11 @@ func (o *CatalogEntityOwnerResourceModel) FromApiModel(owner *cortex.CatalogEnti
 		obj.Description = types.StringValue(owner.Description)
 	} else {
 		obj.Description = types.StringNull()
+	}
+	if owner.Inheritance != "" {
+		obj.Inheritance = types.StringValue(owner.Inheritance)
+	} else {
+		obj.Inheritance = types.StringNull()
 	}
 
 	switch strings.ToLower(owner.Type) {

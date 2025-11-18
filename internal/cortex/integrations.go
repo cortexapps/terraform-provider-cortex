@@ -179,6 +179,7 @@ type CatalogEntityOwner struct {
 	Provider             string `json:"provider,omitempty" yaml:"provider,omitempty"`
 	Channel              string `json:"channel,omitempty" yaml:"channel,omitempty"` // for slack, do not add # to beginning
 	NotificationsEnabled bool   `json:"notificationsEnabled,omitempty" yaml:"notificationsEnabled,omitempty"`
+	Inheritance          string `json:"inheritance,omitempty" yaml:"inheritance,omitempty"` // APPEND, FALLBACK, or NONE
 }
 
 type CatalogEntityChild struct {

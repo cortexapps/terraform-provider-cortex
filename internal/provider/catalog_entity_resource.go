@@ -124,6 +124,13 @@ func (r *CatalogEntityResource) Schema(ctx context.Context, req resource.SchemaR
 							MarkdownDescription: "Whether Slack notifications are enabled for all owners of this service. Only allowed if `type` is `slack`.",
 							Optional:            true,
 						},
+						"inheritance": schema.StringAttribute{
+							MarkdownDescription: "Ownership inheritance level. Valid values are `APPEND` (owner is appended to child entities), `FALLBACK` (owner is assigned when child has no valid owners), or `NONE` (no inheritance - default).",
+							Optional:            true,
+							Validators: []validator.String{
+								stringvalidator.OneOf("APPEND", "FALLBACK", "NONE"),
+							},
+						},
 					},
 				},
 			},
