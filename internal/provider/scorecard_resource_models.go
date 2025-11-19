@@ -47,8 +47,19 @@ type ScorecardRuleResourceModel struct {
 }
 
 type ScorecardFilterResourceModel struct {
-	Category types.String `tfsdk:"category"`
-	Query    types.String `tfsdk:"query"`
+	Types  types.Object `tfsdk:"types"`
+	Groups types.Object `tfsdk:"groups"`
+	Query  types.String `tfsdk:"query"`
+}
+
+type ScorecardFilterTypesResourceModel struct {
+	Include []types.String `tfsdk:"include"`
+	Exclude []types.String `tfsdk:"exclude"`
+}
+
+type ScorecardFilterGroupsResourceModel struct {
+	Include []types.String `tfsdk:"include"`
+	Exclude []types.String `tfsdk:"exclude"`
 }
 
 type ScorecardEvaluationResourceModel struct {
@@ -100,7 +111,7 @@ func (o *ScorecardResourceModel) ToApiModel(ctx context.Context, diagnostics *di
 		Draft:       o.Draft.ValueBool(),
 		Ladder:      ladder.ToApiModel(),
 		Rules:       rules,
-		Filter:      filter.ToApiModel(),
+		Filter:      filter.ToApiModel(ctx, diagnostics),
 		Evaluation:  evaluation.ToApiModel(),
 	}
 }
@@ -240,17 +251,85 @@ func (o *ScorecardRuleResourceModel) FromApiModel(entity *cortex.ScorecardRule) 
  **********************************************************************************************************************/
 
 func (o *ScorecardFilterResourceModel) AttrTypes() map[string]attr.Type {
+	typesModel := ScorecardFilterTypesResourceModel{}
+	groupsModel := ScorecardFilterGroupsResourceModel{}
 	return map[string]attr.Type{
-		"category": types.StringType,
-		"query":    types.StringType,
+		"types":  types.ObjectType{AttrTypes: typesModel.AttrTypes()},
+		"groups": types.ObjectType{AttrTypes: groupsModel.AttrTypes()},
+		"query":  types.StringType,
 	}
 }
 
-func (o *ScorecardFilterResourceModel) ToApiModel() cortex.ScorecardFilter {
-	return cortex.ScorecardFilter{
-		Category: o.Category.ValueString(),
-		Query:    o.Query.ValueString(),
+func (o *ScorecardFilterTypesResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"include": types.SetType{ElemType: types.StringType},
+		"exclude": types.SetType{ElemType: types.StringType},
 	}
+}
+
+func (o *ScorecardFilterGroupsResourceModel) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"include": types.SetType{ElemType: types.StringType},
+		"exclude": types.SetType{ElemType: types.StringType},
+	}
+}
+
+func (o *ScorecardFilterResourceModel) ToApiModel(ctx context.Context, diagnostics *diag.Diagnostics) cortex.ScorecardFilter {
+	defaultObjOptions := getDefaultObjectOptions()
+	filter := cortex.ScorecardFilter{
+		Kind:  "GENERIC",
+		Query: o.Query.ValueString(),
+	}
+
+	// Convert Types if present
+	if !o.Types.IsNull() {
+		typesModel := ScorecardFilterTypesResourceModel{}
+		err := o.Types.As(ctx, &typesModel, defaultObjOptions)
+		if err != nil {
+			diagnostics.AddError("error parsing filter types", fmt.Sprintf("%+v", err))
+		} else {
+			include := make([]string, len(typesModel.Include))
+			for i, v := range typesModel.Include {
+				include[i] = v.ValueString()
+			}
+			exclude := make([]string, len(typesModel.Exclude))
+			for i, v := range typesModel.Exclude {
+				exclude[i] = v.ValueString()
+			}
+			if len(include) > 0 || len(exclude) > 0 {
+				filter.Types = &cortex.ScorecardFilterTypes{
+					Include: include,
+					Exclude: exclude,
+				}
+			}
+		}
+	}
+
+	// Convert Groups if present
+	if !o.Groups.IsNull() {
+		groupsModel := ScorecardFilterGroupsResourceModel{}
+		err := o.Groups.As(ctx, &groupsModel, defaultObjOptions)
+		if err != nil {
+			diagnostics.AddError("error parsing filter groups", fmt.Sprintf("%+v", err))
+		} else {
+			include := make([]string, len(groupsModel.Include))
+			for i, v := range groupsModel.Include {
+				include[i] = v.ValueString()
+			}
+			exclude := make([]string, len(groupsModel.Exclude))
+			for i, v := range groupsModel.Exclude {
+				exclude[i] = v.ValueString()
+			}
+			if len(include) > 0 || len(exclude) > 0 {
+				filter.Groups = &cortex.ScorecardFilterGroups{
+					Include: include,
+					Exclude: exclude,
+				}
+			}
+		}
+	}
+
+	return filter
 }
 
 func (o *ScorecardFilterResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.ScorecardFilter) types.Object {
@@ -259,15 +338,68 @@ func (o *ScorecardFilterResourceModel) FromApiModel(ctx context.Context, diagnos
 	}
 
 	obj := ScorecardFilterResourceModel{}
-	if entity.Category != "" {
-		obj.Category = types.StringValue(entity.Category)
-	} else {
-		obj.Category = types.StringNull()
-	}
+
+	// Convert Query
 	if entity.Query != "" {
 		obj.Query = types.StringValue(entity.Query)
 	} else {
 		obj.Query = types.StringNull()
+	}
+
+	// Convert Types
+	if entity.Types != nil {
+		typesModel := ScorecardFilterTypesResourceModel{}
+
+		// Convert Include
+		if len(entity.Types.Include) > 0 {
+			typesModel.Include = make([]types.String, len(entity.Types.Include))
+			for i, v := range entity.Types.Include {
+				typesModel.Include[i] = types.StringValue(v)
+			}
+		}
+
+		// Convert Exclude
+		if len(entity.Types.Exclude) > 0 {
+			typesModel.Exclude = make([]types.String, len(entity.Types.Exclude))
+			for i, v := range entity.Types.Exclude {
+				typesModel.Exclude[i] = types.StringValue(v)
+			}
+		}
+
+		typesObj, d := types.ObjectValueFrom(ctx, typesModel.AttrTypes(), &typesModel)
+		diagnostics.Append(d...)
+		obj.Types = typesObj
+	} else {
+		typesModel := ScorecardFilterTypesResourceModel{}
+		obj.Types = types.ObjectNull(typesModel.AttrTypes())
+	}
+
+	// Convert Groups
+	if entity.Groups != nil {
+		groupsModel := ScorecardFilterGroupsResourceModel{}
+
+		// Convert Include
+		if len(entity.Groups.Include) > 0 {
+			groupsModel.Include = make([]types.String, len(entity.Groups.Include))
+			for i, v := range entity.Groups.Include {
+				groupsModel.Include[i] = types.StringValue(v)
+			}
+		}
+
+		// Convert Exclude
+		if len(entity.Groups.Exclude) > 0 {
+			groupsModel.Exclude = make([]types.String, len(entity.Groups.Exclude))
+			for i, v := range entity.Groups.Exclude {
+				groupsModel.Exclude[i] = types.StringValue(v)
+			}
+		}
+
+		groupsObj, d := types.ObjectValueFrom(ctx, groupsModel.AttrTypes(), &groupsModel)
+		diagnostics.Append(d...)
+		obj.Groups = groupsObj
+	} else {
+		groupsModel := ScorecardFilterGroupsResourceModel{}
+		obj.Groups = types.ObjectNull(groupsModel.AttrTypes())
 	}
 
 	objectValue, d := types.ObjectValueFrom(ctx, obj.AttrTypes(), &obj)
