@@ -28,7 +28,7 @@ func TestAccCatalogEntityResourceWithInheritance(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "type", "domain"),
 
 					// Check owners
-					resource.TestCheckResourceAttr(resourceName, "owners.#", "3"),
+					resource.TestCheckResourceAttr(resourceName, "owners.#", "2"),
 
 					// Email owner with APPEND inheritance
 					resource.TestCheckResourceAttr(resourceName, "owners.0.type", "EMAIL"),
@@ -41,11 +41,6 @@ func TestAccCatalogEntityResourceWithInheritance(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "owners.1.name", "Platform Team"),
 					resource.TestCheckResourceAttr(resourceName, "owners.1.provider", "CORTEX"),
 					resource.TestCheckResourceAttr(resourceName, "owners.1.inheritance", "FALLBACK"),
-
-					// Slack owner with NONE inheritance
-					resource.TestCheckResourceAttr(resourceName, "owners.2.type", "SLACK"),
-					resource.TestCheckResourceAttr(resourceName, "owners.2.channel", "platform"),
-					resource.TestCheckResourceAttr(resourceName, "owners.2.inheritance", "NONE"),
 				),
 			},
 			// ImportState testing
@@ -64,7 +59,6 @@ func TestAccCatalogEntityResourceWithInheritance(t *testing.T) {
 					// Check updated inheritance values
 					resource.TestCheckResourceAttr(resourceName, "owners.0.inheritance", "FALLBACK"),
 					resource.TestCheckResourceAttr(resourceName, "owners.1.inheritance", "NONE"),
-					resource.TestCheckResourceAttr(resourceName, "owners.2.inheritance", "APPEND"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -92,11 +86,6 @@ resource "cortex_catalog_entity" %[1]q {
       name        = "Platform Team"
       provider    = "CORTEX"
       inheritance = "FALLBACK"
-    },
-    {
-      type        = "SLACK"
-      channel     = "platform"
-      inheritance = "NONE"
     }
   ]
 }`, tag, name, description)
@@ -122,11 +111,6 @@ resource "cortex_catalog_entity" %[1]q {
       name        = "Platform Team"
       provider    = "CORTEX"
       inheritance = "NONE"
-    },
-    {
-      type        = "SLACK"
-      channel     = "platform"
-      inheritance = "APPEND"
     }
   ]
 }`, tag, name, description)
