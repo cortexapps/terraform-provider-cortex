@@ -679,3 +679,47 @@ resource "cortex_catalog_entity" "test-unmanaged-metadata" {
  })
 }`, tag, name, description)
 }
+
+func TestAccCatalogEntityResourceTypeRequiresReplace(t *testing.T) {
+	tag := "test-type-requires-replace"
+	resourceName := "cortex_catalog_entity.test-type-requires-replace"
+	name := "Type Requires Replace Test Entity"
+	description := "Entity to test type attribute RequiresReplace behavior"
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create with type "team"
+			{
+				Config: testAccCatalogEntityResourceTypeRequiresReplace(tag, name, description, "team"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "tag", tag),
+					resource.TestCheckResourceAttr(resourceName, "name", name),
+					resource.TestCheckResourceAttr(resourceName, "description", description),
+					resource.TestCheckResourceAttr(resourceName, "type", "team"),
+				),
+			},
+			// Update type to "domain" - should trigger replace
+			{
+				Config: testAccCatalogEntityResourceTypeRequiresReplace(tag, name, description, "domain"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "tag", tag),
+					resource.TestCheckResourceAttr(resourceName, "name", name),
+					resource.TestCheckResourceAttr(resourceName, "description", description),
+					resource.TestCheckResourceAttr(resourceName, "type", "domain"),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
+
+func testAccCatalogEntityResourceTypeRequiresReplace(tag string, name string, description string, entityType string) string {
+	return fmt.Sprintf(`
+resource "cortex_catalog_entity" "test-type-requires-replace" {
+ tag = %[1]q
+ name = %[2]q
+ description = %[3]q
+ type = %[4]q
+}`, tag, name, description, entityType)
+}
