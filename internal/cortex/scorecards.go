@@ -93,12 +93,24 @@ type ScorecardRule struct {
 }
 
 type ScorecardFilter struct {
-	Category string `json:"category,omitempty" yaml:"category,omitempty"`
-	Query    string `json:"query,omitempty" yaml:"query,omitempty"`
+	Kind   string                 `json:"kind,omitempty" yaml:"kind,omitempty"`
+	Types  *ScorecardFilterTypes  `json:"types,omitempty" yaml:"types,omitempty"`
+	Groups *ScorecardFilterGroups `json:"groups,omitempty" yaml:"groups,omitempty"`
+	Query  string                 `json:"query,omitempty" yaml:"query,omitempty"`
+}
+
+type ScorecardFilterTypes struct {
+	Include []string `json:"include,omitempty" yaml:"include,omitempty"`
+	Exclude []string `json:"exclude,omitempty" yaml:"exclude,omitempty"`
+}
+
+type ScorecardFilterGroups struct {
+	Include []string `json:"include,omitempty" yaml:"include,omitempty"`
+	Exclude []string `json:"exclude,omitempty" yaml:"exclude,omitempty"`
 }
 
 func (s *ScorecardFilter) Enabled() bool {
-	return s.Category != "" || s.Query != ""
+	return s.Types != nil || s.Groups != nil || s.Query != ""
 }
 
 type ScorecardEvaluation struct {
