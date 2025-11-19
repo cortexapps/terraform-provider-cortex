@@ -68,8 +68,56 @@ func (c *ScorecardParser) interpolateLadderLevels(entity *Scorecard, levels []in
 
 func (c *ScorecardParser) interpolateFilter(entity *Scorecard, filter map[string]interface{}) {
 	entity.Filter = ScorecardFilter{
-		Category: MapFetchToString(filter, "category"),
-		Query:    MapFetchToString(filter, "query"),
+		Kind:  MapFetchToString(filter, "kind"),
+		Query: MapFetchToString(filter, "query"),
+	}
+
+	// Parse Types if present
+	if filter["types"] != nil {
+		typesMap := filter["types"].(map[string]interface{})
+		types := &ScorecardFilterTypes{}
+
+		if typesMap["include"] != nil {
+			includeList := typesMap["include"].([]interface{})
+			types.Include = make([]string, len(includeList))
+			for i, v := range includeList {
+				types.Include[i] = v.(string)
+			}
+		}
+
+		if typesMap["exclude"] != nil {
+			excludeList := typesMap["exclude"].([]interface{})
+			types.Exclude = make([]string, len(excludeList))
+			for i, v := range excludeList {
+				types.Exclude[i] = v.(string)
+			}
+		}
+
+		entity.Filter.Types = types
+	}
+
+	// Parse Groups if present
+	if filter["groups"] != nil {
+		groupsMap := filter["groups"].(map[string]interface{})
+		groups := &ScorecardFilterGroups{}
+
+		if groupsMap["include"] != nil {
+			includeList := groupsMap["include"].([]interface{})
+			groups.Include = make([]string, len(includeList))
+			for i, v := range includeList {
+				groups.Include[i] = v.(string)
+			}
+		}
+
+		if groupsMap["exclude"] != nil {
+			excludeList := groupsMap["exclude"].([]interface{})
+			groups.Exclude = make([]string, len(excludeList))
+			for i, v := range excludeList {
+				groups.Exclude[i] = v.(string)
+			}
+		}
+
+		entity.Filter.Groups = groups
 	}
 }
 

@@ -6,6 +6,7 @@ import (
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -112,8 +113,31 @@ func (d *ScorecardDataSource) Schema(ctx context.Context, req datasource.SchemaR
 				MarkdownDescription: "Filter of the scorecard.",
 				Computed:            true,
 				Attributes: map[string]schema.Attribute{
-					"category": schema.StringAttribute{
+					"types": schema.SingleNestedAttribute{
 						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"include": schema.SetAttribute{
+								ElementType: types.StringType,
+								Computed:    true,
+							},
+							"exclude": schema.SetAttribute{
+								ElementType: types.StringType,
+								Computed:    true,
+							},
+						},
+					},
+					"groups": schema.SingleNestedAttribute{
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"include": schema.SetAttribute{
+								ElementType: types.StringType,
+								Computed:    true,
+							},
+							"exclude": schema.SetAttribute{
+								ElementType: types.StringType,
+								Computed:    true,
+							},
+						},
 					},
 					"query": schema.StringAttribute{
 						Computed: true,

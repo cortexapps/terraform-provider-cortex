@@ -34,8 +34,10 @@ resource "cortex_scorecard" "dora-metrics" {
     }
   ]
   filter = {
-    category = "SERVICE"
-    query    = "description != null"
+    types = {
+      include = ["service"]
+    }
+    query = "entity.description() != null"
   }
   evaluation = {
     window = 24
