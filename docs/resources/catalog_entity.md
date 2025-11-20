@@ -512,6 +512,7 @@ Optional:
 - `channel` (String) Channel of the owner. Only allowed if `type` is `slack`. Omit the #.
 - `description` (String) Description of the owner. Optional.
 - `email` (String) Email of the owner. Only allowed if `type` is `user`.
+- `inheritance` (String) Ownership inheritance level. Valid values are `APPEND` (owner is appended to child entities), `FALLBACK` (owner is assigned when child has no valid owners), or `NONE` (no inheritance - default).
 - `name` (String) Name of the owner. Only required for `user` or `group` types.
 - `notifications_enabled` (Boolean) Whether Slack notifications are enabled for all owners of this service. Only allowed if `type` is `slack`.
 - `provider` (String) Provider of the owner. Only allowed if `type` is `group`.
