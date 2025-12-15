@@ -187,6 +187,7 @@ func (c *CatalogEntityParser) interpolateOwners(entity *CatalogEntityData, owner
 			Provider:             MapFetchToString(ownerMap, "provider"),
 			Channel:              MapFetchToString(ownerMap, "channel"),
 			NotificationsEnabled: MapFetch(ownerMap, "notificationsEnabled", false).(bool),
+			Inheritance:          MapFetchToString(ownerMap, "inheritance"),
 		})
 	}
 }
