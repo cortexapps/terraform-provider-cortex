@@ -39,15 +39,20 @@ func (c *CatalogEntitiesClient) YamlClient() *sling.Sling {
 
 // CatalogEntity is the nested response object that is typically returned from the catalog entities endpoints.
 type CatalogEntity struct {
-	Tag          string                 `json:"tag" yaml:"x-cortex-tag"`
-	Title        string                 `json:"title" yaml:"title"`
-	Description  string                 `json:"description" yaml:"description"`
-	Type         string                 `json:"type" yaml:"x-cortex-type"`
-	Groups       []string               `json:"groups" yaml:"x-cortex-groups"`
-	Links        []CatalogEntityLink    `json:"links" yaml:"x-cortex-link"`
-	Metadata     map[string]interface{} `json:"metadata" yaml:"x-cortex-custom-metadata"`
-	Dependencies []string               `json:"dependencies" yaml:"x-cortex-dependency"`
-	Ownership    CatalogEntityOwnership `json:"ownership" yaml:"x-cortex-owners"`
+	Tag          string                  `json:"tag" yaml:"x-cortex-tag"`
+	Title        string                  `json:"title" yaml:"title"`
+	Description  string                  `json:"description" yaml:"description"`
+	Type         string                  `json:"type" yaml:"x-cortex-type"`
+	Groups       []string                `json:"groups" yaml:"x-cortex-groups"`
+	Links        []CatalogEntityLink     `json:"links" yaml:"x-cortex-link"`
+	Metadata     []CatalogEntityMetadata `json:"metadata" yaml:"x-cortex-custom-metadata"`
+	Dependencies []string                `json:"dependencies" yaml:"x-cortex-dependency"`
+	Ownership    CatalogEntityOwnership  `json:"ownership" yaml:"x-cortex-owners"`
+}
+
+type CatalogEntityMetadata struct {
+	Key   string      `json:"key"`
+	Value interface{} `json:"value"`
 }
 
 type CatalogEntityOwnership struct {
@@ -142,14 +147,22 @@ func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag strin
 
 // CatalogEntityListParams are the query parameters for the GET /v1/catalog endpoint.
 type CatalogEntityListParams struct {
-	Groups          []string `url:"groups,omitempty"`
-	Types           []string `url:"types,omitempty"`
-	GitRepositories []string `url:"gitRepositories,omitempty"`
+	Groups          []string `url:"groups,omitempty,comma"`
+	Owners          []string `url:"owners,omitempty,comma"`
+	Types           []string `url:"types,omitempty,comma"`
+	GitRepositories []string `url:"gitRepositories,omitempty,comma"`
+	Query           string   `url:"query,omitempty"`
+	IncludeArchived bool     `url:"includeArchived,omitempty"`
+	PageSize        int      `url:"pageSize,omitempty"`
+	Page            int      `url:"page,omitempty"`
 }
 
 // CatalogEntitiesResponse is the response from the GET /v1/scorecards endpoint.
 type CatalogEntitiesResponse struct {
-	Entities []CatalogEntity `json:"entities" yaml:"entities"`
+	Entities   []CatalogEntity `json:"entities" yaml:"entities"`
+	Page       int             `json:"page"`
+	TotalPages int             `json:"totalPages"`
+	Total      int             `json:"total"`
 }
 
 // List retrieves a list of scorecards based on a query.
