@@ -67,6 +67,7 @@ And the following data sources:
 * [`cortex_resource_definition`](docs/data-sources/resource_definition.md)
 * [`cortex_scorecard`](docs/data-sources/scorecard.md)
 * [`cortex_team`](docs/data-sources/team.md)
+* [`cortex_teams`](docs/data-sources/teams.md)
 
 Examples on each of these can be found in the [examples/](examples/) folder.
 
