@@ -115,6 +115,7 @@ func (p *CortexProvider) DataSources(ctx context.Context) []func() datasource.Da
 		NewCatalogEntityDataSource,
 		NewCatalogEntitiesDataSource,
 		NewTeamDataSource,
+		NewTeamsDataSource,
 		NewDepartmentDataSource,
 		NewScorecardDataSource,
 		NewResourceDefinitionDataSource,
