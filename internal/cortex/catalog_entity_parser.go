@@ -786,7 +786,7 @@ func (c *CatalogEntityParser) interpolateSlack(entity *CatalogEntityData, slackM
 		channels := slackMap["channels"].([]interface{})
 		for _, channel := range channels {
 			channelMap := channel.(map[string]interface{})
-			entity.Slack.Channels = append(entity.Slack.Channels, CatalogEntitySlackChannel{
+			entity.Slack.Channels = append(entity.Slack.Channels, CatalogEntitySlackIntegrationChannel{
 				Name:                 MapFetchToString(channelMap, "name"),
 				NotificationsEnabled: MapFetch(channelMap, "notificationsEnabled", false).(bool),
 			})
