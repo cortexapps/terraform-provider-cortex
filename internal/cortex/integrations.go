@@ -56,9 +56,10 @@ type CatalogEntityData struct {
 }
 
 type CatalogEntityLink struct {
-	Name string `json:"name" yaml:"name"`
-	Type string `json:"type" yaml:"type"` // runbook, documentation, logs, dashboard, metrics, healthcheck
-	Url  string `json:"url" yaml:"url"`
+	Name        string `json:"name" yaml:"name"`
+	Type        string `json:"type" yaml:"type"` // runbook, documentation, logs, dashboard, metrics, healthcheck
+	Url         string `json:"url" yaml:"url"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 type CatalogEntityDependency struct {
@@ -719,19 +720,19 @@ func (o *CatalogEntityServiceNowService) Enabled() bool {
  **********************************************************************************************************************/
 
 type CatalogEntitySlack struct {
-	Channels []CatalogEntitySlackChannel `json:"channels,omitempty" yaml:"channels,omitempty"`
+	Channels []CatalogEntitySlackIntegrationChannel `json:"channels,omitempty" yaml:"channels,omitempty"`
 }
 
 func (o *CatalogEntitySlack) Enabled() bool {
 	return len(o.Channels) > 0
 }
 
-type CatalogEntitySlackChannel struct {
+type CatalogEntitySlackIntegrationChannel struct {
 	Name                 string `json:"name" yaml:"name"`
 	NotificationsEnabled bool   `json:"notificationsEnabled,omitempty" yaml:"notificationsEnabled,omitempty"`
 }
 
-func (o *CatalogEntitySlackChannel) Enabled() bool {
+func (o *CatalogEntitySlackIntegrationChannel) Enabled() bool {
 	return o.Name != ""
 }
 

@@ -39,15 +39,36 @@ func (c *CatalogEntitiesClient) YamlClient() *sling.Sling {
 
 // CatalogEntity is the nested response object that is typically returned from the catalog entities endpoints.
 type CatalogEntity struct {
-	Tag          string                  `json:"tag" yaml:"x-cortex-tag"`
-	Title        string                  `json:"title" yaml:"title"`
-	Description  string                  `json:"description" yaml:"description"`
-	Type         string                  `json:"type" yaml:"x-cortex-type"`
-	Groups       []string                `json:"groups" yaml:"x-cortex-groups"`
-	Links        []CatalogEntityLink     `json:"links" yaml:"x-cortex-link"`
-	Metadata     []CatalogEntityMetadata `json:"metadata" yaml:"x-cortex-custom-metadata"`
-	Dependencies []string                `json:"dependencies" yaml:"x-cortex-dependency"`
-	Ownership    CatalogEntityOwnership  `json:"ownership" yaml:"x-cortex-owners"`
+	Tag           string                      `json:"tag" yaml:"x-cortex-tag"`
+	Name          string                      `json:"name" yaml:"title"`
+	Description   string                      `json:"description" yaml:"description"`
+	Type          string                      `json:"type" yaml:"x-cortex-type"`
+	Id            string                      `json:"id"`
+	IsArchived    bool                        `json:"isArchived"`
+	LastUpdated   string                      `json:"lastUpdated"`
+	Groups        []string                    `json:"groups" yaml:"x-cortex-groups"`
+	Links         []CatalogEntityLink         `json:"links" yaml:"x-cortex-link"`
+	Metadata      []CatalogEntityMetadata     `json:"metadata" yaml:"x-cortex-custom-metadata"`
+	Dependencies  []string                    `json:"dependencies" yaml:"x-cortex-dependency"`
+	Ownership     CatalogEntityOwnership      `json:"ownership" yaml:"x-cortex-owners"`
+	SlackChannels []CatalogEntitySlackChannel `json:"slackChannels"`
+	Git           CatalogEntityGitSummary     `json:"git"`
+}
+
+// CatalogEntityGitSummary is the git summary returned as part of entity detail responses.
+type CatalogEntityGitSummary struct {
+	Alias         string `json:"alias"`
+	Basepath      string `json:"basepath"`
+	Provider      string `json:"provider"`
+	Repository    string `json:"repository"`
+	RepositoryUrl string `json:"repositoryUrl"`
+}
+
+// CatalogEntitySlackChannel is the Slack channel information returned as part of entity detail responses.
+type CatalogEntitySlackChannel struct {
+	Name                 string `json:"name"`
+	Description          string `json:"description"`
+	NotificationsEnabled bool   `json:"notificationsEnabled"`
 }
 
 type CatalogEntityMetadata struct {
@@ -64,12 +85,14 @@ type CatalogEntityOwnership struct {
 type CatalogEntityEmail struct {
 	Email       string `json:"email" yaml:"email"`
 	Description string `json:"description" yaml:"description"`
+	Inheritance string `json:"inheritance,omitempty" yaml:"inheritance,omitempty"`
 }
 
 type CatalogEntityGroup struct {
-	GroupName   string `json:"group" yaml:"groupName"`
+	GroupName   string `json:"groupName" yaml:"groupName"`
 	Description string `json:"description" yaml:"description"`
 	Provider    string `json:"provider" yaml:"provider"`
+	Inheritance string `json:"inheritance,omitempty" yaml:"inheritance,omitempty"`
 }
 
 type CatalogEntityOwnershipSlackChannel struct {

@@ -2164,7 +2164,7 @@ func (o *CatalogEntitySlackResourceModel) AttrTypes() map[string]attr.Type {
 }
 
 func (o *CatalogEntitySlackResourceModel) ToApiModel() cortex.CatalogEntitySlack {
-	channels := make([]cortex.CatalogEntitySlackChannel, len(o.Channels))
+	channels := make([]cortex.CatalogEntitySlackIntegrationChannel, len(o.Channels))
 	for i, c := range o.Channels {
 		channels[i] = c.ToApiModel()
 	}
@@ -2203,14 +2203,14 @@ func (o *CatalogEntitySlackChannelResourceModel) AttrTypes() map[string]attr.Typ
 	}
 }
 
-func (o *CatalogEntitySlackChannelResourceModel) ToApiModel() cortex.CatalogEntitySlackChannel {
-	return cortex.CatalogEntitySlackChannel{
+func (o *CatalogEntitySlackChannelResourceModel) ToApiModel() cortex.CatalogEntitySlackIntegrationChannel {
+	return cortex.CatalogEntitySlackIntegrationChannel{
 		Name:                 o.Name.ValueString(),
 		NotificationsEnabled: o.NotificationsEnabled.ValueBool(),
 	}
 }
 
-func (o *CatalogEntitySlackChannelResourceModel) FromApiModel(entity *cortex.CatalogEntitySlackChannel) CatalogEntitySlackChannelResourceModel {
+func (o *CatalogEntitySlackChannelResourceModel) FromApiModel(entity *cortex.CatalogEntitySlackIntegrationChannel) CatalogEntitySlackChannelResourceModel {
 	return CatalogEntitySlackChannelResourceModel{
 		Name:                 types.StringValue(entity.Name),
 		NotificationsEnabled: types.BoolValue(entity.NotificationsEnabled),
