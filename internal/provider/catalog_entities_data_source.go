@@ -213,7 +213,7 @@ func (d *CatalogEntitiesDataSource) Read(ctx context.Context, req datasource.Rea
 	for i, entity := range allEntities {
 		data.Entities[i] = CatalogEntityDataSourceItemModel{
 			Tag:         types.StringValue(entity.Tag),
-			Name:        types.StringValue(entity.Title),
+			Name:        types.StringValue(entity.Name),
 			Description: types.StringValue(entity.Description),
 			Type:        types.StringValue(entity.Type),
 		}

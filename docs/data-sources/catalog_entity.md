@@ -3,12 +3,12 @@
 page_title: "cortex_catalog_entity Data Source - terraform-provider-cortex"
 subcategory: ""
 description: |-
-  Catalog Entity data source
+  Fetches the details of a single catalog entity by its tag.
 ---
 
 # cortex_catalog_entity (Data Source)
 
-Catalog Entity data source
+Fetches the details of a single catalog entity by its tag.
 
 
 
@@ -17,10 +17,90 @@ Catalog Entity data source
 
 ### Required
 
-- `tag` (String) Tag of the catalog entity
+- `tag` (String) Unique identifier (tag) of the catalog entity.
 
 ### Read-Only
 
 - `description` (String) Description of the entity visible in the Service or Resource Catalog. Markdown is supported.
+- `git` (Attributes) Git repository information associated with the entity. (see [below for nested schema](#nestedatt--git))
+- `groups` (List of String) Groups the entity belongs to. Corresponds to `x-cortex-groups`.
 - `id` (String) The ID of this resource.
-- `name` (String) Human-readable name for the entity
+- `is_archived` (Boolean) Whether the entity is archived.
+- `last_updated` (String) ISO 8601 timestamp of when the entity was last updated.
+- `links` (Attributes List) Links associated with the entity. (see [below for nested schema](#nestedatt--links))
+- `metadata` (Attributes List) Custom metadata key/value pairs associated with the entity. Values are JSON-encoded strings. (see [below for nested schema](#nestedatt--metadata))
+- `name` (String) Human-readable name for the entity.
+- `ownership` (Attributes) Ownership details for the entity. (see [below for nested schema](#nestedatt--ownership))
+- `slack_channels` (Attributes List) Slack channels associated with the entity. (see [below for nested schema](#nestedatt--slack_channels))
+- `type` (String) Type of the entity (e.g. `service`, `resource`, `domain`).
+
+<a id="nestedatt--git"></a>
+### Nested Schema for `git`
+
+Read-Only:
+
+- `alias` (String)
+- `basepath` (String)
+- `provider` (String) Git provider (e.g. `github`, `gitlab`).
+- `repository` (String)
+- `repository_url` (String)
+
+
+<a id="nestedatt--links"></a>
+### Nested Schema for `links`
+
+Read-Only:
+
+- `description` (String)
+- `name` (String)
+- `type` (String) Link type (e.g. `runbook`, `documentation`, `dashboard`).
+- `url` (String)
+
+
+<a id="nestedatt--metadata"></a>
+### Nested Schema for `metadata`
+
+Read-Only:
+
+- `key` (String)
+- `value` (String) JSON-encoded value.
+
+
+<a id="nestedatt--ownership"></a>
+### Nested Schema for `ownership`
+
+Read-Only:
+
+- `emails` (Attributes List) Individual email owners. (see [below for nested schema](#nestedatt--ownership--emails))
+- `groups` (Attributes List) Group owners. (see [below for nested schema](#nestedatt--ownership--groups))
+
+<a id="nestedatt--ownership--emails"></a>
+### Nested Schema for `ownership.emails`
+
+Read-Only:
+
+- `description` (String)
+- `email` (String)
+- `inheritance` (String)
+
+
+<a id="nestedatt--ownership--groups"></a>
+### Nested Schema for `ownership.groups`
+
+Read-Only:
+
+- `description` (String)
+- `group_name` (String)
+- `inheritance` (String)
+- `provider` (String)
+
+
+
+<a id="nestedatt--slack_channels"></a>
+### Nested Schema for `slack_channels`
+
+Read-Only:
+
+- `description` (String)
+- `name` (String)
+- `notifications_enabled` (Boolean)
