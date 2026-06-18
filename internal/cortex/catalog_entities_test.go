@@ -39,3 +39,22 @@ func TestListCatalogEntities(t *testing.T) {
 	assert.NotEmpty(t, res.Entities, "returned no entities")
 	assert.Equal(t, res.Entities[0].Tag, firstTag)
 }
+
+func TestListCatalogEntitiesWithOwners(t *testing.T) {
+	resp := &cortex.CatalogEntitiesResponse{
+		Entities: []cortex.CatalogEntity{
+			*testCatalogEntity,
+		},
+	}
+	c, teardown, err := setupClient(cortex.Route("catalog_entities", ""), resp,
+		AssertRequestMethod(t, "GET"),
+		AssertRequestURI(t, "/api/v1/catalog/?includeOwners=true"),
+	)
+	assert.Nil(t, err, "could not setup client")
+	defer teardown()
+
+	queryParams := cortex.CatalogEntityListParams{IncludeOwners: true}
+	res, err := c.CatalogEntities().List(context.Background(), &queryParams)
+	assert.Nil(t, err, "error retrieving entities")
+	assert.NotEmpty(t, res.Entities, "returned no entities")
+}

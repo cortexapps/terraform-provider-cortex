@@ -53,3 +53,27 @@ data "cortex_catalog_entities" "test" {
 	types = ["service"]
 }`
 }
+
+func TestAccCatalogEntitiesDataSourceWithOwners(t *testing.T) {
+	recordName := "data.cortex_catalog_entities.test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCatalogEntitiesDataSourceWithOwners(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet(recordName, "entities.#"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCatalogEntitiesDataSourceWithOwners() string {
+	return `
+data "cortex_catalog_entities" "test" {
+	types          = ["service"]
+	include_owners = true
+}`
+}
