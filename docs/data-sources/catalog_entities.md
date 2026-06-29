@@ -20,6 +20,7 @@ Catalog Entities data source - returns a list of catalog entities that match the
 - `git_repositories` (List of String) Filter by GitHub repositories in the 'org/repo' format
 - `groups` (List of String) Filter based on groups, which correspond to the x-cortex-groups field in the Catalog Descriptor
 - `include_archived` (Boolean) Whether to include archived entities in the response
+- `include_owners` (Boolean) When true, each entity in the response will include ownership information (teams and individuals). Corresponds to the `includeOwners` API parameter.
 - `owners` (List of String) Filter based on owner group names, which correspond to the x-cortex-owners field in the Catalog Descriptor
 - `query` (String) Filter based on a search query. This will search across entity properties. If provided, results will be sorted by relevance.
 - `types` (List of String) Filter the response to specific types of entities (e.g., service, resource, domain)
@@ -35,6 +36,44 @@ Catalog Entities data source - returns a list of catalog entities that match the
 Read-Only:
 
 - `description` (String) Description of the entity visible in the Service or Resource Catalog
+- `git` (Attributes) Git repository information for the entity. Populated when a git integration is configured. (see [below for nested schema](#nestedatt--entities--git))
 - `name` (String) Human-readable name for the entity
+- `ownership` (Attributes) Ownership information for the entity. Populated when `include_owners` is true. (see [below for nested schema](#nestedatt--entities--ownership))
 - `tag` (String) Tag of the catalog entity
 - `type` (String) Type of the entity (e.g., service, resource, domain)
+
+<a id="nestedatt--entities--git"></a>
+### Nested Schema for `entities.git`
+
+Read-Only:
+
+- `provider` (String) Git provider (e.g., GITHUB, GITLAB)
+- `repository` (String) Repository name in org/repo format
+- `repository_url` (String) Full URL to the repository
+
+
+<a id="nestedatt--entities--ownership"></a>
+### Nested Schema for `entities.ownership`
+
+Read-Only:
+
+- `groups` (Attributes List) List of owning teams for the entity (see [below for nested schema](#nestedatt--entities--ownership--groups))
+- `individuals` (Attributes List) List of individual owners for the entity (see [below for nested schema](#nestedatt--entities--ownership--individuals))
+
+<a id="nestedatt--entities--ownership--groups"></a>
+### Nested Schema for `entities.ownership.groups`
+
+Read-Only:
+
+- `description` (String) Description of this ownership entry
+- `group_name` (String) Tag of the owning team
+- `provider` (String) Provider for this group (e.g., GITHUB, OKTA)
+
+
+<a id="nestedatt--entities--ownership--individuals"></a>
+### Nested Schema for `entities.ownership.individuals`
+
+Read-Only:
+
+- `description` (String) Description of this ownership entry
+- `email` (String) Email address of the individual owner

@@ -30,15 +30,44 @@ type CatalogEntitiesDataSourceModel struct {
 	Types           []types.String                     `tfsdk:"types"`
 	GitRepositories []types.String                     `tfsdk:"git_repositories"`
 	IncludeArchived types.Bool                         `tfsdk:"include_archived"`
+	IncludeOwners   types.Bool                         `tfsdk:"include_owners"`
 	Entities        []CatalogEntityDataSourceItemModel `tfsdk:"entities"`
 }
 
 // CatalogEntityDataSourceItemModel represents a single entity in the list.
 type CatalogEntityDataSourceItemModel struct {
-	Tag         types.String `tfsdk:"tag"`
-	Name        types.String `tfsdk:"name"`
+	Tag         types.String                     `tfsdk:"tag"`
+	Name        types.String                     `tfsdk:"name"`
+	Description types.String                     `tfsdk:"description"`
+	Type        types.String                     `tfsdk:"type"`
+	Git         *CatalogEntityGitItemModel       `tfsdk:"git"`
+	Ownership   *CatalogEntityOwnershipItemModel `tfsdk:"ownership"`
+}
+
+// CatalogEntityGitItemModel holds the flat git information returned by the catalog list endpoint.
+type CatalogEntityGitItemModel struct {
+	Provider      types.String `tfsdk:"provider"`
+	Repository    types.String `tfsdk:"repository"`
+	RepositoryUrl types.String `tfsdk:"repository_url"`
+}
+
+// CatalogEntityOwnershipItemModel holds ownership data for a catalog entity item.
+type CatalogEntityOwnershipItemModel struct {
+	Groups      []CatalogEntityOwnershipGroupItemModel      `tfsdk:"groups"`
+	Individuals []CatalogEntityOwnershipIndividualItemModel `tfsdk:"individuals"`
+}
+
+// CatalogEntityOwnershipGroupItemModel represents a single owning team for a catalog entity.
+type CatalogEntityOwnershipGroupItemModel struct {
+	GroupName   types.String `tfsdk:"group_name"`
 	Description types.String `tfsdk:"description"`
-	Type        types.String `tfsdk:"type"`
+	Provider    types.String `tfsdk:"provider"`
+}
+
+// CatalogEntityOwnershipIndividualItemModel represents a single individual owner for a catalog entity.
+type CatalogEntityOwnershipIndividualItemModel struct {
+	Email       types.String `tfsdk:"email"`
+	Description types.String `tfsdk:"description"`
 }
 
 func (d *CatalogEntitiesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -82,6 +111,10 @@ func (d *CatalogEntitiesDataSource) Schema(ctx context.Context, req datasource.S
 				MarkdownDescription: "Whether to include archived entities in the response",
 				Optional:            true,
 			},
+			"include_owners": schema.BoolAttribute{
+				MarkdownDescription: "When true, each entity in the response will include ownership information (teams and individuals). Corresponds to the `includeOwners` API parameter.",
+				Optional:            true,
+			},
 			"entities": schema.ListNestedAttribute{
 				MarkdownDescription: "List of catalog entities that match the search criteria",
 				Computed:            true,
@@ -102,6 +135,66 @@ func (d *CatalogEntitiesDataSource) Schema(ctx context.Context, req datasource.S
 						"type": schema.StringAttribute{
 							MarkdownDescription: "Type of the entity (e.g., service, resource, domain)",
 							Computed:            true,
+						},
+						"git": schema.SingleNestedAttribute{
+							MarkdownDescription: "Git repository information for the entity. Populated when a git integration is configured.",
+							Computed:            true,
+							Attributes: map[string]schema.Attribute{
+								"provider": schema.StringAttribute{
+									MarkdownDescription: "Git provider (e.g., GITHUB, GITLAB)",
+									Computed:            true,
+								},
+								"repository": schema.StringAttribute{
+									MarkdownDescription: "Repository name in org/repo format",
+									Computed:            true,
+								},
+								"repository_url": schema.StringAttribute{
+									MarkdownDescription: "Full URL to the repository",
+									Computed:            true,
+								},
+							},
+						},
+						"ownership": schema.SingleNestedAttribute{
+							MarkdownDescription: "Ownership information for the entity. Populated when `include_owners` is true.",
+							Computed:            true,
+							Attributes: map[string]schema.Attribute{
+								"groups": schema.ListNestedAttribute{
+									MarkdownDescription: "List of owning teams for the entity",
+									Computed:            true,
+									NestedObject: schema.NestedAttributeObject{
+										Attributes: map[string]schema.Attribute{
+											"group_name": schema.StringAttribute{
+												MarkdownDescription: "Tag of the owning team",
+												Computed:            true,
+											},
+											"description": schema.StringAttribute{
+												MarkdownDescription: "Description of this ownership entry",
+												Computed:            true,
+											},
+											"provider": schema.StringAttribute{
+												MarkdownDescription: "Provider for this group (e.g., GITHUB, OKTA)",
+												Computed:            true,
+											},
+										},
+									},
+								},
+								"individuals": schema.ListNestedAttribute{
+									MarkdownDescription: "List of individual owners for the entity",
+									Computed:            true,
+									NestedObject: schema.NestedAttributeObject{
+										Attributes: map[string]schema.Attribute{
+											"email": schema.StringAttribute{
+												MarkdownDescription: "Email address of the individual owner",
+												Computed:            true,
+											},
+											"description": schema.StringAttribute{
+												MarkdownDescription: "Description of this ownership entry",
+												Computed:            true,
+											},
+										},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -179,6 +272,10 @@ func (d *CatalogEntitiesDataSource) Read(ctx context.Context, req datasource.Rea
 		params.IncludeArchived = data.IncludeArchived.ValueBool()
 	}
 
+	if !data.IncludeOwners.IsNull() && !data.IncludeOwners.IsUnknown() {
+		params.IncludeOwners = data.IncludeOwners.ValueBool()
+	}
+
 	// Fetch all pages of results
 	allEntities := []cortex.CatalogEntity{}
 	page := 0
@@ -211,12 +308,44 @@ func (d *CatalogEntitiesDataSource) Read(ctx context.Context, req datasource.Rea
 	// Map response to state
 	data.Entities = make([]CatalogEntityDataSourceItemModel, len(allEntities))
 	for i, entity := range allEntities {
-		data.Entities[i] = CatalogEntityDataSourceItemModel{
+		item := CatalogEntityDataSourceItemModel{
 			Tag:         types.StringValue(entity.Tag),
 			Name:        types.StringValue(entity.Name),
 			Description: types.StringValue(entity.Description),
 			Type:        types.StringValue(entity.Type),
 		}
+
+		// Git is returned by default from the list endpoint when a git integration is configured.
+		if entity.Git.Repository != "" {
+			item.Git = &CatalogEntityGitItemModel{
+				Provider:      types.StringValue(entity.Git.Provider),
+				Repository:    types.StringValue(entity.Git.Repository),
+				RepositoryUrl: types.StringValue(entity.Git.RepositoryUrl),
+			}
+		}
+
+		// Ownership is populated when include_owners is true. The list endpoint returns
+		// owners.teams[] and owners.individuals[] (not ownership.groups[]).
+		if len(entity.Owners.Teams) > 0 || len(entity.Owners.Individuals) > 0 {
+			groups := make([]CatalogEntityOwnershipGroupItemModel, len(entity.Owners.Teams))
+			for j, t := range entity.Owners.Teams {
+				groups[j] = CatalogEntityOwnershipGroupItemModel{
+					GroupName:   types.StringValue(t.Tag),
+					Description: types.StringValue(t.Description),
+					Provider:    types.StringValue(t.Provider),
+				}
+			}
+			individuals := make([]CatalogEntityOwnershipIndividualItemModel, len(entity.Owners.Individuals))
+			for j, ind := range entity.Owners.Individuals {
+				individuals[j] = CatalogEntityOwnershipIndividualItemModel{
+					Email:       types.StringValue(ind.Email),
+					Description: types.StringValue(ind.Description),
+				}
+			}
+			item.Ownership = &CatalogEntityOwnershipItemModel{Groups: groups, Individuals: individuals}
+		}
+
+		data.Entities[i] = item
 	}
 
 	// Set ID as a hash of the query parameters

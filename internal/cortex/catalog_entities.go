@@ -51,6 +51,7 @@ type CatalogEntity struct {
 	Metadata      []CatalogEntityMetadata     `json:"metadata" yaml:"x-cortex-custom-metadata"`
 	Dependencies  []string                    `json:"dependencies" yaml:"x-cortex-dependency"`
 	Ownership     CatalogEntityOwnership      `json:"ownership" yaml:"x-cortex-owners"`
+	Owners        CatalogEntityOwnersResponse `json:"owners"`
 	SlackChannels []CatalogEntitySlackChannel `json:"slackChannels"`
 	Git           CatalogEntityGitSummary     `json:"git"`
 }
@@ -69,6 +70,27 @@ type CatalogEntitySlackChannel struct {
 	Name                 string `json:"name"`
 	Description          string `json:"description"`
 	NotificationsEnabled bool   `json:"notificationsEnabled"`
+}
+
+// CatalogEntityOwnersResponse is the ownership data returned by the list endpoint when
+// includeOwners=true. This is distinct from CatalogEntityOwnership (used by the single-entity
+// GET) — the list endpoint nests owners under "owners" with "teams" and "individuals" arrays.
+type CatalogEntityOwnersResponse struct {
+	Teams       []CatalogEntityOwnerTeam       `json:"teams"`
+	Individuals []CatalogEntityOwnerIndividual `json:"individuals"`
+}
+
+type CatalogEntityOwnerTeam struct {
+	Name        string `json:"name"`
+	Tag         string `json:"tag"`
+	Description string `json:"description"`
+	Provider    string `json:"provider"`
+	Inheritance string `json:"inheritance"`
+}
+
+type CatalogEntityOwnerIndividual struct {
+	Email       string `json:"email"`
+	Description string `json:"description"`
 }
 
 type CatalogEntityMetadata struct {
@@ -176,6 +198,7 @@ type CatalogEntityListParams struct {
 	GitRepositories []string `url:"gitRepositories,omitempty,comma"`
 	Query           string   `url:"query,omitempty"`
 	IncludeArchived bool     `url:"includeArchived,omitempty"`
+	IncludeOwners   bool     `url:"includeOwners,omitempty"`
 	PageSize        int      `url:"pageSize,omitempty"`
 	Page            int      `url:"page,omitempty"`
 }
