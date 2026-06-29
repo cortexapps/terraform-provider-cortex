@@ -54,7 +54,7 @@ resource %[1]q %[2]q {
     ]
   }
   filter = {
-    query = "owners_is_set"
+    query = "ownership != null"
   }
   evaluation = {
     window = 24
@@ -131,7 +131,7 @@ resource %[1]q %[2]q {
     types = {
       include = ["service", "app"]
     }
-    query = "owners_is_set"
+    query = "ownership != null"
   }
   evaluation = {
     window = 24
@@ -172,7 +172,7 @@ resource %[1]q %[2]q {
     groups = {
       include = ["team-a", "team-b"]
     }
-    query = "owners_is_set"
+    query = "ownership != null"
   }
   evaluation = {
     window = 24
@@ -210,7 +210,7 @@ resource %[1]q %[2]q {
     types = {
       exclude = ["deprecated"]
     }
-    query = "owners_is_set"
+    query = "ownership != null"
   }
   evaluation = {
     window = 24
@@ -273,7 +273,7 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.rank", "1"),
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "ladder.levels.0.color", "#c38b5f"),
 
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.query", "owners_is_set"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.query", "ownership != null"),
 
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "evaluation.window", "24"),
 				),
@@ -304,7 +304,7 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 
 					resource.TestCheckTypeSetElemAttr(stub.ResourceFullName(), "filter.types.include.*", "service"),
 					resource.TestCheckTypeSetElemAttr(stub.ResourceFullName(), "filter.types.include.*", "app"),
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.query", "owners_is_set"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.query", "ownership != null"),
 
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "evaluation.window", "24"),
 				),
@@ -320,7 +320,7 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(stub.ResourceFullName(), "filter.types.include.*", "service"),
 					resource.TestCheckTypeSetElemAttr(stub.ResourceFullName(), "filter.groups.include.*", "team-a"),
 					resource.TestCheckTypeSetElemAttr(stub.ResourceFullName(), "filter.groups.include.*", "team-b"),
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.query", "owners_is_set"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.query", "ownership != null"),
 				),
 			},
 			// Read testing with types exclude filter
@@ -332,7 +332,7 @@ func TestAccScorecardResourceComplete(t *testing.T) {
 					resource.TestCheckResourceAttr(stub.ResourceFullName(), "description", stub.Description),
 
 					resource.TestCheckTypeSetElemAttr(stub.ResourceFullName(), "filter.types.exclude.*", "deprecated"),
-					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.query", "owners_is_set"),
+					resource.TestCheckResourceAttr(stub.ResourceFullName(), "filter.query", "ownership != null"),
 				),
 			},
 			// ImportState testing
