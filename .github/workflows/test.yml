@@ -73,9 +73,11 @@ jobs:
       - name: Unit tests
         run: go test -v -cover ./...
 
-  # Run acceptance tests against a live Cortex tenant.
-  # CORTEX_API_TOKEN is not exposed to workflows triggered from forked PRs, and
-  # the tests use shared, static resource tags against one tenant — so this job
+  # Run acceptance tests against the real Cortex API. With CORTEX_API_URL unset,
+  # the provider defaults to production (https://api.getcortexapp.com), so these
+  # create and destroy real resources in the tenant that CORTEX_API_TOKEN owns.
+  # That secret is not exposed to workflows triggered from forked PRs, and the
+  # tests use shared, static resource tags against the one tenant — so this job
   # only runs on pushes to main and same-repo PRs, and is serialized repo-wide
   # via the concurrency group below. Fork PRs are verified after merge to main.
   acceptance-test:
