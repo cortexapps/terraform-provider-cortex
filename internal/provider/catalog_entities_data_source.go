@@ -36,12 +36,12 @@ type CatalogEntitiesDataSourceModel struct {
 
 // CatalogEntityDataSourceItemModel represents a single entity in the list.
 type CatalogEntityDataSourceItemModel struct {
-	Tag         types.String                          `tfsdk:"tag"`
-	Name        types.String                          `tfsdk:"name"`
-	Description types.String                          `tfsdk:"description"`
-	Type        types.String                          `tfsdk:"type"`
-	Git         *CatalogEntityGitItemModel            `tfsdk:"git"`
-	Ownership   *CatalogEntityOwnershipItemModel      `tfsdk:"ownership"`
+	Tag         types.String                     `tfsdk:"tag"`
+	Name        types.String                     `tfsdk:"name"`
+	Description types.String                     `tfsdk:"description"`
+	Type        types.String                     `tfsdk:"type"`
+	Git         *CatalogEntityGitItemModel       `tfsdk:"git"`
+	Ownership   *CatalogEntityOwnershipItemModel `tfsdk:"ownership"`
 }
 
 // CatalogEntityGitItemModel holds the flat git information returned by the catalog list endpoint.
