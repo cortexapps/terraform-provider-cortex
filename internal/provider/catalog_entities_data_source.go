@@ -53,14 +53,21 @@ type CatalogEntityGitItemModel struct {
 
 // CatalogEntityOwnershipItemModel holds ownership data for a catalog entity item.
 type CatalogEntityOwnershipItemModel struct {
-	Groups []CatalogEntityOwnershipGroupItemModel `tfsdk:"groups"`
+	Groups      []CatalogEntityOwnershipGroupItemModel      `tfsdk:"groups"`
+	Individuals []CatalogEntityOwnershipIndividualItemModel `tfsdk:"individuals"`
 }
 
-// CatalogEntityOwnershipGroupItemModel represents a single owning group for a catalog entity.
+// CatalogEntityOwnershipGroupItemModel represents a single owning team for a catalog entity.
 type CatalogEntityOwnershipGroupItemModel struct {
 	GroupName   types.String `tfsdk:"group_name"`
 	Description types.String `tfsdk:"description"`
 	Provider    types.String `tfsdk:"provider"`
+}
+
+// CatalogEntityOwnershipIndividualItemModel represents a single individual owner for a catalog entity.
+type CatalogEntityOwnershipIndividualItemModel struct {
+	Email       types.String `tfsdk:"email"`
+	Description types.String `tfsdk:"description"`
 }
 
 func (d *CatalogEntitiesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -105,7 +112,7 @@ func (d *CatalogEntitiesDataSource) Schema(ctx context.Context, req datasource.S
 				Optional:            true,
 			},
 			"include_owners": schema.BoolAttribute{
-				MarkdownDescription: "When true, each entity in the response will include ownership group information. Corresponds to the `includeOwners` API parameter.",
+				MarkdownDescription: "When true, each entity in the response will include ownership information (teams and individuals). Corresponds to the `includeOwners` API parameter.",
 				Optional:            true,
 			},
 			"entities": schema.ListNestedAttribute{
@@ -152,7 +159,7 @@ func (d *CatalogEntitiesDataSource) Schema(ctx context.Context, req datasource.S
 							Computed:            true,
 							Attributes: map[string]schema.Attribute{
 								"groups": schema.ListNestedAttribute{
-									MarkdownDescription: "List of owning groups for the entity",
+									MarkdownDescription: "List of owning teams for the entity",
 									Computed:            true,
 									NestedObject: schema.NestedAttributeObject{
 										Attributes: map[string]schema.Attribute{
@@ -166,6 +173,22 @@ func (d *CatalogEntitiesDataSource) Schema(ctx context.Context, req datasource.S
 											},
 											"provider": schema.StringAttribute{
 												MarkdownDescription: "Provider for this group (e.g., GITHUB, OKTA)",
+												Computed:            true,
+											},
+										},
+									},
+								},
+								"individuals": schema.ListNestedAttribute{
+									MarkdownDescription: "List of individual owners for the entity",
+									Computed:            true,
+									NestedObject: schema.NestedAttributeObject{
+										Attributes: map[string]schema.Attribute{
+											"email": schema.StringAttribute{
+												MarkdownDescription: "Email address of the individual owner",
+												Computed:            true,
+											},
+											"description": schema.StringAttribute{
+												MarkdownDescription: "Description of this ownership entry",
 												Computed:            true,
 											},
 										},
@@ -301,9 +324,9 @@ func (d *CatalogEntitiesDataSource) Read(ctx context.Context, req datasource.Rea
 			}
 		}
 
-		// Ownership teams are populated when include_owners is true. The list endpoint returns
-		// owners.teams[] (not ownership.groups[]) so we map from that field.
-		if len(entity.Owners.Teams) > 0 {
+		// Ownership is populated when include_owners is true. The list endpoint returns
+		// owners.teams[] and owners.individuals[] (not ownership.groups[]).
+		if len(entity.Owners.Teams) > 0 || len(entity.Owners.Individuals) > 0 {
 			groups := make([]CatalogEntityOwnershipGroupItemModel, len(entity.Owners.Teams))
 			for j, t := range entity.Owners.Teams {
 				groups[j] = CatalogEntityOwnershipGroupItemModel{
@@ -312,7 +335,14 @@ func (d *CatalogEntitiesDataSource) Read(ctx context.Context, req datasource.Rea
 					Provider:    types.StringValue(t.Provider),
 				}
 			}
-			item.Ownership = &CatalogEntityOwnershipItemModel{Groups: groups}
+			individuals := make([]CatalogEntityOwnershipIndividualItemModel, len(entity.Owners.Individuals))
+			for j, ind := range entity.Owners.Individuals {
+				individuals[j] = CatalogEntityOwnershipIndividualItemModel{
+					Email:       types.StringValue(ind.Email),
+					Description: types.StringValue(ind.Description),
+				}
+			}
+			item.Ownership = &CatalogEntityOwnershipItemModel{Groups: groups, Individuals: individuals}
 		}
 
 		data.Entities[i] = item

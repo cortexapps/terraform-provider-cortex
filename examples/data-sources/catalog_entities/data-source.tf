@@ -61,3 +61,12 @@ output "entity_owners" {
     if entity.ownership != null && length(entity.ownership.groups) > 0
   }
 }
+
+# Access individual owners for each service (requires include_owners = true)
+output "entity_individual_owners" {
+  value = {
+    for entity in data.cortex_catalog_entities.services_with_owners.entities :
+    entity.tag => [for ind in entity.ownership.individuals : ind.email]
+    if entity.ownership != null && length(entity.ownership.individuals) > 0
+  }
+}
