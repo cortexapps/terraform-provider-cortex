@@ -1,11 +1,16 @@
 # Terraform Provider testing workflow.
 name: Tests
 
-# This GitHub action runs your tests for each pull request and push.
-# Optionally, you can turn it on using a schedule for regular testing.
+# Runs on every pull request and on pushes to main.
 on:
   pull_request:
-  workflow_call:
+  push:
+    branches:
+      - "main"
+    paths-ignore:
+      - "README.md"
+      - "CHANGELOG.md"
+      - "TODO.md"
 
 # Testing only needs permissions to read the repository contents.
 permissions:
@@ -66,4 +71,37 @@ jobs:
           cache: true
       - run: go mod download
       - name: Unit tests
+        run: go test -v -cover ./...
+
+  # Run acceptance tests against the real Cortex API. With CORTEX_API_URL unset,
+  # the provider defaults to production (https://api.getcortexapp.com), so these
+  # create and destroy real resources in the tenant that CORTEX_API_TOKEN owns.
+  # That secret is not exposed to workflows triggered from forked PRs, and the
+  # tests use shared, static resource tags against the one tenant — so this job
+  # only runs on pushes to main and same-repo PRs, and is serialized repo-wide
+  # via the concurrency group below. Fork PRs are verified after merge to main.
+  acceptance-test:
+    name: Terraform Provider Acceptance Tests
+    needs: [build, test]
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: cortex-acceptance-tenant
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5.0.0
+      - uses: actions/setup-go@v6.1.0
+        with:
+          go-version-file: "go.mod"
+          cache: true
+      - uses: hashicorp/setup-terraform@v3.1.2
+        with:
+          terraform_version: "1.10.*"
+          terraform_wrapper: false
+      - run: go mod download
+      - name: Acceptance tests
+        env:
+          TF_ACC: "1"
+          CORTEX_API_TOKEN: ${{ secrets.CORTEX_API_TOKEN }}
         run: go test -v -cover ./...
