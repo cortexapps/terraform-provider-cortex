@@ -143,3 +143,14 @@ func datadogUnsetsDefault(stateValue types.Bool, configValue types.Bool) bool {
 	}
 	return stateValue.ValueBool() && !configValue.ValueBool()
 }
+
+// datadogCreateBecomesDefault tells if Cortex makes a new configuration the default: it does so when no existing
+// configuration is the default, whatever the create request asks.
+func datadogCreateBecomesDefault(existing []cortex.DatadogConfiguration) bool {
+	for _, configuration := range existing {
+		if configuration.IsDefault {
+			return false
+		}
+	}
+	return true
+}

@@ -263,6 +263,25 @@ func (r *DatadogConfigurationResource) Create(ctx context.Context, req resource.
 		return
 	}
 
+	// Cortex makes a new configuration the default when no default exists, whatever the request asks. Fail before
+	// the create, so an explicit is_default = false does not leave a configuration that contradicts the plan.
+	if !data.IsDefault.IsNull() && !data.IsDefault.IsUnknown() && !data.IsDefault.ValueBool() {
+		existing, err := r.client.DatadogConfigurations().List(ctx)
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to list datadog configurations, got error: %s", err))
+			return
+		}
+		if datadogCreateBecomesDefault(existing) {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("is_default"),
+				"Datadog configuration must be the default",
+				fmt.Sprintf("No datadog configuration is the default, so Cortex makes %s the default. Remove "+
+					"is_default or set it to true.", data.Alias.ValueString()),
+			)
+			return
+		}
+	}
+
 	entity, err := r.client.DatadogConfigurations().Create(ctx, createRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create datadog configuration, got error: %s", err))
@@ -279,15 +298,6 @@ func (r *DatadogConfigurationResource) Create(ctx context.Context, req resource.
 		} else {
 			entity = updated
 		}
-	}
-
-	// Cortex makes the first configuration the default, whatever the request asks.
-	if !data.IsDefault.IsNull() && !data.IsDefault.IsUnknown() && !data.IsDefault.ValueBool() && entity.IsDefault {
-		resp.Diagnostics.AddError(
-			"Datadog configuration is the default",
-			fmt.Sprintf("Cortex made datadog configuration %s the default, because it is the first configuration. "+
-				"Remove is_default or set it to true.", entity.Alias),
-		)
 	}
 
 	// Map entity to resource model. Save state also after an error, so Terraform keeps track of the configuration.

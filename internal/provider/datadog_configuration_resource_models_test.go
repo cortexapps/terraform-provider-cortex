@@ -213,3 +213,9 @@ func TestDatadogUnsetsDefault(t *testing.T) {
 		})
 	}
 }
+
+func TestDatadogCreateBecomesDefault(t *testing.T) {
+	assert.True(t, datadogCreateBecomesDefault(nil))
+	assert.True(t, datadogCreateBecomesDefault([]cortex.DatadogConfiguration{{Alias: "a", IsDefault: false}}))
+	assert.False(t, datadogCreateBecomesDefault([]cortex.DatadogConfiguration{{Alias: "a", IsDefault: false}, {Alias: "b", IsDefault: true}}))
+}
