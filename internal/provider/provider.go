@@ -107,6 +107,7 @@ func (p *CortexProvider) Resources(ctx context.Context) []func() resource.Resour
 		NewResourceDefinitionResource,
 		NewCatalogEntityCustomDataResource,
 		NewCatalogEntityOpenAPIResource,
+		NewDatadogConfigurationResource,
 	}
 }
 
