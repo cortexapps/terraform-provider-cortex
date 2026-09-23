@@ -5,6 +5,7 @@ subcategory: ""
 description: |-
   Datadog integration configuration. Each configuration connects Cortex to one Datadog organization and is identified by its alias.
   The Cortex API cannot change api_key, app_key, region, or custom_subdomain in place, so a change to one of them destroys the configuration and creates a new one. Cortex does not allow deleting the default configuration while other configurations exist, so to replace the default configuration, first make a different configuration the default.
+  Set is_default = true on one configuration only. Cortex keeps exactly one default, so two configurations with is_default = true take the default from each other on every apply.
 ---
 
 # cortex_datadog_configuration (Resource)
@@ -12,6 +13,8 @@ description: |-
 Datadog integration configuration. Each configuration connects Cortex to one Datadog organization and is identified by its alias.
 
 The Cortex API cannot change `api_key`, `app_key`, `region`, or `custom_subdomain` in place, so a change to one of them destroys the configuration and creates a new one. Cortex does not allow deleting the default configuration while other configurations exist, so to replace the default configuration, first make a different configuration the default.
+
+Set `is_default = true` on one configuration only. Cortex keeps exactly one default, so two configurations with `is_default = true` take the default from each other on every apply.
 
 ## Example Usage
 
@@ -40,7 +43,7 @@ resource "cortex_datadog_configuration" "production" {
 
 - `custom_subdomain` (String) Custom subdomain of the Datadog organization, if it uses one.
 - `environments` (List of String) Datadog environments to use for this configuration. Defaults to an empty list.
-- `is_default` (Boolean) Whether this is the default Datadog configuration. Cortex always makes the first configuration the default, and does not allow unsetting the default directly: set `is_default = true` on another configuration instead. When not set, Terraform keeps the value from Cortex.
+- `is_default` (Boolean) Whether this is the default Datadog configuration. When not set, Terraform keeps the value from Cortex. Cortex always makes the first configuration the default, so `is_default = false` fails on the first configuration. Cortex does not allow setting the current default to `false`: set `is_default = true` on another configuration and remove `is_default` from this one, apply, and then set it to `false` if necessary.
 
 ### Read-Only
 

@@ -50,10 +50,12 @@ func (r *DatadogConfigurationResourceModel) FromApiModel(ctx context.Context, di
 	r.Environments = list
 }
 
+// ToCreateRequest never asks for a default configuration: the API rejects a new default while another default
+// exists. Create sets the default with an update after the configuration exists.
 func (r *DatadogConfigurationResourceModel) ToCreateRequest(ctx context.Context, diagnostics *diag.Diagnostics) cortex.CreateDatadogConfigurationRequest {
 	return cortex.CreateDatadogConfigurationRequest{
 		Alias:           r.Alias.ValueString(),
-		IsDefault:       r.IsDefault.ValueBool(),
+		IsDefault:       false,
 		ApiKey:          r.ApiKey.ValueString(),
 		AppKey:          r.AppKey.ValueString(),
 		Region:          r.Region.ValueString(),
@@ -127,4 +129,17 @@ func lastFour(value string) string {
 		return value
 	}
 	return string(runes[len(runes)-4:])
+}
+
+/***********************************************************************************************************************
+ * Default configuration
+ **********************************************************************************************************************/
+
+// datadogUnsetsDefault tells if the configuration sets is_default to false on the current default configuration.
+// The API rejects this: a different configuration must become the default first.
+func datadogUnsetsDefault(stateValue types.Bool, configValue types.Bool) bool {
+	if stateValue.IsNull() || stateValue.IsUnknown() || configValue.IsNull() || configValue.IsUnknown() {
+		return false
+	}
+	return stateValue.ValueBool() && !configValue.ValueBool()
 }

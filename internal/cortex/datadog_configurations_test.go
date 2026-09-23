@@ -79,7 +79,8 @@ func TestCreateDatadogConfiguration(t *testing.T) {
 	}
 	c, teardown, err := setupClient(
 		cortex.Route("datadog", "configuration"),
-		cortex.DatadogConfigurationsResponse{Configurations: []cortex.DatadogConfiguration{testDatadogConfiguration}},
+		// The API returns every configuration in the tenant, not only the new one.
+		testDatadogConfigurationsResponse,
 		AssertRequestMethod(t, "POST"),
 		AssertRequestBody(t, req),
 	)
@@ -100,7 +101,8 @@ func TestUpdateDatadogConfiguration(t *testing.T) {
 	}
 	c, teardown, err := setupClient(
 		cortex.Route("datadog", "configuration/"+oldAlias),
-		cortex.DatadogConfigurationsResponse{Configurations: []cortex.DatadogConfiguration{testDatadogConfiguration}},
+		// The API returns every configuration in the tenant, not only the updated one.
+		testDatadogConfigurationsResponse,
 		AssertRequestMethod(t, "PUT"),
 		AssertRequestBody(t, req),
 	)
@@ -110,6 +112,20 @@ func TestUpdateDatadogConfiguration(t *testing.T) {
 	res, err := c.DatadogConfigurations().Update(context.Background(), oldAlias, req)
 	assert.Nil(t, err, "error updating a datadog configuration")
 	assert.Equal(t, testDatadogConfiguration, res)
+}
+
+func TestCreateDatadogConfigurationMissingFromResponse(t *testing.T) {
+	req := cortex.CreateDatadogConfigurationRequest{Alias: "missing-datadog", Region: "US1", Environments: []string{}}
+	c, teardown, err := setupClient(
+		cortex.Route("datadog", "configuration"),
+		testDatadogConfigurationsResponse,
+		AssertRequestMethod(t, "POST"),
+	)
+	assert.Nil(t, err, "could not setup client")
+	defer teardown()
+
+	_, err = c.DatadogConfigurations().Create(context.Background(), req)
+	assert.ErrorContains(t, err, "missing-datadog")
 }
 
 func TestDeleteDatadogConfiguration(t *testing.T) {

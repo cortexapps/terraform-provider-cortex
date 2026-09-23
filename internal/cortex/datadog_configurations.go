@@ -42,17 +42,20 @@ type DatadogConfiguration struct {
 	LastFourAppKey  string   `json:"lastFourAppKey"`
 }
 
-// DatadogConfigurationsResponse wraps the list, create, and update responses.
+// DatadogConfigurationsResponse wraps the list, create, and update responses. Create and update also return every
+// configuration in the tenant, not only the one that changed.
 type DatadogConfigurationsResponse struct {
 	Configurations []DatadogConfiguration `json:"configurations"`
 }
 
-// firstConfiguration returns the single configuration that a create or update response contains.
-func (r DatadogConfigurationsResponse) firstConfiguration() (DatadogConfiguration, error) {
-	if len(r.Configurations) == 0 {
-		return DatadogConfiguration{}, fmt.Errorf("response contained no configurations")
+// findByAlias returns the configuration with the alias. Returns ApiErrorNotFound when no configuration has it.
+func (r DatadogConfigurationsResponse) findByAlias(alias string) (DatadogConfiguration, error) {
+	for _, configuration := range r.Configurations {
+		if configuration.Alias == alias {
+			return configuration, nil
+		}
 	}
-	return r.Configurations[0], nil
+	return DatadogConfiguration{}, fmt.Errorf("datadog configuration %s: %w", alias, ApiErrorNotFound)
 }
 
 /***********************************************************************************************************************
@@ -83,12 +86,7 @@ func (c *DatadogConfigurationsClient) Get(ctx context.Context, alias string) (Da
 	if err != nil {
 		return DatadogConfiguration{}, err
 	}
-	for _, configuration := range configurations {
-		if configuration.Alias == alias {
-			return configuration, nil
-		}
-	}
-	return DatadogConfiguration{}, fmt.Errorf("failed getting datadog configuration %s: %w", alias, ApiErrorNotFound)
+	return DatadogConfigurationsResponse{Configurations: configurations}.findByAlias(alias)
 }
 
 /***********************************************************************************************************************
@@ -118,7 +116,7 @@ func (c *DatadogConfigurationsClient) Create(ctx context.Context, req CreateData
 	if err != nil {
 		return DatadogConfiguration{}, err
 	}
-	return response.firstConfiguration()
+	return response.findByAlias(req.Alias)
 }
 
 /***********************************************************************************************************************
@@ -146,7 +144,7 @@ func (c *DatadogConfigurationsClient) Update(ctx context.Context, alias string, 
 	if err != nil {
 		return DatadogConfiguration{}, err
 	}
-	return response.firstConfiguration()
+	return response.findByAlias(req.Alias)
 }
 
 /***********************************************************************************************************************

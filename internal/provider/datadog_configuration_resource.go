@@ -52,7 +52,9 @@ func (r *DatadogConfigurationResource) Schema(ctx context.Context, req resource.
 			"The Cortex API cannot change `api_key`, `app_key`, `region`, or `custom_subdomain` in place, so a change to " +
 			"one of them destroys the configuration and creates a new one. Cortex does not allow deleting the default " +
 			"configuration while other configurations exist, so to replace the default configuration, first make a " +
-			"different configuration the default.",
+			"different configuration the default.\n\n" +
+			"Set `is_default = true` on one configuration only. Cortex keeps exactly one default, so two configurations " +
+			"with `is_default = true` take the default from each other on every apply.",
 
 		Attributes: map[string]schema.Attribute{
 			// Required attributes
@@ -94,13 +96,16 @@ func (r *DatadogConfigurationResource) Schema(ctx context.Context, req resource.
 
 			// Optional attributes
 			"is_default": schema.BoolAttribute{
-				MarkdownDescription: "Whether this is the default Datadog configuration. Cortex always makes the first " +
-					"configuration the default, and does not allow unsetting the default directly: set `is_default = true` " +
-					"on another configuration instead. When not set, Terraform keeps the value from Cortex.",
+				MarkdownDescription: "Whether this is the default Datadog configuration. When not set, Terraform keeps " +
+					"the value from Cortex. Cortex always makes the first configuration the default, so `is_default = false` " +
+					"fails on the first configuration. Cortex does not allow setting the current default to `false`: set " +
+					"`is_default = true` on another configuration and remove `is_default` from this one, apply, and then set " +
+					"it to `false` if necessary.",
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []planmodifier.Bool{
 					boolplanmodifier.UseStateForUnknown(),
+					datadogDefaultModifier{},
 				},
 			},
 			"environments": schema.ListAttribute{
@@ -160,6 +165,32 @@ func datadogKeyReplaceModifier(lastFourAttribute string) planmodifier.String {
 		"A change to the key replaces the configuration.",
 		"A change to the key replaces the configuration.",
 	)
+}
+
+// datadogDefaultModifier fails the plan when the configuration sets is_default to false on the current default
+// configuration, because the API rejects that update.
+type datadogDefaultModifier struct{}
+
+func (m datadogDefaultModifier) Description(ctx context.Context) string {
+	return "Rejects is_default = false on the current default configuration."
+}
+
+func (m datadogDefaultModifier) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (m datadogDefaultModifier) PlanModifyBool(ctx context.Context, req planmodifier.BoolRequest, resp *planmodifier.BoolResponse) {
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+	if datadogUnsetsDefault(req.StateValue, req.ConfigValue) {
+		resp.Diagnostics.AddAttributeError(
+			req.Path,
+			"Cannot unset the default Datadog configuration",
+			"Cortex does not allow setting the current default configuration to is_default = false. Set is_default = true "+
+				"on another configuration and remove is_default from this one, apply, and then set it to false if necessary.",
+		)
+	}
 }
 
 /***********************************************************************************************************************
@@ -238,7 +269,28 @@ func (r *DatadogConfigurationResource) Create(ctx context.Context, req resource.
 		return
 	}
 
-	// Map entity to resource model
+	// The create request never asks for the default, so an update sets it. The API unsets the previous default.
+	wantDefault := !data.IsDefault.IsNull() && !data.IsDefault.IsUnknown() && data.IsDefault.ValueBool()
+	if wantDefault && !entity.IsDefault {
+		updateRequest := data.ToUpdateRequest(ctx, &resp.Diagnostics)
+		updated, err := r.client.DatadogConfigurations().Update(ctx, entity.Alias, updateRequest)
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Created datadog configuration %s, but unable to make it the default, got error: %s", entity.Alias, err))
+		} else {
+			entity = updated
+		}
+	}
+
+	// Cortex makes the first configuration the default, whatever the request asks.
+	if !data.IsDefault.IsNull() && !data.IsDefault.IsUnknown() && !data.IsDefault.ValueBool() && entity.IsDefault {
+		resp.Diagnostics.AddError(
+			"Datadog configuration is the default",
+			fmt.Sprintf("Cortex made datadog configuration %s the default, because it is the first configuration. "+
+				"Remove is_default or set it to true.", entity.Alias),
+		)
+	}
+
+	// Map entity to resource model. Save state also after an error, so Terraform keeps track of the configuration.
 	data.FromApiModel(ctx, &resp.Diagnostics, entity)
 
 	// Save data into Terraform state

@@ -175,3 +175,41 @@ func TestDatadogConfigurationResourceModel_ClearDriftedKeys_NullKeys(t *testing.
 	assert.True(t, data.ApiKey.IsNull())
 	assert.True(t, data.AppKey.IsNull())
 }
+
+func TestDatadogConfigurationResourceModel_ToCreateRequest_NeverDefault(t *testing.T) {
+	ctx := context.Background()
+	diagnostics := diag.Diagnostics{}
+	data := DatadogConfigurationResourceModel{
+		Alias:     types.StringValue("datadog-prod"),
+		IsDefault: types.BoolValue(true),
+		Region:    types.StringValue("US1"),
+	}
+
+	req := data.ToCreateRequest(ctx, &diagnostics)
+
+	require.False(t, diagnostics.HasError())
+	// The API rejects a new default while another default exists, so Create sets the default with a later update.
+	assert.False(t, req.IsDefault)
+}
+
+func TestDatadogUnsetsDefault(t *testing.T) {
+	tests := []struct {
+		name        string
+		stateValue  types.Bool
+		configValue types.Bool
+		want        bool
+	}{
+		{"default set to false", types.BoolValue(true), types.BoolValue(false), true},
+		{"default kept", types.BoolValue(true), types.BoolValue(true), false},
+		{"default not configured", types.BoolValue(true), types.BoolNull(), false},
+		{"non-default set to false", types.BoolValue(false), types.BoolValue(false), false},
+		{"non-default set to true", types.BoolValue(false), types.BoolValue(true), false},
+		{"no state", types.BoolNull(), types.BoolValue(false), false},
+		{"unknown config", types.BoolValue(true), types.BoolUnknown(), false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, datadogUnsetsDefault(tt.stateValue, tt.configValue))
+		})
+	}
+}
