@@ -25,6 +25,7 @@ var BaseUris = map[string]string{
 	"catalog_entities":     "/api/v1/catalog/",
 	"open_api":             "/api/v1/open-api",
 	"resource_definitions": "/api/v1/catalog/definitions/",
+	"datadog":              "/api/v1/datadog/",
 }
 
 func Route(domain string, path string) string {
@@ -172,4 +173,8 @@ func (c *HttpClient) Scorecards() ScorecardsClientInterface {
 
 func (c *HttpClient) ResourceDefinitions() ResourceDefinitionsClientInterface {
 	return &ResourceDefinitionsClient{client: c}
+}
+
+func (c *HttpClient) DatadogConfigurations() DatadogConfigurationsClientInterface {
+	return &DatadogConfigurationsClient{client: c}
 }
