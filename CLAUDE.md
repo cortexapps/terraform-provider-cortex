@@ -67,6 +67,7 @@ Each resource follows this structure:
 - `cortex_catalog_entity` - Catalog entities (services, resources, teams, domains)
 - `cortex_catalog_entity_custom_data` - Custom data for catalog entities
 - `cortex_catalog_entity_openapi` - OpenAPI specs for catalog entities (YAML format)
+- `cortex_datadog_configuration` - Datadog integration configurations (keys are write-only in the API; drift is detected via last four characters)
 - `cortex_department` - Departments
 - `cortex_resource_definition` - Resource type definitions
 - `cortex_scorecard` - Scorecards

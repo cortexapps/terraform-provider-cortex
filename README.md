@@ -55,6 +55,7 @@ This provider comes with the following resource types:
 
 * [`cortex_catalog_entity`](docs/resources/catalog_entity.md)
 * [`cortex_catalog_entity_custom_data`](docs/resources/catalog_entity_custom_data.md)
+* [`cortex_datadog_configuration`](docs/resources/datadog_configuration.md)
 * [`cortex_department`](docs/resources/department.md)
 * [`cortex_resource_definition`](docs/resources/resource_definition.md)
 * [`cortex_scorecard`](docs/resources/scorecard.md)

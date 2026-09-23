@@ -1,6 +1,7 @@
 Changelog for the Cortex terraform provider.
 
 ## Unreleased
+* Add `cortex_datadog_configuration` resource to manage Datadog integration configurations.
 
 ## 0.5.0
 
