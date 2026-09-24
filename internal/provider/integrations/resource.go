@@ -95,6 +95,7 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 			"| `datadog` | `key_pair` | `key` = API key, `secret` = application key |\n" +
 			"| `gitlab` | `token` | `value` = personal access token |\n" +
 			"| `incident_io` | `token` | `value` = API key |\n" +
+			"| `jira` | `basic` | `username` = email (cloud) or username (on-prem), `password` = API token (cloud) or password (on-prem) |\n" +
 			"| `pagerduty` | `token` | `value` = API token |\n\n" +
 			"The Cortex API never returns secrets. Terraform detects a secret changed outside Terraform through " +
 			"`credentials_last_four`. Cortex does not check credentials when it saves a configuration, so invalid " +
@@ -595,6 +596,21 @@ func applyState(ctx context.Context, m *integrationConfigurationModel, def integ
 	value, d := types.MapValueFrom(ctx, types.StringType, lastFours)
 	diags.Append(d...)
 	m.CredentialsLastFour = value
+
+	// Credential parts that the API returns show changes made outside Terraform.
+	if len(st.Readable) > 0 {
+		credentials, _, d := decodeCredentials(ctx, m.Credentials)
+		diags.Append(d...)
+		if credentials != nil {
+			for name, v := range st.Readable {
+				if p := credentials.part(name); p != nil {
+					*p = types.StringValue(v)
+				}
+			}
+			m.Credentials, d = credentials.object(ctx)
+			diags.Append(d...)
+		}
+	}
 }
 
 // addUnsupportedEngineError reports a definition that no engine handles, instead of writing an empty state.

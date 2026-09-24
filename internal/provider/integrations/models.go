@@ -297,6 +297,7 @@ type integrationConfigurationModel struct {
 	Datadog             types.Object `tfsdk:"datadog"`
 	Gitlab              types.Object `tfsdk:"gitlab"`
 	IncidentIo          types.Object `tfsdk:"incident_io"`
+	Jira                types.Object `tfsdk:"jira"`
 	PagerDuty           types.Object `tfsdk:"pagerduty"`
 }
 
@@ -309,6 +310,8 @@ func (m *integrationConfigurationModel) settings(name string) *types.Object {
 		return &m.Gitlab
 	case "incident_io":
 		return &m.IncidentIo
+	case "jira":
+		return &m.Jira
 	case "pagerduty":
 		return &m.PagerDuty
 	}
