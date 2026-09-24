@@ -257,3 +257,43 @@ func TestUnitIntegrationConfiguration_ImportIdErrors(t *testing.T) {
 		})
 	}
 }
+
+// The API cannot change region or custom_subdomain in place, so a change to one of them replaces the configuration.
+func TestUnitIntegrationConfiguration_DatadogSettingsReplace(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	withSettings := func(region, subdomain string) string {
+		return unitConfig(url, fmt.Sprintf(`
+resource "cortex_integration_configuration" "test" {
+  alias       = "dd"
+  credentials = { key_pair = { key = "fake-api-key-a1b2", secret = "fake-app-key-c3d4" } }
+  datadog     = { region = %q, custom_subdomain = %q }
+}`, region, subdomain))
+	}
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: withSettings("US1", "acme"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "datadog.custom_subdomain", "acme"),
+					checkFake(fake, "datadog", "dd", "customSubdomain", "acme"),
+				),
+			},
+			{
+				Config: withSettings("EU1", "acme"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "datadog", "dd", "region", "EU1"),
+					checkCreates(fake, "datadog", 2),
+				),
+			},
+			{
+				Config: withSettings("EU1", "acme2"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "datadog", "dd", "customSubdomain", "acme2"),
+					checkCreates(fake, "datadog", 3),
+				),
+			},
+		},
+	})
+}
