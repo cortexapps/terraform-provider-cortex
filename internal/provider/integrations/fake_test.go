@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -114,7 +115,7 @@ func (f *fakeCortexApi) serveMulti(w http.ResponseWriter, r *http.Request, seg, 
 			return
 		}
 		for k, v := range body {
-			if v == nil || k == "isDefault" || contains(fakeSpecs[seg].ignoreOnUpdate, k) {
+			if v == nil || k == "isDefault" || slices.Contains(fakeSpecs[seg].ignoreOnUpdate, k) {
 				continue
 			}
 			f.configs[seg][i][k] = v
@@ -298,15 +299,6 @@ func fail(w http.ResponseWriter, status int, message string) {
 func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(v)
-}
-
-func contains(list []string, s string) bool {
-	for _, v := range list {
-		if v == s {
-			return true
-		}
-	}
-	return false
 }
 
 // takeLastFour matches the backend, which keeps the last four characters of a key, or all of a shorter key.
