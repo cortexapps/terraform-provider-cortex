@@ -315,3 +315,23 @@ func TestUnitIntegrationConfiguration_DeleteToleratesNotFound(t *testing.T) {
 		},
 	})
 }
+
+// When the follow-up update that makes a new configuration the default fails, the apply fails, and Terraform still
+// tracks the created configuration so that it does not become an orphan.
+func TestUnitIntegrationConfiguration_CreateKeepsStateWhenDefaultUpdateFails(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	fake.seed("datadog", map[string]any{"alias": "existing", "isDefault": true, "region": "US1", "environments": []any{}, "apiKey": "aaaa", "appKey": "bbbb"})
+	fake.failUpdates()
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config:      datadogUnit(url, "dd", "fake-api-key-a1b2", "is_default = true"),
+			ExpectError: regexp.MustCompile(`unable to make it the default`),
+		}},
+	})
+	assert.Equal(t, 1, fake.createCount("datadog"))
+	// The destroy after the steps deletes the tracked configuration; without state it would stay in Cortex.
+	_, orphan := fake.get("datadog", "dd")
+	assert.False(t, orphan, "datadog configuration dd is an orphan")
+}

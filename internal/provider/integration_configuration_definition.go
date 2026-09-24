@@ -153,8 +153,8 @@ func settingsObject[T any](ctx context.Context, d integrationDefinition, v T) (t
 	return obj, diagsError(diags)
 }
 
-// asSettings converts the plan and state settings blocks for a replace check. It returns nil when either is null
-// or unknown.
+// asSettings converts the plan and state settings blocks for a replace check. It returns both values or neither:
+// both are nil when either block is null or unknown, so a caller only needs to check one.
 func asSettings[T any](ctx context.Context, plan types.Object, state types.Object) (*T, *T, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	if plan.IsNull() || plan.IsUnknown() || state.IsNull() || state.IsUnknown() {

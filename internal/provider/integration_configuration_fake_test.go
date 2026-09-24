@@ -29,6 +29,8 @@ type fakeCortexApi struct {
 	creates map[string]int
 	// deleteNotFound makes deletes answer 404, like a configuration that another client deleted after the refresh.
 	deleteNotFound bool
+	// updateFails makes updates answer 500.
+	updateFails bool
 }
 
 func newFakeCortexApi(t *testing.T) (*fakeCortexApi, string) {
@@ -79,6 +81,8 @@ func (f *fakeCortexApi) serveMulti(w http.ResponseWriter, r *http.Request, seg, 
 		body["isDefault"] = isDefault || !hasDefault
 		f.configs[seg] = append(f.configs[seg], body)
 		f.writeAll(w, seg)
+	case r.Method == http.MethodPut && hasAlias && f.updateFails:
+		fail(w, http.StatusInternalServerError, "update failed")
 	case r.Method == http.MethodPut && hasAlias:
 		i := f.find(seg, alias)
 		if i < 0 {
@@ -213,6 +217,12 @@ func (f *fakeCortexApi) answerDeletesWithNotFound() {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.deleteNotFound = true
+}
+
+func (f *fakeCortexApi) failUpdates() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.updateFails = true
 }
 
 func (f *fakeCortexApi) seed(seg string, cfg map[string]any) {
