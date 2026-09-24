@@ -1,7 +1,7 @@
 Changelog for the Cortex terraform provider.
 
 ## Unreleased
-* Add `cortex_integration_configuration` resource to manage integration configurations for Datadog and PagerDuty.
+* Add `cortex_integration_configuration` resource to manage integration configurations for Datadog, GitLab, incident.io, and PagerDuty.
 
 ## 0.5.0
 
