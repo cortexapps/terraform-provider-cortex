@@ -22,7 +22,6 @@ resource "cortex_integration_configuration" "test" {
 }`, alias, extra, key))
 }
 
-//nolint:unparam // The next integrations in the stack use other segments.
 func checkFake(f *fakeCortexApi, seg, alias, field string, want any) resource.TestCheckFunc {
 	return func(*terraform.State) error {
 		cfg, ok := f.get(seg, alias)
@@ -36,7 +35,6 @@ func checkFake(f *fakeCortexApi, seg, alias, field string, want any) resource.Te
 	}
 }
 
-//nolint:unparam // The next integrations in the stack use other segments.
 func checkCreates(f *fakeCortexApi, seg string, want int) resource.TestCheckFunc {
 	return func(*terraform.State) error {
 		if got := f.createCount(seg); got != want {
@@ -484,4 +482,109 @@ resource "cortex_integration_configuration" "test" {
 			})
 		})
 	}
+}
+
+func pagerdutyUnit(url, token, extra string) string {
+	return unitConfig(url, fmt.Sprintf(`
+resource "cortex_integration_configuration" "test" {
+  %s
+  credentials = { token = { value = %q } }
+  pagerduty   = { is_token_readonly = true }
+}`, extra, token))
+}
+
+func TestUnitIntegrationConfiguration_PagerdutyLifecycle(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: pagerdutyUnit(url, "fake-token-a1b2", ""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "id", "pagerduty"),
+					resource.TestCheckNoResourceAttr(unitResourceName, "is_default"),
+					resource.TestCheckNoResourceAttr(unitResourceName, "alias"),
+					resource.TestCheckResourceAttr(unitResourceName, "credentials_last_four.value", "a1b2"),
+					checkFake(fake, "pagerduty", "", "isTokenReadonly", true),
+				),
+			},
+			{
+				ResourceName:            unitResourceName,
+				ImportState:             true,
+				ImportStateId:           "pagerduty",
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"credentials"},
+			},
+			// A new token updates in place through the full-replace PUT.
+			{
+				Config: pagerdutyUnit(url, "fake-token-c3d4", ""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "credentials_last_four.value", "c3d4"),
+					checkFake(fake, "pagerduty", "", "token", "fake-token-c3d4"),
+					checkCreates(fake, "pagerduty", 1),
+				),
+			},
+			// A token rotated outside Terraform shows as a change, and the apply restores the configured token.
+			{
+				PreConfig: func() { fake.setField("pagerduty", "", "token", "rotated-outside-9999") },
+				Config:    pagerdutyUnit(url, "fake-token-c3d4", ""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "pagerduty", "", "token", "fake-token-c3d4"),
+					checkCreates(fake, "pagerduty", 1),
+				),
+			},
+			// Deleted outside Terraform: Read removes it, and the apply creates it again.
+			{
+				PreConfig: func() { fake.remove("pagerduty", "") },
+				Config:    pagerdutyUnit(url, "fake-token-c3d4", ""),
+				Check:     checkCreates(fake, "pagerduty", 2),
+			},
+		},
+	})
+}
+
+func TestUnitIntegrationConfiguration_PagerdutyCreateFailsWhenConfigurationExists(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	fake.seed("pagerduty", map[string]any{"token": "real-token-9999", "isTokenReadonly": false})
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config:      pagerdutyUnit(url, "fake-token-a1b2", ""),
+			ExpectError: regexp.MustCompile(`Import it instead`),
+		}},
+	})
+	cfg, _ := fake.get("pagerduty", "")
+	assert.Equal(t, "real-token-9999", cfg["token"])
+	assert.Equal(t, 0, fake.createCount("pagerduty"))
+}
+
+func TestUnitIntegrationConfiguration_PagerdutyValidation(t *testing.T) {
+	_, url := newFakeCortexApi(t)
+	for name, c := range map[string]struct{ extra, want string }{
+		"alias":      {`alias = "x"`, `alias is not allowed`},
+		"is_default": {`is_default = true`, `is_default is not allowed`},
+	} {
+		t.Run(name, func(t *testing.T) {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps:                    []resource.TestStep{{Config: pagerdutyUnit(url, "t", c.extra), ExpectError: regexp.MustCompile(c.want)}},
+			})
+		})
+	}
+}
+
+func TestUnitIntegrationConfiguration_PagerdutyImportIdError(t *testing.T) {
+	_, url := newFakeCortexApi(t)
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config:        pagerdutyUnit(url, "t", ""),
+			ResourceName:  unitResourceName,
+			ImportState:   true,
+			ImportStateId: "pagerduty/x",
+			ExpectError:   regexp.MustCompile(`The import ID for PagerDuty is pagerduty\.`),
+		}},
+	})
 }

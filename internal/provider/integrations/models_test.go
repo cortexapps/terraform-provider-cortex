@@ -100,7 +100,7 @@ func TestStringHelpers(t *testing.T) {
 func TestIntegrationDefinitionsAreWired(t *testing.T) {
 	for _, d := range integrationDefinitions {
 		t.Run(d.Name(), func(t *testing.T) {
-			assert.True(t, isMultiInstance(d), "no engine handles %s", d.Name())
+			assert.True(t, isMultiInstance(d) != isSingleInstance(d), "%s needs exactly one engine", d.Name())
 			m := integrationConfigurationModel{}
 			assert.NotNil(t, m.settings(d.Name()), "integrationConfigurationModel has no settings field for %s", d.Name())
 		})

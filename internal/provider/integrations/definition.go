@@ -21,16 +21,16 @@ import (
 
 // configurationInput is what the resource sends to a definition.
 type configurationInput struct {
-	Alias       string
-	IsDefault   bool
+	Alias       string // multi-instance only
+	IsDefault   bool   // multi-instance only
 	Credentials credentialsValue
 	Settings    types.Object // the settings block from the plan
 }
 
 // configurationState is what a definition reads back from the API, in provider terms.
 type configurationState struct {
-	Alias     string
-	IsDefault bool
+	Alias     string            // multi-instance only
+	IsDefault bool              // multi-instance only
 	Settings  types.Object      // the settings block
 	LastFour  map[string]string // secret credential part -> last four characters
 }
@@ -60,8 +60,20 @@ type multiInstanceDefinition interface {
 	Delete(ctx context.Context, c *cortex.HttpClient, alias string) error
 }
 
+// singleInstanceDefinition is an integration with at most one configuration per tenant.
+type singleInstanceDefinition interface {
+	integrationDefinition
+	// Get returns an error that matches cortex.ApiErrorNotFound when no configuration exists.
+	Get(ctx context.Context, c *cortex.HttpClient, prior types.Object) (configurationState, error)
+	Create(ctx context.Context, c *cortex.HttpClient, in configurationInput) (configurationState, error)
+	// Replace sends the full configuration.
+	Replace(ctx context.Context, c *cortex.HttpClient, in configurationInput) (configurationState, error)
+	Delete(ctx context.Context, c *cortex.HttpClient) error
+}
+
 var integrationDefinitions = []integrationDefinition{
 	datadogDefinition{},
+	pagerDutyDefinition{},
 }
 
 func definitionByName(name string) integrationDefinition {
@@ -83,6 +95,11 @@ func definitionNames() string {
 
 func isMultiInstance(d integrationDefinition) bool {
 	_, ok := d.(multiInstanceDefinition)
+	return ok
+}
+
+func isSingleInstance(d integrationDefinition) bool {
+	_, ok := d.(singleInstanceDefinition)
 	return ok
 }
 

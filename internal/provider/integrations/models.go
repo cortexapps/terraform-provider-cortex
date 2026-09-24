@@ -295,6 +295,7 @@ type integrationConfigurationModel struct {
 	Credentials         types.Object `tfsdk:"credentials"`
 	CredentialsLastFour types.Map    `tfsdk:"credentials_last_four"`
 	Datadog             types.Object `tfsdk:"datadog"`
+	PagerDuty           types.Object `tfsdk:"pagerduty"`
 }
 
 // settings returns the settings block of the named integration. Every registered definition needs a case here.
@@ -302,6 +303,8 @@ func (m *integrationConfigurationModel) settings(name string) *types.Object {
 	switch name {
 	case "datadog":
 		return &m.Datadog
+	case "pagerduty":
+		return &m.PagerDuty
 	}
 	return nil
 }
