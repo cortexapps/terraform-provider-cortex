@@ -19,11 +19,11 @@ import (
 )
 
 // jiraDefinition maps credentials.basic to email and apiToken (cloud variants) or username and password (on-prem).
-// The variant sets the API "type". Once Terraform manages the credentials, Read copies the email or username that the
-// API returns into state; right after an import, the next apply sets them. The API never returns cloudId, so Read
-// keeps it from state. The API ignores host,
-// frontendHost, and cloudId on update, and the email of a cloud_scoped configuration, so a change to one of them
-// replaces the configuration. On create, the API sets frontendHost to host when it is not set.
+// The variant sets the API "type". Once Terraform manages the credentials, every state refresh (create, read, and
+// update) copies the email or username that the API returns into state; right after an import, the next apply sets
+// them. The API never returns cloudId, so the refresh keeps it from state. The API ignores host, frontendHost, and
+// cloudId on update, and the email of a cloud_scoped configuration, so a change to one of them replaces the
+// configuration. On create, the API sets frontendHost to host when it is not set.
 type jiraDefinition struct{}
 
 type jiraSettingsModel struct {
