@@ -198,3 +198,26 @@ func optionalString(s string) types.String {
 	}
 	return types.StringValue(s)
 }
+
+/***********************************************************************************************************************
+ * Resource model
+ **********************************************************************************************************************/
+
+type integrationConfigurationModel struct {
+	Id                  types.String      `tfsdk:"id"`
+	Integration         types.String      `tfsdk:"integration"`
+	Alias               types.String      `tfsdk:"alias"`
+	IsDefault           types.Bool        `tfsdk:"is_default"`
+	Credentials         *credentialsModel `tfsdk:"credentials"`
+	CredentialsLastFour types.Map         `tfsdk:"credentials_last_four"`
+	Datadog             types.Object      `tfsdk:"datadog"`
+}
+
+// settings returns the settings block of the named integration. Every registered definition needs a case here.
+func (m *integrationConfigurationModel) settings(name string) *types.Object {
+	switch name {
+	case "datadog":
+		return &m.Datadog
+	}
+	return nil
+}
