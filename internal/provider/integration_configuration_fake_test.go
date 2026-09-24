@@ -27,6 +27,8 @@ type fakeCortexApi struct {
 	mu      sync.Mutex
 	configs map[string][]map[string]any
 	creates map[string]int
+	// deleteNotFound makes deletes answer 404, like a configuration that another client deleted after the refresh.
+	deleteNotFound bool
 }
 
 func newFakeCortexApi(t *testing.T) (*fakeCortexApi, string) {
@@ -106,7 +108,7 @@ func (f *fakeCortexApi) serveMulti(w http.ResponseWriter, r *http.Request, seg, 
 		f.writeAll(w, seg)
 	case r.Method == http.MethodDelete && hasAlias:
 		i := f.find(seg, alias)
-		if i < 0 {
+		if i < 0 || f.deleteNotFound {
 			fail(w, http.StatusNotFound, "Unable to find configuration")
 			return
 		}
@@ -205,6 +207,12 @@ func (f *fakeCortexApi) remove(seg, alias string) {
 	if i := f.find(seg, alias); i >= 0 {
 		f.configs[seg] = append(f.configs[seg][:i], f.configs[seg][i+1:]...)
 	}
+}
+
+func (f *fakeCortexApi) answerDeletesWithNotFound() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.deleteNotFound = true
 }
 
 func (f *fakeCortexApi) seed(seg string, cfg map[string]any) {

@@ -318,9 +318,6 @@ func (r *IntegrationConfigurationResource) Read(ctx context.Context, req resourc
 	}
 	def := definitionByName(state.Integration.ValueString())
 	if def == nil {
-		def = configuredDefinition(ctx, req.State)
-	}
-	if def == nil {
 		resp.Diagnostics.AddError("Unknown integration", fmt.Sprintf("State has no known integration. Use one of: %s.", definitionNames()))
 		return
 	}

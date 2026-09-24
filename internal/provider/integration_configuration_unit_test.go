@@ -298,3 +298,20 @@ resource "cortex_integration_configuration" "test" {
 		},
 	})
 }
+
+// A delete that finds no configuration counts as done: another client deleted it after the refresh.
+func TestUnitIntegrationConfiguration_DeleteToleratesNotFound(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: datadogUnit(url, "dd", "fake-api-key-a1b2", "")},
+			{
+				PreConfig: fake.answerDeletesWithNotFound,
+				Config:    datadogUnit(url, "dd", "fake-api-key-a1b2", ""),
+				Destroy:   true,
+			},
+		},
+	})
+}
