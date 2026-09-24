@@ -1,9 +1,10 @@
-package provider
+package integrations
 
 import (
 	"context"
 
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
+	api "github.com/cortexapps/terraform-provider-cortex/internal/cortex/integrations"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -69,7 +70,7 @@ func (datadogDefinition) SettingsRequireReplace(ctx context.Context, plan types.
 }
 
 func (d datadogDefinition) List(ctx context.Context, c *cortex.HttpClient, prior types.Object) ([]configurationState, error) {
-	configurations, err := c.DatadogConfigurations().List(ctx)
+	configurations, err := api.Datadog(c).List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +90,7 @@ func (d datadogDefinition) Create(ctx context.Context, c *cortex.HttpClient, in 
 	if err != nil {
 		return configurationState{}, err
 	}
-	cfg, err := c.DatadogConfigurations().Create(ctx, in.Alias, cortex.CreateDatadogConfigurationRequest{
+	cfg, err := api.Datadog(c).Create(ctx, in.Alias, api.CreateDatadogConfigurationRequest{
 		Alias:           in.Alias,
 		IsDefault:       in.IsDefault,
 		ApiKey:          in.Credentials.Parts["key"],
@@ -109,7 +110,7 @@ func (d datadogDefinition) Update(ctx context.Context, c *cortex.HttpClient, cur
 	if err != nil {
 		return configurationState{}, err
 	}
-	cfg, err := c.DatadogConfigurations().Update(ctx, currentAlias, in.Alias, cortex.UpdateDatadogConfigurationRequest{
+	cfg, err := api.Datadog(c).Update(ctx, currentAlias, in.Alias, api.UpdateDatadogConfigurationRequest{
 		Alias:        in.Alias,
 		IsDefault:    in.IsDefault,
 		Environments: environments,
@@ -121,7 +122,7 @@ func (d datadogDefinition) Update(ctx context.Context, c *cortex.HttpClient, cur
 }
 
 func (datadogDefinition) Delete(ctx context.Context, c *cortex.HttpClient, alias string) error {
-	return c.DatadogConfigurations().Delete(ctx, alias)
+	return api.Datadog(c).Delete(ctx, alias)
 }
 
 func (d datadogDefinition) settings(ctx context.Context, in configurationInput) (datadogSettingsModel, []string, error) {
@@ -133,7 +134,7 @@ func (d datadogDefinition) settings(ctx context.Context, in configurationInput) 
 	return s, environments, diagsError(diags)
 }
 
-func (d datadogDefinition) state(ctx context.Context, cfg cortex.DatadogConfiguration) (configurationState, error) {
+func (d datadogDefinition) state(ctx context.Context, cfg api.DatadogConfiguration) (configurationState, error) {
 	environments := cfg.Environments
 	if environments == nil {
 		environments = []string{}

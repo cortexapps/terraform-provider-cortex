@@ -1,4 +1,4 @@
-package provider_test
+package integrations_test
 
 import (
 	"encoding/json"

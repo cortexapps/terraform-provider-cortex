@@ -38,7 +38,9 @@ To use a locally built provider:
 ### Package Structure
 - `main.go` - Provider entry point, runs the provider server
 - `internal/provider/` - Terraform provider implementation (resources, data sources, schemas)
+- `internal/provider/integrations/` - The `cortex_integration_configuration` resource and one definition per integration
 - `internal/cortex/` - Cortex API client library
+- `internal/cortex/integrations/` - Generic integration configuration clients, created with constructors such as `integrations.Datadog(client)`
 
 ### API Client Architecture (`internal/cortex/`)
 The HTTP client uses a functional options pattern for initialization:
@@ -67,7 +69,7 @@ Each resource follows this structure:
 - `cortex_catalog_entity` - Catalog entities (services, resources, teams, domains)
 - `cortex_catalog_entity_custom_data` - Custom data for catalog entities
 - `cortex_catalog_entity_openapi` - OpenAPI specs for catalog entities (YAML format)
-- `cortex_integration_configuration` - Integration configurations. One settings block per integration and a shared `credentials` block; each integration is a definition in `internal/provider/integration_*.go`, on top of the generic clients in `internal/cortex/integration_configurations.go`
+- `cortex_integration_configuration` - Integration configurations. One settings block per integration and a shared `credentials` block; each integration is a definition in `internal/provider/integrations/`, on top of the generic clients in `internal/cortex/integrations/`
 - `cortex_department` - Departments
 - `cortex_resource_definition` - Resource type definitions
 - `cortex_scorecard` - Scorecards

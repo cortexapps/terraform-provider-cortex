@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
+	"github.com/cortexapps/terraform-provider-cortex/internal/provider/integrations"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -107,7 +108,7 @@ func (p *CortexProvider) Resources(ctx context.Context) []func() resource.Resour
 		NewResourceDefinitionResource,
 		NewCatalogEntityCustomDataResource,
 		NewCatalogEntityOpenAPIResource,
-		NewIntegrationConfigurationResource,
+		integrations.NewResource,
 	}
 }
 

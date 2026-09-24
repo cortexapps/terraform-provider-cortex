@@ -1,4 +1,4 @@
-package provider
+package integrations
 
 import (
 	"context"
@@ -20,23 +20,23 @@ import (
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
-var _ resource.Resource = &IntegrationConfigurationResource{}
-var _ resource.ResourceWithImportState = &IntegrationConfigurationResource{}
-var _ resource.ResourceWithConfigValidators = &IntegrationConfigurationResource{}
-var _ resource.ResourceWithValidateConfig = &IntegrationConfigurationResource{}
-var _ resource.ResourceWithModifyPlan = &IntegrationConfigurationResource{}
+var _ resource.Resource = &Resource{}
+var _ resource.ResourceWithImportState = &Resource{}
+var _ resource.ResourceWithConfigValidators = &Resource{}
+var _ resource.ResourceWithValidateConfig = &Resource{}
+var _ resource.ResourceWithModifyPlan = &Resource{}
 
-func NewIntegrationConfigurationResource() resource.Resource {
-	return &IntegrationConfigurationResource{}
+func NewResource() resource.Resource {
+	return &Resource{}
 }
 
 /***********************************************************************************************************************
  * Types
  **********************************************************************************************************************/
 
-// IntegrationConfigurationResource manages one integration configuration. The integration definitions hold
-// everything specific to an integration; this file holds the shared lifecycle.
-type IntegrationConfigurationResource struct {
+// Resource manages one integration configuration. The integration definitions hold everything specific to an
+// integration; this file holds the shared lifecycle.
+type Resource struct {
 	client *cortex.HttpClient
 }
 
@@ -44,7 +44,7 @@ type IntegrationConfigurationResource struct {
  * Schema
  **********************************************************************************************************************/
 
-func (r *IntegrationConfigurationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	attributes := map[string]schema.Attribute{
 		"alias": schema.StringAttribute{
 			MarkdownDescription: "Unique alias of the configuration. Required for integrations that support several " +
@@ -177,7 +177,7 @@ func (m defaultConfigurationModifier) PlanModifyBool(ctx context.Context, req pl
  * Validation and plan
  **********************************************************************************************************************/
 
-func (r *IntegrationConfigurationResource) ConfigValidators(ctx context.Context) []resource.ConfigValidator {
+func (r *Resource) ConfigValidators(ctx context.Context) []resource.ConfigValidator {
 	expressions := make([]path.Expression, 0, len(integrationDefinitions))
 	for _, d := range integrationDefinitions {
 		expressions = append(expressions, path.MatchRoot(d.Name()))
@@ -185,7 +185,7 @@ func (r *IntegrationConfigurationResource) ConfigValidators(ctx context.Context)
 	return []resource.ConfigValidator{resourcevalidator.ExactlyOneOf(expressions...)}
 }
 
-func (r *IntegrationConfigurationResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+func (r *Resource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	def := configuredDefinition(ctx, req.Config)
 	if def == nil {
 		return
@@ -215,7 +215,7 @@ func (r *IntegrationConfigurationResource) ValidateConfig(ctx context.Context, r
 }
 
 // ModifyPlan sets the computed values that the plan can know, and marks the changes that need a new configuration.
-func (r *IntegrationConfigurationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	if req.Plan.Raw.IsNull() {
 		return
 	}
@@ -290,11 +290,11 @@ func (r *IntegrationConfigurationResource) ModifyPlan(ctx context.Context, req r
  * Methods
  **********************************************************************************************************************/
 
-func (r *IntegrationConfigurationResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_integration_configuration"
 }
 
-func (r *IntegrationConfigurationResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *Resource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
@@ -310,7 +310,7 @@ func (r *IntegrationConfigurationResource) Configure(ctx context.Context, req re
 	r.client = client
 }
 
-func (r *IntegrationConfigurationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state integrationConfigurationModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -347,7 +347,7 @@ func (r *IntegrationConfigurationResource) Read(ctx context.Context, req resourc
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func (r *IntegrationConfigurationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan integrationConfigurationModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -399,7 +399,7 @@ func (r *IntegrationConfigurationResource) Create(ctx context.Context, req resou
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-func (r *IntegrationConfigurationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state integrationConfigurationModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
@@ -442,7 +442,7 @@ func (r *IntegrationConfigurationResource) Update(ctx context.Context, req resou
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
-func (r *IntegrationConfigurationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state integrationConfigurationModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -463,7 +463,7 @@ func (r *IntegrationConfigurationResource) Delete(ctx context.Context, req resou
 }
 
 // ImportState takes <integration>/<alias>.
-func (r *IntegrationConfigurationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	name, alias, hasAlias := strings.Cut(req.ID, "/")
 	def := definitionByName(name)
 	if def == nil {
