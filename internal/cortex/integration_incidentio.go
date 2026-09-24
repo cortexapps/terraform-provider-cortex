@@ -19,8 +19,7 @@ type IncidentIoConfiguration struct {
 	LastFour  string `json:"lastFour"`
 }
 
-func (c IncidentIoConfiguration) GetAlias() string   { return c.Alias }
-func (c IncidentIoConfiguration) GetIsDefault() bool { return c.IsDefault }
+func (c IncidentIoConfiguration) GetAlias() string { return c.Alias }
 
 func (c *HttpClient) IncidentIoConfigurations() *MultiInstanceClient[CreateIncidentIoConfigurationRequest, UpdateIncidentIoConfigurationRequest, IncidentIoConfiguration] {
 	return &MultiInstanceClient[CreateIncidentIoConfigurationRequest, UpdateIncidentIoConfigurationRequest, IncidentIoConfiguration]{client: c, domain: "incident_io", name: "incident.io"}

@@ -12,8 +12,7 @@ type DatadogConfiguration struct {
 	LastFourAppKey  string   `json:"lastFourAppKey"`
 }
 
-func (c DatadogConfiguration) GetAlias() string   { return c.Alias }
-func (c DatadogConfiguration) GetIsDefault() bool { return c.IsDefault }
+func (c DatadogConfiguration) GetAlias() string { return c.Alias }
 
 type CreateDatadogConfigurationRequest struct {
 	Alias           string   `json:"alias"`

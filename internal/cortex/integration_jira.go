@@ -38,8 +38,7 @@ type JiraConfiguration struct {
 	Username     string `json:"username,omitempty"`
 }
 
-func (c JiraConfiguration) GetAlias() string   { return c.Alias }
-func (c JiraConfiguration) GetIsDefault() bool { return c.IsDefault }
+func (c JiraConfiguration) GetAlias() string { return c.Alias }
 
 func (c *HttpClient) JiraConfigurations() *MultiInstanceClient[JiraConfigurationRequest, JiraConfigurationRequest, JiraConfiguration] {
 	return &MultiInstanceClient[JiraConfigurationRequest, JiraConfigurationRequest, JiraConfiguration]{client: c, domain: "jira", name: "jira"}

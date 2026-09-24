@@ -28,8 +28,7 @@ type GitlabConfiguration struct {
 	GroupNames           []string `json:"groupNames"`
 }
 
-func (c GitlabConfiguration) GetAlias() string   { return c.Alias }
-func (c GitlabConfiguration) GetIsDefault() bool { return c.IsDefault }
+func (c GitlabConfiguration) GetAlias() string { return c.Alias }
 
 func (c *HttpClient) GitlabConfigurations() *MultiInstanceClient[CreateGitlabConfigurationRequest, UpdateGitlabConfigurationRequest, GitlabConfiguration] {
 	return &MultiInstanceClient[CreateGitlabConfigurationRequest, UpdateGitlabConfigurationRequest, GitlabConfiguration]{client: c, domain: "gitlab", name: "gitlab"}

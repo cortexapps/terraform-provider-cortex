@@ -13,7 +13,6 @@ import (
 // MultiInstanceConfiguration is a configuration of an integration that supports several configurations per tenant.
 type MultiInstanceConfiguration interface {
 	GetAlias() string
-	GetIsDefault() bool
 }
 
 // configurationsResponse wraps list, create, update, and delete responses. For multi-instance integrations, create
