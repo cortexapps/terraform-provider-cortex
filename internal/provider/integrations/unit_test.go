@@ -866,3 +866,79 @@ func TestUnitIntegrationConfiguration_JiraVariantValidation(t *testing.T) {
 		})
 	}
 }
+
+// The API fills frontendHost from host when it is not set. The testing framework fails a step whose plan after apply
+// is not empty, so this also proves that frontend_host shows no permanent diff.
+func TestUnitIntegrationConfiguration_JiraOnPremFrontendHostDefault(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: jiraUnit(url, "bot", `{ on_prem = { host = "https://jira.invalid" } }`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "jira.on_prem.frontend_host", "https://jira.invalid"),
+					checkFake(fake, "jira", "jira", "frontendHost", "https://jira.invalid"),
+				),
+			},
+			// A frontend_host set in the configuration differs from the stored one, so it replaces the configuration.
+			{
+				Config: jiraUnit(url, "bot", `{ on_prem = { host = "https://jira.invalid", frontend_host = "https://links.invalid" } }`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "jira", "jira", "frontendHost", "https://links.invalid"),
+					checkCreates(fake, "jira", 2),
+				),
+			},
+		},
+	})
+}
+
+// The API ignores the email on update for cloud_scoped, so a new username replaces the configuration.
+func TestUnitIntegrationConfiguration_JiraCloudScopedUsernameReplaces(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	scoped := `{ cloud_scoped = { subdomain = "acme", cloud_id = "cloud-123" } }`
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: jiraUnit(url, "bot@acme.invalid", scoped)},
+			{
+				Config: jiraUnit(url, "other@acme.invalid", scoped),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "jira", "jira", "email", "other@acme.invalid"),
+					checkCreates(fake, "jira", 2),
+				),
+			},
+		},
+	})
+}
+
+// The API never returns cloudId, so it is null after an import. The next apply adopts the configured value in place
+// instead of replacing the configuration.
+func TestUnitIntegrationConfiguration_JiraCloudScopedImportKeepsConfiguration(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	fake.seed("jira", map[string]any{"alias": "jira", "isDefault": true, "type": "CLOUD_SCOPED", "subdomain": "acme",
+		"baseUrl": "api.atlassian.com/ex/jira", "cloudId": "cloud-123", "email": "bot@acme.invalid", "apiToken": "fake-token-a1b2"})
+	scoped := jiraUnit(url, "bot@acme.invalid", `{ cloud_scoped = { subdomain = "acme", cloud_id = "cloud-123" } }`)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:             scoped,
+				ResourceName:       unitResourceName,
+				ImportState:        true,
+				ImportStateId:      "jira/jira",
+				ImportStatePersist: true,
+			},
+			{
+				Config: scoped,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "jira.cloud_scoped.cloud_id", "cloud-123"),
+					checkCreates(fake, "jira", 0),
+				),
+			},
+		},
+	})
+}

@@ -307,6 +307,13 @@ func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReques
 				credentialsChanged = true
 			}
 		}
+		if replacer, ok := def.(credentialsReplacer); ok {
+			replace, diags := replacer.CredentialsRequireReplace(ctx, *plan.settings(def.Name()), planCredentials, stateCredentials)
+			resp.Diagnostics.Append(diags...)
+			if replace {
+				resp.RequiresReplace = append(resp.RequiresReplace, path.Root("credentials"))
+			}
+		}
 	}
 	if !credentialsChanged {
 		plan.CredentialsLastFour = state.CredentialsLastFour
