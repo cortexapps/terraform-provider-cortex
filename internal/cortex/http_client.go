@@ -25,6 +25,11 @@ var BaseUris = map[string]string{
 	"catalog_entities":     "/api/v1/catalog/",
 	"open_api":             "/api/v1/open-api",
 	"resource_definitions": "/api/v1/catalog/definitions/",
+	"datadog":              "/api/v1/datadog/",
+	"jira":                 "/api/v1/jira/",
+	"gitlab":               "/api/v1/gitlab/",
+	"incident_io":          "/api/v1/incidentio/",
+	"pagerduty":            "/api/v1/pagerduty/",
 }
 
 func Route(domain string, path string) string {
