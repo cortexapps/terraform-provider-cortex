@@ -15,6 +15,23 @@ type MultiInstanceConfiguration interface {
 	GetAlias() string
 }
 
+// MultiInstanceClientInterface is the API of a multi-instance integration.
+type MultiInstanceClientInterface[C any, U any, R MultiInstanceConfiguration] interface {
+	List(ctx context.Context) ([]R, error)
+	Get(ctx context.Context, alias string) (R, error)
+	Create(ctx context.Context, alias string, req C) (R, error)
+	Update(ctx context.Context, currentAlias string, newAlias string, req U) (R, error)
+	Delete(ctx context.Context, alias string) error
+}
+
+// SingleInstanceClientInterface is the API of a single-instance integration.
+type SingleInstanceClientInterface[C any, R any] interface {
+	Get(ctx context.Context) (R, error)
+	Create(ctx context.Context, req C) (R, error)
+	Replace(ctx context.Context, req C) (R, error)
+	Delete(ctx context.Context) error
+}
+
 // configurationsResponse wraps list, create, update, and delete responses. For multi-instance integrations, create
 // and update return every configuration in the tenant, not only the one that changed.
 type configurationsResponse[R any] struct {
@@ -131,12 +148,13 @@ func (c *SingleInstanceClient[C, R]) Get(ctx context.Context) (R, error) {
 	var response R
 	apiError := ApiError{}
 
+	var zero R
+
 	body, err := c.client.Client().Get(Route(c.domain, "default-configuration")).Receive(&response, &apiError)
 	if err != nil {
-		return response, fmt.Errorf("failed getting %s configuration: %+v", c.name, err)
+		return zero, fmt.Errorf("failed getting %s configuration: %+v", c.name, err)
 	}
 	if err := c.client.handleResponseStatus(body, &apiError); err != nil {
-		var zero R
 		return zero, fmt.Errorf("failed getting %s configuration: %w", c.name, err)
 	}
 	return response, nil

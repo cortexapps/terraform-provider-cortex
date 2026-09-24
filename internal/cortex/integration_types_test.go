@@ -87,3 +87,19 @@ func TestGitlabClientRoute(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "a1b2", res.LastFour)
 }
+
+// The backend rejects null for its required lists, so a nil slice must go out as [].
+func TestRequestsSendEmptyListsForNil(t *testing.T) {
+	for name, req := range map[string]any{
+		"datadog create": cortex.CreateDatadogConfigurationRequest{},
+		"datadog update": cortex.UpdateDatadogConfigurationRequest{},
+		"gitlab create":  cortex.CreateGitlabConfigurationRequest{},
+		"gitlab update":  cortex.UpdateGitlabConfigurationRequest{},
+	} {
+		t.Run(name, func(t *testing.T) {
+			body, err := json.Marshal(req)
+			assert.Nil(t, err)
+			assert.NotContains(t, string(body), "null")
+		})
+	}
+}

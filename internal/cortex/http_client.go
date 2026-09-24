@@ -178,3 +178,23 @@ func (c *HttpClient) Scorecards() ScorecardsClientInterface {
 func (c *HttpClient) ResourceDefinitions() ResourceDefinitionsClientInterface {
 	return &ResourceDefinitionsClient{client: c}
 }
+
+func (c *HttpClient) DatadogConfigurations() MultiInstanceClientInterface[CreateDatadogConfigurationRequest, UpdateDatadogConfigurationRequest, DatadogConfiguration] {
+	return &MultiInstanceClient[CreateDatadogConfigurationRequest, UpdateDatadogConfigurationRequest, DatadogConfiguration]{client: c, domain: "datadog", name: "datadog"}
+}
+
+func (c *HttpClient) JiraConfigurations() MultiInstanceClientInterface[JiraConfigurationRequest, JiraConfigurationRequest, JiraConfiguration] {
+	return &MultiInstanceClient[JiraConfigurationRequest, JiraConfigurationRequest, JiraConfiguration]{client: c, domain: "jira", name: "jira"}
+}
+
+func (c *HttpClient) GitlabConfigurations() MultiInstanceClientInterface[CreateGitlabConfigurationRequest, UpdateGitlabConfigurationRequest, GitlabConfiguration] {
+	return &MultiInstanceClient[CreateGitlabConfigurationRequest, UpdateGitlabConfigurationRequest, GitlabConfiguration]{client: c, domain: "gitlab", name: "gitlab"}
+}
+
+func (c *HttpClient) IncidentIoConfigurations() MultiInstanceClientInterface[CreateIncidentIoConfigurationRequest, UpdateIncidentIoConfigurationRequest, IncidentIoConfiguration] {
+	return &MultiInstanceClient[CreateIncidentIoConfigurationRequest, UpdateIncidentIoConfigurationRequest, IncidentIoConfiguration]{client: c, domain: "incident_io", name: "incident.io"}
+}
+
+func (c *HttpClient) PagerDutyConfiguration() SingleInstanceClientInterface[PagerDutyConfigurationRequest, PagerDutyConfiguration] {
+	return &SingleInstanceClient[PagerDutyConfigurationRequest, PagerDutyConfiguration]{client: c, domain: "pagerduty", name: "pagerduty"}
+}

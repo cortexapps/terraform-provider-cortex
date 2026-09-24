@@ -1,5 +1,7 @@
 package cortex
 
+import "encoding/json"
+
 // DatadogConfiguration is one Datadog integration configuration. The API never returns the full API key or
 // application key, only their last four characters.
 type DatadogConfiguration struct {
@@ -32,6 +34,20 @@ type UpdateDatadogConfigurationRequest struct {
 	Environments []string `json:"environments"`
 }
 
-func (c *HttpClient) DatadogConfigurations() *MultiInstanceClient[CreateDatadogConfigurationRequest, UpdateDatadogConfigurationRequest, DatadogConfiguration] {
-	return &MultiInstanceClient[CreateDatadogConfigurationRequest, UpdateDatadogConfigurationRequest, DatadogConfiguration]{client: c, domain: "datadog", name: "datadog"}
+// MarshalJSON sends an empty list for nil environments, because the API rejects null.
+func (r CreateDatadogConfigurationRequest) MarshalJSON() ([]byte, error) {
+	type plain CreateDatadogConfigurationRequest
+	if r.Environments == nil {
+		r.Environments = []string{}
+	}
+	return json.Marshal(plain(r))
+}
+
+// MarshalJSON sends an empty list for nil environments, because the API rejects null.
+func (r UpdateDatadogConfigurationRequest) MarshalJSON() ([]byte, error) {
+	type plain UpdateDatadogConfigurationRequest
+	if r.Environments == nil {
+		r.Environments = []string{}
+	}
+	return json.Marshal(plain(r))
 }

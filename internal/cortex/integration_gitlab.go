@@ -1,5 +1,7 @@
 package cortex
 
+import "encoding/json"
+
 type CreateGitlabConfigurationRequest struct {
 	Alias                string   `json:"alias"`
 	IsDefault            bool     `json:"isDefault"`
@@ -30,6 +32,20 @@ type GitlabConfiguration struct {
 
 func (c GitlabConfiguration) GetAlias() string { return c.Alias }
 
-func (c *HttpClient) GitlabConfigurations() *MultiInstanceClient[CreateGitlabConfigurationRequest, UpdateGitlabConfigurationRequest, GitlabConfiguration] {
-	return &MultiInstanceClient[CreateGitlabConfigurationRequest, UpdateGitlabConfigurationRequest, GitlabConfiguration]{client: c, domain: "gitlab", name: "gitlab"}
+// MarshalJSON sends an empty list for nil group names, because the API rejects null.
+func (r CreateGitlabConfigurationRequest) MarshalJSON() ([]byte, error) {
+	type plain CreateGitlabConfigurationRequest
+	if r.GroupNames == nil {
+		r.GroupNames = []string{}
+	}
+	return json.Marshal(plain(r))
+}
+
+// MarshalJSON sends an empty list for nil group names, because the API rejects null.
+func (r UpdateGitlabConfigurationRequest) MarshalJSON() ([]byte, error) {
+	type plain UpdateGitlabConfigurationRequest
+	if r.GroupNames == nil {
+		r.GroupNames = []string{}
+	}
+	return json.Marshal(plain(r))
 }
