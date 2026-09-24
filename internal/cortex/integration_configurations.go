@@ -145,15 +145,15 @@ func (c *SingleInstanceClient[C, R]) Get(ctx context.Context) (R, error) {
 
 // Create calls POST <base>/configuration. The API rejects it when a configuration exists.
 func (c *SingleInstanceClient[C, R]) Create(ctx context.Context, req C) (R, error) {
-	return c.write(ctx, false, req)
+	return c.write(false, req)
 }
 
 // Replace calls PUT <base>/configuration with the full configuration. The API creates one when none exists.
 func (c *SingleInstanceClient[C, R]) Replace(ctx context.Context, req C) (R, error) {
-	return c.write(ctx, true, req)
+	return c.write(true, req)
 }
 
-func (c *SingleInstanceClient[C, R]) write(ctx context.Context, replace bool, req C) (R, error) {
+func (c *SingleInstanceClient[C, R]) write(replace bool, req C) (R, error) {
 	response := configurationsResponse[R]{}
 	apiError := ApiError{}
 	var zero R
