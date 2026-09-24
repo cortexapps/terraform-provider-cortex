@@ -340,6 +340,9 @@ func (r *IntegrationConfigurationResource) Read(ctx context.Context, req resourc
 			return
 		}
 		st = found
+	default:
+		addUnsupportedEngineError(&resp.Diagnostics, def)
+		return
 	}
 
 	applyState(ctx, &state, def, st, &resp.Diagnostics)
@@ -389,6 +392,9 @@ func (r *IntegrationConfigurationResource) Create(ctx context.Context, req resou
 				st = updated
 			}
 		}
+	default:
+		addUnsupportedEngineError(&resp.Diagnostics, def)
+		return
 	}
 
 	// Save state also after an error, so Terraform keeps track of the configuration.
@@ -426,6 +432,9 @@ func (r *IntegrationConfigurationResource) Update(ctx context.Context, req resou
 			in.IsDefault = live.IsDefault
 		}
 		st, err = d.Update(ctx, r.client, state.Alias.ValueString(), in)
+	default:
+		addUnsupportedEngineError(&resp.Diagnostics, def)
+		return
 	}
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update %s configuration, got error: %s", def.Name(), err))
@@ -448,6 +457,7 @@ func (r *IntegrationConfigurationResource) Delete(ctx context.Context, req resou
 	case multiInstanceDefinition:
 		err = d.Delete(ctx, r.client, state.Alias.ValueString())
 	default:
+		addUnsupportedEngineError(&resp.Diagnostics, def)
 		return
 	}
 	if err != nil && !errors.Is(err, cortex.ApiErrorNotFound) {
@@ -493,6 +503,15 @@ func applyState(ctx context.Context, m *integrationConfigurationModel, def integ
 	value, d := types.MapValueFrom(ctx, types.StringType, lastFours)
 	diags.Append(d...)
 	m.CredentialsLastFour = value
+}
+
+// addUnsupportedEngineError reports a definition that no engine handles, instead of writing an empty state.
+func addUnsupportedEngineError(diags *diag.Diagnostics, def integrationDefinition) {
+	name := "unknown"
+	if def != nil {
+		name = def.Name()
+	}
+	diags.AddError("Unsupported integration", fmt.Sprintf("The provider has no engine for integration %q. Please report this issue to the provider developers.", name))
 }
 
 func noDefault(states []configurationState) bool {

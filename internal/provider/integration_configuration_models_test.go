@@ -93,3 +93,15 @@ func TestStringHelpers(t *testing.T) {
 	assert.True(t, optionalString("").IsNull())
 	assert.Equal(t, "x", optionalString("x").ValueString())
 }
+
+// Every registered definition needs an engine and a settings field in the resource model, or the resource cannot
+// handle it.
+func TestIntegrationDefinitionsAreWired(t *testing.T) {
+	for _, d := range integrationDefinitions {
+		t.Run(d.Name(), func(t *testing.T) {
+			assert.True(t, isMultiInstance(d), "no engine handles %s", d.Name())
+			m := integrationConfigurationModel{}
+			assert.NotNil(t, m.settings(d.Name()), "integrationConfigurationModel has no settings field for %s", d.Name())
+		})
+	}
+}
