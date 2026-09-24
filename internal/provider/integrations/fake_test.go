@@ -16,7 +16,6 @@ import (
 type fakeIntegrationSpec struct {
 	multi          bool              // several configurations per tenant, identified by alias
 	masks          map[string]string // secret request field -> response field with its last four characters
-	hidden         []string          // request fields the API never returns
 	ignoreOnUpdate []string          // request fields the API ignores on update
 	// ignoreOnUpdateForType lists more fields the API ignores on update, by the stored "type".
 	ignoreOnUpdateForType map[string][]string
@@ -31,7 +30,7 @@ var fakeSpecs = map[string]fakeIntegrationSpec{
 	"gitlab":     {multi: true, masks: map[string]string{"personalAccessToken": "lastFour"}, ignoreOnUpdate: []string{"host"}},
 	"incidentio": {multi: true, masks: map[string]string{"apiKey": "lastFour"}},
 	"jira": {multi: true, masks: map[string]string{"apiToken": "lastFour", "password": "lastFour"},
-		hidden: []string{"cloudId"}, ignoreOnUpdate: []string{"host", "frontendHost", "cloudId"},
+		ignoreOnUpdate:        []string{"host", "frontendHost", "cloudId"},
 		ignoreOnUpdateForType: map[string][]string{"CLOUD_SCOPED": {"email"}},
 		defaults:              map[string]string{"frontendHost": "host"}},
 }
@@ -180,13 +179,12 @@ func (f *fakeCortexApi) serveSingle(w http.ResponseWriter, r *http.Request, seg,
 	}
 }
 
-// render returns the configuration as the API does: no secrets, no hidden fields, and the last four characters of each
-// secret.
+// render returns the configuration as the API does: no secrets, and the last four characters of each secret.
 func (f *fakeCortexApi) render(seg string, cfg map[string]any) map[string]any {
 	spec := fakeSpecs[seg]
 	out := map[string]any{}
 	for k, v := range cfg {
-		if _, secret := spec.masks[k]; secret || slices.Contains(spec.hidden, k) || v == nil {
+		if _, secret := spec.masks[k]; secret || v == nil {
 			continue
 		}
 		out[k] = v
