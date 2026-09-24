@@ -15,7 +15,7 @@ import (
 )
 
 // These tests run against the shared tenant with fake credentials. Cortex does not check credentials when it saves
-// a configuration.
+// a configuration. Hosts use the reserved .invalid domain, so background jobs cannot reach a real server.
 
 const accResourceName = "cortex_integration_configuration.test"
 
@@ -52,6 +52,30 @@ resource "cortex_integration_configuration" "test" {
 		body("a1b2", `{ region = "US1", environments = ["tf-acc"] }`),
 		body("e5f6", `{ region = "EU1", custom_subdomain = "tf-acc", environments = ["tf-acc", "tf-acc-2"] }`),
 		plancheck.ExpectResourceAction(accResourceName, plancheck.ResourceActionUpdate))
+}
+
+func TestAccIntegrationConfigurationGitlab(t *testing.T) {
+	body := func(groups string) string {
+		return fmt.Sprintf(`
+resource "cortex_integration_configuration" "test" {
+  alias       = "tf-acc-test-gitlab"
+  credentials = { token = { value = "tf-acc-fake-token-a1b2" } }
+  gitlab      = { host = "https://gitlab.invalid", group_names = %s }
+}`, groups)
+	}
+	accIntegrationTest(t, "gitlab/tf-acc-test-gitlab", body(`[]`), body(`["tf-acc"]`))
+}
+
+func TestAccIntegrationConfigurationIncidentIo(t *testing.T) {
+	body := func(key string) string {
+		return fmt.Sprintf(`
+resource "cortex_integration_configuration" "test" {
+  alias       = "tf-acc-test-incident-io"
+  credentials = { token = { value = %q } }
+  incident_io = {}
+}`, key)
+	}
+	accIntegrationTest(t, "incident_io/tf-acc-test-incident-io", body("tf-acc-fake-key-a1b2"), body("tf-acc-fake-key-c3d4"))
 }
 
 // A tenant has one PagerDuty configuration. The test skips when the tenant already has one, so it never touches a
