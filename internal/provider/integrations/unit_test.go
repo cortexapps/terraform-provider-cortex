@@ -835,10 +835,11 @@ func TestUnitIntegrationConfiguration_JiraCloudScopedKeepsCloudId(t *testing.T) 
 	})
 }
 
-// A tenant configuration of a type the provider does not support must not break Read of other configurations.
-func TestUnitIntegrationConfiguration_JiraSkipsUnsupportedTypes(t *testing.T) {
+// A configuration of a type the provider does not support must not break Read of other configurations. Today the
+// API fails the whole list for OAuth configurations instead; this covers types that a later API version returns.
+func TestUnitIntegrationConfiguration_JiraSkipsUnknownTypes(t *testing.T) {
 	fake, url := newFakeCortexApi(t)
-	fake.seed("jira", map[string]any{"alias": "oauth", "isDefault": true, "type": "ON_PREM_OAUTH", "host": "https://jira.invalid"})
+	fake.seed("jira", map[string]any{"alias": "other", "isDefault": true, "type": "SOME_FUTURE_TYPE", "host": "https://jira.invalid"})
 
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
@@ -937,6 +938,26 @@ func TestUnitIntegrationConfiguration_JiraCloudScopedImportKeepsConfiguration(t 
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(unitResourceName, "jira.cloud_scoped.cloud_id", "cloud-123"),
 					checkCreates(fake, "jira", 0),
+				),
+			},
+		},
+	})
+}
+
+// A host change replaces the configuration. With frontend_host not set, the new configuration must get the new host.
+func TestUnitIntegrationConfiguration_JiraHostChangeResetsFrontendHost(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: jiraUnit(url, "bot", `{ on_prem = { host = "https://a.invalid" } }`)},
+			{
+				Config: jiraUnit(url, "bot", `{ on_prem = { host = "https://b.invalid" } }`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "jira", "jira", "frontendHost", "https://b.invalid"),
+					resource.TestCheckResourceAttr(unitResourceName, "jira.on_prem.frontend_host", "https://b.invalid"),
+					checkCreates(fake, "jira", 2),
 				),
 			},
 		},

@@ -66,7 +66,9 @@ func (jiraDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 		MarkdownDescription: "Jira settings. Set exactly one variant. Use `credentials.basic`: for the cloud variants, " +
 			"`username` is the email and `password` is the API token; for `on_prem`, they are the username and password. " +
 			"The Cortex API cannot change the variant, `host`, `frontend_host`, `cloud_id`, or the `cloud_scoped` email " +
-			"(`credentials.basic.username`) in place, so a change to one of them replaces the configuration.",
+			"(`credentials.basic.username`) in place, so a change to one of them replaces the configuration. When the tenant " +
+			"has a Jira OAuth configuration, the Cortex API cannot list Jira configurations, so this resource cannot manage " +
+			"Jira in that tenant.",
 		Optional: true,
 		Attributes: map[string]schema.Attribute{
 			"cloud": schema.SingleNestedAttribute{
@@ -161,8 +163,9 @@ func jiraVariant(s jiraSettingsModel) string {
 	return ""
 }
 
-// List skips configurations of types the provider does not support, for example OAuth, so that they do not break
-// Read of other configurations.
+// List skips configurations of types the provider does not support, so that they do not break Read of other
+// configurations. Note: today the API fails the whole list when a tenant has a Jira OAuth configuration, so Jira
+// configurations cannot be read in such a tenant; this skip covers types that a later API version returns.
 func (d jiraDefinition) List(ctx context.Context, c *cortex.HttpClient, prior types.Object) ([]configurationState, error) {
 	configurations, err := api.Jira(c).List(ctx)
 	if err != nil {
