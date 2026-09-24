@@ -70,12 +70,13 @@ func (c *MultiInstanceClient[C, U, R]) Get(ctx context.Context, alias string) (R
 	configurations, err := c.List(ctx)
 	if err != nil {
 		var zero R
-		return zero, err
+		return zero, fmt.Errorf("failed getting %s configuration %s: %w", c.name, alias, err)
 	}
 	return findByAlias(c.name, configurations, alias)
 }
 
-// Create calls POST <base>/configuration and returns the new configuration, found by alias in the response.
+// Create calls POST <base>/configuration and returns the new configuration, found by alias in the response. alias
+// must equal the alias in req.
 func (c *MultiInstanceClient[C, U, R]) Create(ctx context.Context, alias string, req C) (R, error) {
 	response := configurationsResponse[R]{}
 	apiError := ApiError{}
@@ -91,7 +92,8 @@ func (c *MultiInstanceClient[C, U, R]) Create(ctx context.Context, alias string,
 	return findByAlias(c.name, response.Configurations, alias)
 }
 
-// Update calls PUT <base>/configuration/:currentAlias. The body can rename the configuration to newAlias.
+// Update calls PUT <base>/configuration/:currentAlias. The body can rename the configuration: newAlias must equal
+// the alias in req, and the result is found by it.
 func (c *MultiInstanceClient[C, U, R]) Update(ctx context.Context, currentAlias string, newAlias string, req U) (R, error) {
 	response := configurationsResponse[R]{}
 	apiError := ApiError{}

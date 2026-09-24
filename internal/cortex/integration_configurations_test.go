@@ -25,16 +25,9 @@ func TestSingleInstanceGet(t *testing.T) {
 }
 
 func TestSingleInstanceGetNotFound(t *testing.T) {
-	mux := http.NewServeMux()
-	mux.HandleFunc(cortex.Route("pagerduty", "default-configuration"), func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, `{"message":"No configuration"}`, http.StatusNotFound)
-	})
-	server := httptest.NewServer(mux)
-	defer server.Close()
-	c, err := cortex.NewClient(cortex.WithURL(server.URL), cortex.WithToken("test"), cortex.WithVersion("test"))
-	assert.Nil(t, err)
+	c := errorClient(t, http.StatusNotFound, `{"message":"No configuration"}`)
 
-	_, err = c.PagerDutyConfiguration().Get(context.Background())
+	_, err := c.PagerDutyConfiguration().Get(context.Background())
 	assert.ErrorIs(t, err, cortex.ApiErrorNotFound)
 }
 
@@ -96,15 +89,7 @@ func TestSingleInstanceDelete(t *testing.T) {
 }
 
 func TestSingleInstanceGetDecodeErrorReturnsZeroValue(t *testing.T) {
-	mux := http.NewServeMux()
-	mux.HandleFunc(cortex.Route("pagerduty", "default-configuration"), func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"lastFour":"a1b2","isTokenReadonly":"not-a-bool"}`))
-	})
-	server := httptest.NewServer(mux)
-	defer server.Close()
-	c, err := cortex.NewClient(cortex.WithURL(server.URL), cortex.WithToken("test"), cortex.WithVersion("test"))
-	assert.Nil(t, err)
+	c := errorClient(t, http.StatusOK, `{"lastFour":"a1b2","isTokenReadonly":"not-a-bool"}`)
 
 	res, err := c.PagerDutyConfiguration().Get(context.Background())
 	assert.NotNil(t, err)
