@@ -52,15 +52,15 @@ resource "cortex_integration_configuration" "pagerduty" {
 
 ### Optional
 
-- `alias` (String) Unique alias of the configuration. Required for integrations that support several configurations. Not allowed for PagerDuty, which has one configuration per tenant. A change renames the configuration in place.
+- `alias` (String) Unique alias of the configuration. Required for integrations that support several configurations. Not allowed for integrations with one configuration per tenant, such as PagerDuty. A change renames the configuration in place.
 - `datadog` (Attributes) Datadog settings. Use `credentials.key_pair`: `key` is the Datadog API key and `secret` is the application key. A change of the keys, `region`, or `custom_subdomain` updates the configuration in place. The Cortex API cannot remove a custom subdomain, so removing `custom_subdomain` replaces the configuration. (see [below for nested schema](#nestedatt--datadog))
-- `is_default` (Boolean) Whether this is the default configuration of its integration. Not allowed for PagerDuty. When not set, Terraform keeps the value from Cortex. Cortex makes the first configuration the default, and does not allow setting the current default to `false`: set `is_default = true` on another configuration and remove `is_default` from this one, apply, and then set it to `false` if necessary. Set `is_default = true` on one configuration per integration only.
+- `is_default` (Boolean) Whether this is the default configuration of its integration. Not allowed for integrations with one configuration per tenant. When not set, Terraform keeps the value from Cortex. Cortex makes the first configuration the default, and does not allow setting the current default to `false`: set `is_default = true` on another configuration and remove `is_default` from this one, apply, and then set it to `false` if necessary. Set `is_default = true` on one configuration per integration only.
 - `pagerduty` (Attributes) PagerDuty settings. Use `credentials.token`: `value` is the PagerDuty API token. A tenant has one PagerDuty configuration, so `alias` and `is_default` are not allowed. When Cortex already has a PagerDuty configuration, import it with ID `pagerduty`. (see [below for nested schema](#nestedatt--pagerduty))
 
 ### Read-Only
 
 - `credentials_last_four` (Map of String) Last four characters of each secret credential part that Cortex stores, keyed by part name (`value`, `password`, `key`, `secret`). Terraform uses them to detect a secret changed outside Terraform.
-- `id` (String) `<integration>/<alias>`, or `<integration>` for PagerDuty. Same as the import ID.
+- `id` (String) `<integration>/<alias>`, or `<integration>` for integrations with one configuration per tenant. Same as the import ID.
 - `integration` (String) Name of the integration, from the settings block that is set.
 
 <a id="nestedatt--credentials"></a>

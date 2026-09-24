@@ -48,14 +48,14 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 	attributes := map[string]schema.Attribute{
 		"alias": schema.StringAttribute{
 			MarkdownDescription: "Unique alias of the configuration. Required for integrations that support several " +
-				"configurations. Not allowed for PagerDuty, which has one configuration per tenant. A change renames the " +
-				"configuration in place.",
+				"configurations. Not allowed for integrations with one configuration per tenant, such as PagerDuty. A " +
+				"change renames the configuration in place.",
 			Optional:   true,
 			Validators: []validator.String{stringvalidator.LengthAtLeast(1)},
 		},
 		"is_default": schema.BoolAttribute{
-			MarkdownDescription: "Whether this is the default configuration of its integration. Not allowed for PagerDuty. " +
-				"When not set, Terraform " +
+			MarkdownDescription: "Whether this is the default configuration of its integration. Not allowed for " +
+				"integrations with one configuration per tenant. When not set, Terraform " +
 				"keeps the value from Cortex. Cortex makes the first configuration the default, and does not allow " +
 				"setting the current default to `false`: set `is_default = true` on another configuration and remove " +
 				"`is_default` from this one, apply, and then set it to `false` if necessary. Set `is_default = true` on " +
@@ -74,8 +74,9 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 			Computed:    true,
 		},
 		"id": schema.StringAttribute{
-			MarkdownDescription: "`<integration>/<alias>`, or `<integration>` for PagerDuty. Same as the import ID.",
-			Computed:            true,
+			MarkdownDescription: "`<integration>/<alias>`, or `<integration>` for integrations with one configuration per " +
+				"tenant. Same as the import ID.",
+			Computed: true,
 		},
 		"integration": schema.StringAttribute{
 			MarkdownDescription: "Name of the integration, from the settings block that is set.",
