@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -103,5 +104,32 @@ func TestIntegrationDefinitionsAreWired(t *testing.T) {
 			m := integrationConfigurationModel{}
 			assert.NotNil(t, m.settings(d.Name()), "integrationConfigurationModel has no settings field for %s", d.Name())
 		})
+	}
+}
+
+// Every credential kind needs a model field and a part() case for each of its parts, or drift detection silently
+// skips the missing part.
+func TestCredentialKindsAreWired(t *testing.T) {
+	models := map[credentialKind]*credentialsModel{
+		credentialToken:   {Token: &tokenCredentialModel{}},
+		credentialBasic:   {Basic: &basicCredentialModel{}},
+		credentialKeyPair: {KeyPair: &keyPairCredentialModel{}},
+	}
+	assert.Len(t, models, len(credentialParts), "every kind in credentialParts needs a model here")
+	for kind, parts := range credentialParts {
+		c := models[kind]
+		require.NotNil(t, c, "no model for kind %s", kind)
+		assert.Equal(t, kind, c.kind())
+		for _, p := range parts {
+			assert.NotNil(t, c.part(p.name), "kind %s has no part() case for %s", kind, p.name)
+		}
+		schemaKind, ok := credentialsAttribute().Attributes[string(kind)].(schema.SingleNestedAttribute)
+		require.True(t, ok, "credentials schema has no block for %s", kind)
+		assert.Len(t, schemaKind.Attributes, len(parts), "credentials.%s schema and credentialParts differ", kind)
+		for _, p := range parts {
+			attribute, ok := schemaKind.Attributes[p.name].(schema.StringAttribute)
+			require.True(t, ok, "credentials.%s schema has no %s", kind, p.name)
+			assert.Equal(t, p.secret, attribute.Sensitive, "credentials.%s.%s sensitivity differs from credentialParts", kind, p.name)
+		}
 	}
 }
