@@ -32,6 +32,7 @@ type configurationState struct {
 	Alias     string            // multi-instance only
 	IsDefault bool              // multi-instance only
 	Settings  types.Object      // the settings block
+	Readable  map[string]string // credential parts the API returns, for example "username"
 	LastFour  map[string]string // secret credential part -> last four characters
 }
 
@@ -75,6 +76,7 @@ var integrationDefinitions = []integrationDefinition{
 	datadogDefinition{},
 	gitlabDefinition{},
 	incidentIoDefinition{},
+	jiraDefinition{},
 	pagerDutyDefinition{},
 }
 
