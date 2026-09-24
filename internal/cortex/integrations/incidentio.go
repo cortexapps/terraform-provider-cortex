@@ -1,4 +1,6 @@
-package cortex
+package integrations
+
+import "github.com/cortexapps/terraform-provider-cortex/internal/cortex"
 
 type CreateIncidentIoConfigurationRequest struct {
 	Alias     string `json:"alias"`
@@ -20,3 +22,8 @@ type IncidentIoConfiguration struct {
 }
 
 func (c IncidentIoConfiguration) GetAlias() string { return c.Alias }
+
+// IncidentIo returns the client for the incident.io configurations.
+func IncidentIo(c *cortex.HttpClient) MultiInstanceClientInterface[CreateIncidentIoConfigurationRequest, UpdateIncidentIoConfigurationRequest, IncidentIoConfiguration] {
+	return &MultiInstanceClient[CreateIncidentIoConfigurationRequest, UpdateIncidentIoConfigurationRequest, IncidentIoConfiguration]{client: c, base: "/api/v1/incidentio/", name: "incident.io"}
+}

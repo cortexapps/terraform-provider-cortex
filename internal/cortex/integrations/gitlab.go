@@ -1,6 +1,10 @@
-package cortex
+package integrations
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
+)
 
 type CreateGitlabConfigurationRequest struct {
 	Alias                string   `json:"alias"`
@@ -48,4 +52,9 @@ func (r UpdateGitlabConfigurationRequest) MarshalJSON() ([]byte, error) {
 		r.GroupNames = []string{}
 	}
 	return json.Marshal(plain(r))
+}
+
+// Gitlab returns the client for the GitLab configurations.
+func Gitlab(c *cortex.HttpClient) MultiInstanceClientInterface[CreateGitlabConfigurationRequest, UpdateGitlabConfigurationRequest, GitlabConfiguration] {
+	return &MultiInstanceClient[CreateGitlabConfigurationRequest, UpdateGitlabConfigurationRequest, GitlabConfiguration]{client: c, base: "/api/v1/gitlab/", name: "gitlab"}
 }

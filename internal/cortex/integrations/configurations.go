@@ -1,9 +1,11 @@
-package cortex
+package integrations
 
 import (
 	"context"
 	"fmt"
 	"net/url"
+
+	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
 )
 
 /***********************************************************************************************************************
@@ -44,21 +46,21 @@ type configurationsResponse[R any] struct {
 
 // MultiInstanceClient calls the configuration routes that every multi-instance integration shares.
 type MultiInstanceClient[C any, U any, R MultiInstanceConfiguration] struct {
-	client *HttpClient
-	domain string // key in BaseUris
+	client *cortex.HttpClient
+	base   string // route prefix, such as /api/v1/datadog/
 	name   string // name in error messages
 }
 
 // List calls GET <base>/configurations.
 func (c *MultiInstanceClient[C, U, R]) List(ctx context.Context) ([]R, error) {
 	response := configurationsResponse[R]{}
-	apiError := ApiError{}
+	apiError := cortex.ApiError{}
 
-	body, err := c.client.Client().Get(Route(c.domain, "configurations")).Receive(&response, &apiError)
+	body, err := c.client.Client().Get(c.base+"configurations").Receive(&response, &apiError)
 	if err != nil {
 		return nil, fmt.Errorf("failed listing %s configurations: %+v", c.name, err)
 	}
-	if err := c.client.handleResponseStatus(body, &apiError); err != nil {
+	if err := c.client.HandleResponseStatus(body, &apiError); err != nil {
 		return nil, fmt.Errorf("failed listing %s configurations: %w", c.name, err)
 	}
 	return response.Configurations, nil
@@ -79,14 +81,14 @@ func (c *MultiInstanceClient[C, U, R]) Get(ctx context.Context, alias string) (R
 // must equal the alias in req.
 func (c *MultiInstanceClient[C, U, R]) Create(ctx context.Context, alias string, req C) (R, error) {
 	response := configurationsResponse[R]{}
-	apiError := ApiError{}
+	apiError := cortex.ApiError{}
 	var zero R
 
-	body, err := c.client.Client().Post(Route(c.domain, "configuration")).BodyJSON(&req).Receive(&response, &apiError)
+	body, err := c.client.Client().Post(c.base+"configuration").BodyJSON(&req).Receive(&response, &apiError)
 	if err != nil {
 		return zero, fmt.Errorf("failed creating %s configuration: %+v", c.name, err)
 	}
-	if err := c.client.handleResponseStatus(body, &apiError); err != nil {
+	if err := c.client.HandleResponseStatus(body, &apiError); err != nil {
 		return zero, fmt.Errorf("failed creating %s configuration: %w", c.name, err)
 	}
 	return findByAlias(c.name, response.Configurations, alias)
@@ -96,14 +98,14 @@ func (c *MultiInstanceClient[C, U, R]) Create(ctx context.Context, alias string,
 // the alias in req, and the result is found by it.
 func (c *MultiInstanceClient[C, U, R]) Update(ctx context.Context, currentAlias string, newAlias string, req U) (R, error) {
 	response := configurationsResponse[R]{}
-	apiError := ApiError{}
+	apiError := cortex.ApiError{}
 	var zero R
 
-	body, err := c.client.Client().Put(Route(c.domain, "configuration/"+url.PathEscape(currentAlias))).BodyJSON(&req).Receive(&response, &apiError)
+	body, err := c.client.Client().Put(c.base+"configuration/"+url.PathEscape(currentAlias)).BodyJSON(&req).Receive(&response, &apiError)
 	if err != nil {
 		return zero, fmt.Errorf("failed updating %s configuration: %+v", c.name, err)
 	}
-	if err := c.client.handleResponseStatus(body, &apiError); err != nil {
+	if err := c.client.HandleResponseStatus(body, &apiError); err != nil {
 		return zero, fmt.Errorf("failed updating %s configuration: %w", c.name, err)
 	}
 	return findByAlias(c.name, response.Configurations, newAlias)
@@ -111,13 +113,13 @@ func (c *MultiInstanceClient[C, U, R]) Update(ctx context.Context, currentAlias 
 
 // Delete calls DELETE <base>/configuration/:alias.
 func (c *MultiInstanceClient[C, U, R]) Delete(ctx context.Context, alias string) error {
-	apiError := ApiError{}
+	apiError := cortex.ApiError{}
 
-	body, err := c.client.Client().Delete(Route(c.domain, "configuration/"+url.PathEscape(alias))).Receive(nil, &apiError)
+	body, err := c.client.Client().Delete(c.base+"configuration/"+url.PathEscape(alias)).Receive(nil, &apiError)
 	if err != nil {
 		return fmt.Errorf("failed deleting %s configuration: %+v", c.name, err)
 	}
-	if err := c.client.handleResponseStatus(body, &apiError); err != nil {
+	if err := c.client.HandleResponseStatus(body, &apiError); err != nil {
 		return fmt.Errorf("failed deleting %s configuration: %w", c.name, err)
 	}
 	return nil
@@ -130,7 +132,7 @@ func findByAlias[R MultiInstanceConfiguration](name string, configurations []R, 
 		}
 	}
 	var zero R
-	return zero, fmt.Errorf("%s configuration %s: %w", name, alias, ApiErrorNotFound)
+	return zero, fmt.Errorf("%s configuration %s: %w", name, alias, cortex.ApiErrorNotFound)
 }
 
 /***********************************************************************************************************************
@@ -140,23 +142,23 @@ func findByAlias[R MultiInstanceConfiguration](name string, configurations []R, 
 // SingleInstanceClient calls the configuration routes that every single-instance integration shares. A tenant has at
 // most one configuration, so no route takes an alias.
 type SingleInstanceClient[C any, R any] struct {
-	client *HttpClient
-	domain string
+	client *cortex.HttpClient
+	base   string
 	name   string
 }
 
 // Get calls GET <base>/default-configuration. The API returns 404 when no configuration exists.
 func (c *SingleInstanceClient[C, R]) Get(ctx context.Context) (R, error) {
 	var response R
-	apiError := ApiError{}
+	apiError := cortex.ApiError{}
 
 	var zero R
 
-	body, err := c.client.Client().Get(Route(c.domain, "default-configuration")).Receive(&response, &apiError)
+	body, err := c.client.Client().Get(c.base+"default-configuration").Receive(&response, &apiError)
 	if err != nil {
 		return zero, fmt.Errorf("failed getting %s configuration: %+v", c.name, err)
 	}
-	if err := c.client.handleResponseStatus(body, &apiError); err != nil {
+	if err := c.client.HandleResponseStatus(body, &apiError); err != nil {
 		return zero, fmt.Errorf("failed getting %s configuration: %w", c.name, err)
 	}
 	return response, nil
@@ -174,18 +176,18 @@ func (c *SingleInstanceClient[C, R]) Replace(ctx context.Context, req C) (R, err
 
 func (c *SingleInstanceClient[C, R]) write(replace bool, req C) (R, error) {
 	response := configurationsResponse[R]{}
-	apiError := ApiError{}
+	apiError := cortex.ApiError{}
 	var zero R
 
-	request, verb := c.client.Client().Post(Route(c.domain, "configuration")), "creating"
+	request, verb := c.client.Client().Post(c.base+"configuration"), "creating"
 	if replace {
-		request, verb = c.client.Client().Put(Route(c.domain, "configuration")), "replacing"
+		request, verb = c.client.Client().Put(c.base+"configuration"), "replacing"
 	}
 	body, err := request.BodyJSON(&req).Receive(&response, &apiError)
 	if err != nil {
 		return zero, fmt.Errorf("failed %s %s configuration: %+v", verb, c.name, err)
 	}
-	if err := c.client.handleResponseStatus(body, &apiError); err != nil {
+	if err := c.client.HandleResponseStatus(body, &apiError); err != nil {
 		return zero, fmt.Errorf("failed %s %s configuration: %w", verb, c.name, err)
 	}
 	if len(response.Configurations) == 0 {
@@ -196,13 +198,13 @@ func (c *SingleInstanceClient[C, R]) write(replace bool, req C) (R, error) {
 
 // Delete calls DELETE <base>/configurations. The API succeeds also when no configuration exists.
 func (c *SingleInstanceClient[C, R]) Delete(ctx context.Context) error {
-	apiError := ApiError{}
+	apiError := cortex.ApiError{}
 
-	body, err := c.client.Client().Delete(Route(c.domain, "configurations")).Receive(nil, &apiError)
+	body, err := c.client.Client().Delete(c.base+"configurations").Receive(nil, &apiError)
 	if err != nil {
 		return fmt.Errorf("failed deleting %s configuration: %+v", c.name, err)
 	}
-	if err := c.client.handleResponseStatus(body, &apiError); err != nil {
+	if err := c.client.HandleResponseStatus(body, &apiError); err != nil {
 		return fmt.Errorf("failed deleting %s configuration: %w", c.name, err)
 	}
 	return nil

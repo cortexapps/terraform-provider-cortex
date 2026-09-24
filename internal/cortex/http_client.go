@@ -25,11 +25,6 @@ var BaseUris = map[string]string{
 	"catalog_entities":     "/api/v1/catalog/",
 	"open_api":             "/api/v1/open-api",
 	"resource_definitions": "/api/v1/catalog/definitions/",
-	"datadog":              "/api/v1/datadog/",
-	"jira":                 "/api/v1/jira/",
-	"gitlab":               "/api/v1/gitlab/",
-	"incident_io":          "/api/v1/incidentio/",
-	"pagerduty":            "/api/v1/pagerduty/",
 }
 
 func Route(domain string, path string) string {
@@ -132,6 +127,11 @@ func (c *HttpClient) handleResponseStatus(response *http.Response, apiError *Api
 	}
 }
 
+// HandleResponseStatus maps the status of a response to an error. Clients in other packages use it.
+func (c *HttpClient) HandleResponseStatus(response *http.Response, apiError *ApiError) error {
+	return c.handleResponseStatus(response, apiError)
+}
+
 func (c *HttpClient) Ping(ctx context.Context) error {
 	apiError := new(ApiError)
 	response, err := c.client.Get("/").Receive(nil, apiError)
@@ -177,24 +177,4 @@ func (c *HttpClient) Scorecards() ScorecardsClientInterface {
 
 func (c *HttpClient) ResourceDefinitions() ResourceDefinitionsClientInterface {
 	return &ResourceDefinitionsClient{client: c}
-}
-
-func (c *HttpClient) DatadogConfigurations() MultiInstanceClientInterface[CreateDatadogConfigurationRequest, UpdateDatadogConfigurationRequest, DatadogConfiguration] {
-	return &MultiInstanceClient[CreateDatadogConfigurationRequest, UpdateDatadogConfigurationRequest, DatadogConfiguration]{client: c, domain: "datadog", name: "datadog"}
-}
-
-func (c *HttpClient) JiraConfigurations() MultiInstanceClientInterface[JiraConfigurationRequest, JiraConfigurationRequest, JiraConfiguration] {
-	return &MultiInstanceClient[JiraConfigurationRequest, JiraConfigurationRequest, JiraConfiguration]{client: c, domain: "jira", name: "jira"}
-}
-
-func (c *HttpClient) GitlabConfigurations() MultiInstanceClientInterface[CreateGitlabConfigurationRequest, UpdateGitlabConfigurationRequest, GitlabConfiguration] {
-	return &MultiInstanceClient[CreateGitlabConfigurationRequest, UpdateGitlabConfigurationRequest, GitlabConfiguration]{client: c, domain: "gitlab", name: "gitlab"}
-}
-
-func (c *HttpClient) IncidentIoConfigurations() MultiInstanceClientInterface[CreateIncidentIoConfigurationRequest, UpdateIncidentIoConfigurationRequest, IncidentIoConfiguration] {
-	return &MultiInstanceClient[CreateIncidentIoConfigurationRequest, UpdateIncidentIoConfigurationRequest, IncidentIoConfiguration]{client: c, domain: "incident_io", name: "incident.io"}
-}
-
-func (c *HttpClient) PagerDutyConfiguration() SingleInstanceClientInterface[PagerDutyConfigurationRequest, PagerDutyConfiguration] {
-	return &SingleInstanceClient[PagerDutyConfigurationRequest, PagerDutyConfiguration]{client: c, domain: "pagerduty", name: "pagerduty"}
 }

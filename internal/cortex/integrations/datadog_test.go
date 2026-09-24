@@ -1,19 +1,20 @@
-package cortex_test
+package integrations_test
 
 import (
 	"context"
 	"testing"
 
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
+	"github.com/cortexapps/terraform-provider-cortex/internal/cortex/integrations"
 	"github.com/stretchr/testify/assert"
 )
 
 // datadogConfigurationsResponse is the wrapper of list, create, and update responses.
 type datadogConfigurationsResponse struct {
-	Configurations []cortex.DatadogConfiguration `json:"configurations"`
+	Configurations []integrations.DatadogConfiguration `json:"configurations"`
 }
 
-var testDatadogConfiguration = cortex.DatadogConfiguration{
+var testDatadogConfiguration = integrations.DatadogConfiguration{
 	Alias:           "test-datadog",
 	IsDefault:       true,
 	Environments:    []string{"prod", "staging"},
@@ -24,7 +25,7 @@ var testDatadogConfiguration = cortex.DatadogConfiguration{
 }
 
 var testDatadogConfigurationsResponse = datadogConfigurationsResponse{
-	Configurations: []cortex.DatadogConfiguration{
+	Configurations: []integrations.DatadogConfiguration{
 		{Alias: "other-datadog", Region: "EU1", Environments: []string{}, LastFourApiKey: "aaaa", LastFourAppKey: "bbbb"},
 		testDatadogConfiguration,
 	},
@@ -32,14 +33,14 @@ var testDatadogConfigurationsResponse = datadogConfigurationsResponse{
 
 func TestListDatadogConfigurations(t *testing.T) {
 	c, teardown, err := setupClient(
-		cortex.Route("datadog", "configurations"),
+		"/api/v1/datadog/configurations",
 		testDatadogConfigurationsResponse,
 		AssertRequestMethod(t, "GET"),
 	)
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
-	res, err := c.DatadogConfigurations().List(context.Background())
+	res, err := integrations.Datadog(c).List(context.Background())
 	assert.Nil(t, err, "error listing datadog configurations")
 	assert.Len(t, res, 2)
 	assert.Equal(t, testDatadogConfiguration, res[1])
@@ -47,33 +48,33 @@ func TestListDatadogConfigurations(t *testing.T) {
 
 func TestGetDatadogConfiguration(t *testing.T) {
 	c, teardown, err := setupClient(
-		cortex.Route("datadog", "configurations"),
+		"/api/v1/datadog/configurations",
 		testDatadogConfigurationsResponse,
 		AssertRequestMethod(t, "GET"),
 	)
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
-	res, err := c.DatadogConfigurations().Get(context.Background(), testDatadogConfiguration.Alias)
+	res, err := integrations.Datadog(c).Get(context.Background(), testDatadogConfiguration.Alias)
 	assert.Nil(t, err, "error retrieving a datadog configuration")
 	assert.Equal(t, testDatadogConfiguration, res)
 }
 
 func TestGetDatadogConfigurationNotFound(t *testing.T) {
 	c, teardown, err := setupClient(
-		cortex.Route("datadog", "configurations"),
+		"/api/v1/datadog/configurations",
 		testDatadogConfigurationsResponse,
 		AssertRequestMethod(t, "GET"),
 	)
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
-	_, err = c.DatadogConfigurations().Get(context.Background(), "missing-datadog")
+	_, err = integrations.Datadog(c).Get(context.Background(), "missing-datadog")
 	assert.ErrorIs(t, err, cortex.ApiErrorNotFound)
 }
 
 func TestCreateDatadogConfiguration(t *testing.T) {
-	req := cortex.CreateDatadogConfigurationRequest{
+	req := integrations.CreateDatadogConfigurationRequest{
 		Alias:           testDatadogConfiguration.Alias,
 		IsDefault:       true,
 		ApiKey:          "fake-apiKey",
@@ -83,7 +84,7 @@ func TestCreateDatadogConfiguration(t *testing.T) {
 		CustomSubdomain: "acme",
 	}
 	c, teardown, err := setupClient(
-		cortex.Route("datadog", "configuration"),
+		"/api/v1/datadog/configuration",
 		// The API returns every configuration in the tenant, not only the new one.
 		testDatadogConfigurationsResponse,
 		AssertRequestMethod(t, "POST"),
@@ -92,20 +93,20 @@ func TestCreateDatadogConfiguration(t *testing.T) {
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
-	res, err := c.DatadogConfigurations().Create(context.Background(), req.Alias, req)
+	res, err := integrations.Datadog(c).Create(context.Background(), req.Alias, req)
 	assert.Nil(t, err, "error creating a datadog configuration")
 	assert.Equal(t, testDatadogConfiguration, res)
 }
 
 func TestUpdateDatadogConfiguration(t *testing.T) {
 	oldAlias := "old-datadog"
-	req := cortex.UpdateDatadogConfigurationRequest{
+	req := integrations.UpdateDatadogConfigurationRequest{
 		Alias:        testDatadogConfiguration.Alias,
 		IsDefault:    true,
 		Environments: []string{"prod", "staging"},
 	}
 	c, teardown, err := setupClient(
-		cortex.Route("datadog", "configuration/"+oldAlias),
+		"/api/v1/datadog/configuration/"+oldAlias,
 		// The API returns every configuration in the tenant, not only the updated one.
 		testDatadogConfigurationsResponse,
 		AssertRequestMethod(t, "PUT"),
@@ -114,34 +115,34 @@ func TestUpdateDatadogConfiguration(t *testing.T) {
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
-	res, err := c.DatadogConfigurations().Update(context.Background(), oldAlias, req.Alias, req)
+	res, err := integrations.Datadog(c).Update(context.Background(), oldAlias, req.Alias, req)
 	assert.Nil(t, err, "error updating a datadog configuration")
 	assert.Equal(t, testDatadogConfiguration, res)
 }
 
 func TestCreateDatadogConfigurationMissingFromResponse(t *testing.T) {
-	req := cortex.CreateDatadogConfigurationRequest{Alias: "missing-datadog", Region: "US1", Environments: []string{}}
+	req := integrations.CreateDatadogConfigurationRequest{Alias: "missing-datadog", Region: "US1", Environments: []string{}}
 	c, teardown, err := setupClient(
-		cortex.Route("datadog", "configuration"),
+		"/api/v1/datadog/configuration",
 		testDatadogConfigurationsResponse,
 		AssertRequestMethod(t, "POST"),
 	)
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
-	_, err = c.DatadogConfigurations().Create(context.Background(), req.Alias, req)
+	_, err = integrations.Datadog(c).Create(context.Background(), req.Alias, req)
 	assert.ErrorContains(t, err, "missing-datadog")
 }
 
 func TestDeleteDatadogConfiguration(t *testing.T) {
 	c, teardown, err := setupClient(
-		cortex.Route("datadog", "configuration/"+testDatadogConfiguration.Alias),
+		"/api/v1/datadog/configuration/"+testDatadogConfiguration.Alias,
 		map[string]interface{}{},
 		AssertRequestMethod(t, "DELETE"),
 	)
 	assert.Nil(t, err, "could not setup client")
 	defer teardown()
 
-	err = c.DatadogConfigurations().Delete(context.Background(), testDatadogConfiguration.Alias)
+	err = integrations.Datadog(c).Delete(context.Background(), testDatadogConfiguration.Alias)
 	assert.Nil(t, err, "error deleting a datadog configuration")
 }

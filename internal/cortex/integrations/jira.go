@@ -1,4 +1,6 @@
-package cortex
+package integrations
+
+import "github.com/cortexapps/terraform-provider-cortex/internal/cortex"
 
 // Values of the Jira "type" property. The API picks the request shape from it.
 const (
@@ -41,3 +43,8 @@ type JiraConfiguration struct {
 }
 
 func (c JiraConfiguration) GetAlias() string { return c.Alias }
+
+// Jira returns the client for the Jira configurations.
+func Jira(c *cortex.HttpClient) MultiInstanceClientInterface[JiraConfigurationRequest, JiraConfigurationRequest, JiraConfiguration] {
+	return &MultiInstanceClient[JiraConfigurationRequest, JiraConfigurationRequest, JiraConfiguration]{client: c, base: "/api/v1/jira/", name: "jira"}
+}

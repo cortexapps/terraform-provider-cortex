@@ -1,6 +1,10 @@
-package cortex
+package integrations
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
+)
 
 // DatadogConfiguration is one Datadog integration configuration. The API never returns the full API key or
 // application key, only their last four characters.
@@ -50,4 +54,9 @@ func (r UpdateDatadogConfigurationRequest) MarshalJSON() ([]byte, error) {
 		r.Environments = []string{}
 	}
 	return json.Marshal(plain(r))
+}
+
+// Datadog returns the client for the Datadog configurations.
+func Datadog(c *cortex.HttpClient) MultiInstanceClientInterface[CreateDatadogConfigurationRequest, UpdateDatadogConfigurationRequest, DatadogConfiguration] {
+	return &MultiInstanceClient[CreateDatadogConfigurationRequest, UpdateDatadogConfigurationRequest, DatadogConfiguration]{client: c, base: "/api/v1/datadog/", name: "datadog"}
 }
