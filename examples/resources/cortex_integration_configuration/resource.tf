@@ -25,6 +25,16 @@ resource "cortex_integration_configuration" "incident_io" {
   incident_io = {}
 }
 
+resource "cortex_integration_configuration" "jira" {
+  alias = "jira-cloud"
+  credentials = {
+    basic = { username = "bot@acme.com", password = var.jira_api_token }
+  }
+  jira = {
+    cloud = { subdomain = "acme", base_url = "atlassian.net" }
+  }
+}
+
 resource "cortex_integration_configuration" "pagerduty" {
   credentials = { token = { value = var.pagerduty_token } }
   pagerduty   = { is_token_readonly = true }

@@ -78,6 +78,18 @@ resource "cortex_integration_configuration" "test" {
 	accIntegrationTest(t, "incident_io/tf-acc-test-incident-io", body("tf-acc-fake-key-a1b2"), body("tf-acc-fake-key-c3d4"))
 }
 
+func TestAccIntegrationConfigurationJira(t *testing.T) {
+	body := func(token string) string {
+		return fmt.Sprintf(`
+resource "cortex_integration_configuration" "test" {
+  alias       = "tf-acc-test-jira"
+  credentials = { basic = { username = "tf-acc@example.invalid", password = %q } }
+  jira        = { on_prem = { host = "https://jira.invalid" } }
+}`, token)
+	}
+	accIntegrationTest(t, "jira/tf-acc-test-jira", body("tf-acc-fake-token-a1b2"), body("tf-acc-fake-token-c3d4"))
+}
+
 // A tenant has one PagerDuty configuration. The test skips when the tenant already has one, so it never touches a
 // real configuration.
 func TestAccIntegrationConfigurationPagerDuty(t *testing.T) {

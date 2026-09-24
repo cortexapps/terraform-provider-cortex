@@ -3,25 +3,27 @@
 page_title: "cortex_integration_configuration Resource - terraform-provider-cortex"
 subcategory: ""
 description: |-
-  Integration configuration. Set exactly one settings block to pick the integration (datadog, gitlab, incident_io, pagerduty), and one credential kind in credentials.
+  Integration configuration. Set exactly one settings block to pick the integration (datadog, gitlab, incident_io, jira, pagerduty), and one credential kind in credentials.
   | Integration | Credential kind | Mapping to the Cortex API |
   |---|---|---|
   | `datadog` | `key_pair` | `key` = API key, `secret` = application key |
   | `gitlab` | `token` | `value` = personal access token |
   | `incident_io` | `token` | `value` = API key |
+  | `jira` | `basic` | `username` = email (cloud) or username (on-prem), `password` = API token (cloud) or password (on-prem) |
   | `pagerduty` | `token` | `value` = API token |
   The Cortex API never returns secrets. Terraform detects a secret changed outside Terraform through credentials_last_four. Cortex does not check credentials when it saves a configuration, so invalid credentials do not fail the apply. Cortex does not allow deleting the default configuration of an integration while other configurations exist.
 ---
 
 # cortex_integration_configuration (Resource)
 
-Integration configuration. Set exactly one settings block to pick the integration (`datadog`, `gitlab`, `incident_io`, `pagerduty`), and one credential kind in `credentials`.
+Integration configuration. Set exactly one settings block to pick the integration (`datadog`, `gitlab`, `incident_io`, `jira`, `pagerduty`), and one credential kind in `credentials`.
 
 | Integration | Credential kind | Mapping to the Cortex API |
 |---|---|---|
 | `datadog` | `key_pair` | `key` = API key, `secret` = application key |
 | `gitlab` | `token` | `value` = personal access token |
 | `incident_io` | `token` | `value` = API key |
+| `jira` | `basic` | `username` = email (cloud) or username (on-prem), `password` = API token (cloud) or password (on-prem) |
 | `pagerduty` | `token` | `value` = API token |
 
 The Cortex API never returns secrets. Terraform detects a secret changed outside Terraform through `credentials_last_four`. Cortex does not check credentials when it saves a configuration, so invalid credentials do not fail the apply. Cortex does not allow deleting the default configuration of an integration while other configurations exist.
@@ -56,6 +58,16 @@ resource "cortex_integration_configuration" "incident_io" {
   incident_io = {}
 }
 
+resource "cortex_integration_configuration" "jira" {
+  alias = "jira-cloud"
+  credentials = {
+    basic = { username = "bot@acme.com", password = var.jira_api_token }
+  }
+  jira = {
+    cloud = { subdomain = "acme", base_url = "atlassian.net" }
+  }
+}
+
 resource "cortex_integration_configuration" "pagerduty" {
   credentials = { token = { value = var.pagerduty_token } }
   pagerduty   = { is_token_readonly = true }
@@ -76,6 +88,7 @@ resource "cortex_integration_configuration" "pagerduty" {
 - `gitlab` (Attributes) GitLab settings. Use `credentials.token`: `value` is the GitLab personal access token. The Cortex API cannot change `host` in place, so a change replaces the configuration. (see [below for nested schema](#nestedatt--gitlab))
 - `incident_io` (Attributes) incident.io settings. incident.io has no settings, so set `incident_io = {}`. Use `credentials.token`: `value` is the incident.io API key. (see [below for nested schema](#nestedatt--incident_io))
 - `is_default` (Boolean) Whether this is the default configuration of its integration. Not allowed for integrations with one configuration per tenant. When not set, Terraform keeps the value from Cortex. Cortex makes the first configuration the default, and does not allow setting the current default to `false`: set `is_default = true` on another configuration and remove `is_default` from this one, apply, and then set it to `false` if necessary. Set `is_default = true` on one configuration per integration only.
+- `jira` (Attributes) Jira settings. Set exactly one variant. Use `credentials.basic`: for the cloud variants, `username` is the email and `password` is the API token; for `on_prem`, they are the username and password. The Cortex API cannot change the variant, `host`, `frontend_host`, or `cloud_id` in place, so a change to one of them replaces the configuration. (see [below for nested schema](#nestedatt--jira))
 - `pagerduty` (Attributes) PagerDuty settings. Use `credentials.token`: `value` is the PagerDuty API token. A tenant has one PagerDuty configuration, so `alias` and `is_default` are not allowed. When Cortex already has a PagerDuty configuration, import it with ID `pagerduty`. (see [below for nested schema](#nestedatt--pagerduty))
 
 ### Read-Only
@@ -145,6 +158,50 @@ Optional:
 
 <a id="nestedatt--incident_io"></a>
 ### Nested Schema for `incident_io`
+
+
+<a id="nestedatt--jira"></a>
+### Nested Schema for `jira`
+
+Optional:
+
+- `cloud` (Attributes) Jira Cloud with basic authentication. (see [below for nested schema](#nestedatt--jira--cloud))
+- `cloud_scoped` (Attributes) Jira Cloud with a scoped API token. (see [below for nested schema](#nestedatt--jira--cloud_scoped))
+- `on_prem` (Attributes) Jira Data Center or Server with basic authentication. (see [below for nested schema](#nestedatt--jira--on_prem))
+
+<a id="nestedatt--jira--cloud"></a>
+### Nested Schema for `jira.cloud`
+
+Required:
+
+- `base_url` (String) Base URL. One of `jira.com`, `atlassian.net`, `api.atlassian.com/ex/jira`.
+- `subdomain` (String) Subdomain of the Jira site, for example `acme`.
+
+
+<a id="nestedatt--jira--cloud_scoped"></a>
+### Nested Schema for `jira.cloud_scoped`
+
+Required:
+
+- `cloud_id` (String) Atlassian cloud ID of the site. The Cortex API does not return it, so Terraform cannot detect a change outside Terraform.
+- `subdomain` (String) Subdomain of the Jira site.
+
+Optional:
+
+- `base_url` (String) Base URL. Defaults to `api.atlassian.com/ex/jira`.
+
+
+<a id="nestedatt--jira--on_prem"></a>
+### Nested Schema for `jira.on_prem`
+
+Required:
+
+- `host` (String) URL of the Jira server.
+
+Optional:
+
+- `frontend_host` (String) URL for links in Cortex, when it differs from `host`.
+
 
 
 <a id="nestedatt--pagerduty"></a>
