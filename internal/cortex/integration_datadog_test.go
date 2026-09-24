@@ -8,6 +8,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// datadogConfigurationsResponse is the wrapper of list, create, and update responses.
+type datadogConfigurationsResponse struct {
+	Configurations []cortex.DatadogConfiguration `json:"configurations"`
+}
+
 var testDatadogConfiguration = cortex.DatadogConfiguration{
 	Alias:           "test-datadog",
 	IsDefault:       true,
@@ -18,7 +23,7 @@ var testDatadogConfiguration = cortex.DatadogConfiguration{
 	LastFourAppKey:  "pKey",
 }
 
-var testDatadogConfigurationsResponse = cortex.DatadogConfigurationsResponse{
+var testDatadogConfigurationsResponse = datadogConfigurationsResponse{
 	Configurations: []cortex.DatadogConfiguration{
 		{Alias: "other-datadog", Region: "EU1", Environments: []string{}, LastFourApiKey: "aaaa", LastFourAppKey: "bbbb"},
 		testDatadogConfiguration,

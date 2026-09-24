@@ -15,11 +15,6 @@ type DatadogConfiguration struct {
 func (c DatadogConfiguration) GetAlias() string   { return c.Alias }
 func (c DatadogConfiguration) GetIsDefault() bool { return c.IsDefault }
 
-// DatadogConfigurationsResponse is the list response. Tests use it to build fake responses.
-type DatadogConfigurationsResponse struct {
-	Configurations []DatadogConfiguration `json:"configurations"`
-}
-
 type CreateDatadogConfigurationRequest struct {
 	Alias           string   `json:"alias"`
 	IsDefault       bool     `json:"isDefault"`
