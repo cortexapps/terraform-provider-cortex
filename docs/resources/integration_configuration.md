@@ -138,7 +138,7 @@ Optional:
 
 Optional:
 
-- `group_names` (List of String) GitLab groups to include. Defaults to an empty list.
+- `group_names` (List of String) GitLab groups to include. Defaults to an empty list. Names must not be blank.
 - `hide_personal_projects` (Boolean) Whether to hide personal projects. Defaults to `false`.
 - `host` (String) URL of a self-managed GitLab instance. Not set means gitlab.com.
 

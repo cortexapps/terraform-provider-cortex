@@ -2,6 +2,7 @@ package integrations
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
 	api "github.com/cortexapps/terraform-provider-cortex/internal/cortex/integrations"
@@ -47,12 +48,15 @@ func (gitlabDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 				Validators:          []validator.String{stringvalidator.LengthAtLeast(1)},
 			},
 			"group_names": schema.ListAttribute{
-				MarkdownDescription: "GitLab groups to include. Defaults to an empty list.",
+				MarkdownDescription: "GitLab groups to include. Defaults to an empty list. Names must not be blank.",
 				ElementType:         types.StringType,
 				Optional:            true,
 				Computed:            true,
 				Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
-				Validators:          []validator.List{listvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1))},
+				// The API drops blank names, so they would make the apply inconsistent.
+				Validators: []validator.List{listvalidator.ValueStringsAre(
+					stringvalidator.RegexMatches(regexp.MustCompile(`\S`), "must not be blank"),
+				)},
 			},
 			"hide_personal_projects": schema.BoolAttribute{
 				MarkdownDescription: "Whether to hide personal projects. Defaults to `false`.",

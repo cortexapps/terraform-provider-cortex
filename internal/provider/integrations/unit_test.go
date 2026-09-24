@@ -698,3 +698,19 @@ func TestUnitIntegrationConfiguration_GitlabLifecycle(t *testing.T) {
 		},
 	})
 }
+
+// The API drops blank group names, which would make the apply inconsistent, so validation rejects them.
+func TestUnitIntegrationConfiguration_GitlabRejectsBlankGroupNames(t *testing.T) {
+	_, url := newFakeCortexApi(t)
+	for name, groups := range map[string]string{"empty": `[""]`, "blank": `[" "]`} {
+		t.Run(name, func(t *testing.T) {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{{
+					Config:      gitlabUnit(url, "fake-token-a1b2", "https://gitlab.invalid", groups),
+					ExpectError: regexp.MustCompile(`group_names`),
+				}},
+			})
+		})
+	}
+}
