@@ -110,3 +110,34 @@ func TestSingleInstanceGetDecodeErrorReturnsZeroValue(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, cortex.PagerDutyConfiguration{}, res)
 }
+
+// errorClient returns a client whose server answers every request with the status and body.
+func errorClient(t *testing.T, status int, body string) *cortex.HttpClient {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(status)
+		_, _ = w.Write([]byte(body))
+	}))
+	t.Cleanup(server.Close)
+	c, err := cortex.NewClient(cortex.WithURL(server.URL), cortex.WithToken("test"), cortex.WithVersion("test"))
+	assert.Nil(t, err)
+	return c
+}
+
+func TestMultiInstanceApiErrors(t *testing.T) {
+	ctx := context.Background()
+	rejected := errorClient(t, http.StatusBadRequest, `{"message":"Configuration exists with that alias"}`)
+
+	_, err := rejected.DatadogConfigurations().Create(ctx, "dd", cortex.CreateDatadogConfigurationRequest{Alias: "dd"})
+	assert.ErrorContains(t, err, "Configuration exists with that alias")
+	assert.NotErrorIs(t, err, cortex.ApiErrorNotFound)
+
+	_, err = rejected.DatadogConfigurations().Update(ctx, "dd", "dd", cortex.UpdateDatadogConfigurationRequest{Alias: "dd"})
+	assert.ErrorContains(t, err, "Configuration exists with that alias")
+
+	_, err = errorClient(t, http.StatusInternalServerError, `{"message":"boom"}`).DatadogConfigurations().List(ctx)
+	assert.ErrorContains(t, err, "500")
+
+	err = errorClient(t, http.StatusNotFound, `{"message":"Unable to find configuration"}`).DatadogConfigurations().Delete(ctx, "dd")
+	assert.ErrorIs(t, err, cortex.ApiErrorNotFound)
+}

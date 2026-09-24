@@ -32,7 +32,7 @@ type SingleInstanceClientInterface[C any, R any] interface {
 	Delete(ctx context.Context) error
 }
 
-// configurationsResponse wraps list, create, update, and delete responses. For multi-instance integrations, create
+// configurationsResponse wraps list, create, update, and replace responses. For multi-instance integrations, create
 // and update return every configuration in the tenant, not only the one that changed.
 type configurationsResponse[R any] struct {
 	Configurations []R `json:"configurations"`

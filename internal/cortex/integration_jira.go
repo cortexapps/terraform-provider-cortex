@@ -7,8 +7,10 @@ const (
 	JiraTypeOnPremBasic = "ON_PREM_BASIC"
 )
 
-// JiraConfigurationRequest is the create and update body. Each type uses a subset of the fields; the others stay
-// empty and are not sent. BaseUrl takes the wire values "jira.com", "atlassian.net", or "api.atlassian.com/ex/jira".
+// JiraConfigurationRequest is the create and update body. Unlike the other integrations, Jira uses one shape for
+// both, because the API selects the update shape by the same "type" property. On update, an omitted field keeps its
+// current value, and the API ignores Host, FrontendHost, and CloudId: they cannot change after creation. Each type
+// uses a subset of the fields; the others stay empty and are not sent. BaseUrl takes the wire values "jira.com", "atlassian.net", or "api.atlassian.com/ex/jira".
 type JiraConfigurationRequest struct {
 	Type         string `json:"type"`
 	Alias        string `json:"alias"`
