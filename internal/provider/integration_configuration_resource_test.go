@@ -12,7 +12,7 @@ import (
 
 const accResourceName = "cortex_integration_configuration.test"
 
-func accIntegrationTest(t *testing.T, importId string, create, update string, extraIgnore ...string) {
+func accIntegrationTest(t *testing.T, importId string, create, update string) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
@@ -23,7 +23,7 @@ func accIntegrationTest(t *testing.T, importId string, create, update string, ex
 				ImportState:             true,
 				ImportStateId:           importId,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: append([]string{"credentials"}, extraIgnore...),
+				ImportStateVerifyIgnore: []string{"credentials"},
 			},
 			{Config: update},
 		},
