@@ -67,6 +67,7 @@ Each resource follows this structure:
 - `cortex_catalog_entity` - Catalog entities (services, resources, teams, domains)
 - `cortex_catalog_entity_custom_data` - Custom data for catalog entities
 - `cortex_catalog_entity_openapi` - OpenAPI specs for catalog entities (YAML format)
+- `cortex_integration_configuration` - Integration configurations. One settings block per integration and a shared `credentials` block; each integration is a definition in `internal/provider/integration_*.go`, on top of the generic clients in `internal/cortex/integration_configurations.go`
 - `cortex_department` - Departments
 - `cortex_resource_definition` - Resource type definitions
 - `cortex_scorecard` - Scorecards
