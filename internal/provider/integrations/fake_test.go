@@ -18,6 +18,10 @@ type fakeIntegrationSpec struct {
 	masks          map[string]string // secret request field -> response field with its last four characters
 	hidden         []string          // request fields the API never returns
 	ignoreOnUpdate []string          // request fields the API ignores on update
+	// ignoreOnUpdateForType lists more fields the API ignores on update, by the stored "type".
+	ignoreOnUpdateForType map[string][]string
+	// defaults fills a missing request field from another field on create, as the API does.
+	defaults map[string]string
 }
 
 // fakeSpecs follow the backend contract. The key is the path segment under /api/v1.
@@ -27,7 +31,9 @@ var fakeSpecs = map[string]fakeIntegrationSpec{
 	"gitlab":     {multi: true, masks: map[string]string{"personalAccessToken": "lastFour"}, ignoreOnUpdate: []string{"host"}},
 	"incidentio": {multi: true, masks: map[string]string{"apiKey": "lastFour"}},
 	"jira": {multi: true, masks: map[string]string{"apiToken": "lastFour", "password": "lastFour"},
-		hidden: []string{"cloudId"}, ignoreOnUpdate: []string{"host", "frontendHost", "cloudId"}},
+		hidden: []string{"cloudId"}, ignoreOnUpdate: []string{"host", "frontendHost", "cloudId"},
+		ignoreOnUpdateForType: map[string][]string{"CLOUD_SCOPED": {"email"}},
+		defaults:              map[string]string{"frontendHost": "host"}},
 }
 
 // fakeCortexApi is an in-memory Cortex API for the integration configuration routes. It applies the same alias,
@@ -93,6 +99,11 @@ func (f *fakeCortexApi) serveMulti(w http.ResponseWriter, r *http.Request, seg, 
 			return
 		}
 		body["isDefault"] = isDefault || !hasDefault
+		for field, from := range fakeSpecs[seg].defaults {
+			if v, ok := body[from]; ok && body[field] == nil {
+				body[field] = v
+			}
+		}
 		f.configs[seg] = append(f.configs[seg], body)
 		f.writeAll(w, seg)
 	case r.Method == http.MethodPut && hasAlias && f.updateFails:
@@ -117,8 +128,9 @@ func (f *fakeCortexApi) serveMulti(w http.ResponseWriter, r *http.Request, seg, 
 			fail(w, http.StatusBadRequest, "You must change the default to a different configuration before updating")
 			return
 		}
+		ignoredForType := fakeSpecs[seg].ignoreOnUpdateForType[fmt.Sprint(f.configs[seg][i]["type"])]
 		for k, v := range body {
-			if v == nil || k == "isDefault" || slices.Contains(fakeSpecs[seg].ignoreOnUpdate, k) {
+			if v == nil || k == "isDefault" || slices.Contains(fakeSpecs[seg].ignoreOnUpdate, k) || slices.Contains(ignoredForType, k) {
 				continue
 			}
 			f.configs[seg][i][k] = v

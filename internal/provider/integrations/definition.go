@@ -61,6 +61,12 @@ type multiInstanceDefinition interface {
 	Delete(ctx context.Context, c *cortex.HttpClient, alias string) error
 }
 
+// credentialsReplacer is an optional hook for definitions whose API cannot change some credential parts in place for
+// some settings. A true result replaces the configuration.
+type credentialsReplacer interface {
+	CredentialsRequireReplace(ctx context.Context, settings types.Object, plan *credentialsModel, state *credentialsModel) (bool, diag.Diagnostics)
+}
+
 // singleInstanceDefinition is an integration with at most one configuration per tenant.
 type singleInstanceDefinition interface {
 	integrationDefinition

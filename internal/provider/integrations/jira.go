@@ -11,14 +11,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // jiraDefinition maps credentials.basic to email and apiToken (cloud variants) or username and password (on-prem).
 // The variant sets the API "type". The API never returns cloudId, so Read keeps it from state. The API ignores host,
-// frontendHost, and cloudId on update, so a change to one of them replaces the configuration.
+// frontendHost, and cloudId on update, and the email of a cloud_scoped configuration, so a change to one of them
+// replaces the configuration. On create, the API sets frontendHost to host when it is not set.
 type jiraDefinition struct{}
 
 type jiraSettingsModel struct {
@@ -46,6 +49,7 @@ type jiraOnPremModel struct {
 var jiraBaseUrls = []string{"jira.com", "atlassian.net", "api.atlassian.com/ex/jira"}
 
 var _ multiInstanceDefinition = jiraDefinition{}
+var _ credentialsReplacer = jiraDefinition{}
 
 func (jiraDefinition) Name() string  { return "jira" }
 func (jiraDefinition) Title() string { return "Jira" }
@@ -61,8 +65,8 @@ func (jiraDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 	return schema.SingleNestedAttribute{
 		MarkdownDescription: "Jira settings. Set exactly one variant. Use `credentials.basic`: for the cloud variants, " +
 			"`username` is the email and `password` is the API token; for `on_prem`, they are the username and password. " +
-			"The Cortex API cannot change the variant, `host`, `frontend_host`, or `cloud_id` in place, so a change to one " +
-			"of them replaces the configuration.",
+			"The Cortex API cannot change the variant, `host`, `frontend_host`, `cloud_id`, or the `cloud_scoped` email " +
+			"(`credentials.basic.username`) in place, so a change to one of them replaces the configuration.",
 		Optional: true,
 		Attributes: map[string]schema.Attribute{
 			"cloud": schema.SingleNestedAttribute{
@@ -105,9 +109,11 @@ func (jiraDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 				Attributes: map[string]schema.Attribute{
 					"host": required("URL of the Jira server."),
 					"frontend_host": schema.StringAttribute{
-						MarkdownDescription: "URL for links in Cortex, when it differs from `host`.",
+						MarkdownDescription: "URL for links in Cortex, when it differs from `host`. When not set, Cortex uses `host`.",
 						Optional:            true,
+						Computed:            true,
 						Validators:          []validator.String{stringvalidator.LengthAtLeast(1)},
+						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 					},
 				},
 			},
@@ -126,9 +132,21 @@ func (jiraDefinition) SettingsRequireReplace(ctx context.Context, plan types.Obj
 	case p.OnPrem != nil:
 		return !p.OnPrem.Host.Equal(s.OnPrem.Host) || !p.OnPrem.FrontendHost.Equal(s.OnPrem.FrontendHost), diags
 	case p.CloudScoped != nil:
-		return !p.CloudScoped.CloudId.Equal(s.CloudScoped.CloudId), diags
+		// The API never returns cloudId, so it is null after an import: the update then adopts the configured value.
+		return !s.CloudScoped.CloudId.IsNull() && !p.CloudScoped.CloudId.Equal(s.CloudScoped.CloudId), diags
 	}
 	return false, diags
+}
+
+// CredentialsRequireReplace replaces a cloud_scoped configuration when the username (email) changes, because the API
+// ignores the email on update for that variant.
+func (jiraDefinition) CredentialsRequireReplace(ctx context.Context, settings types.Object, plan *credentialsModel, state *credentialsModel) (bool, diag.Diagnostics) {
+	s, err := settingsFrom[jiraSettingsModel](ctx, settings)
+	if err != nil || s.CloudScoped == nil || plan.kind() != credentialBasic || state.kind() != credentialBasic {
+		return false, nil
+	}
+	before, after := state.Basic.Username, plan.Basic.Username
+	return !before.IsNull() && !before.IsUnknown() && !after.Equal(before), nil
 }
 
 func jiraVariant(s jiraSettingsModel) string {
