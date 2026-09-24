@@ -22,6 +22,7 @@ resource "cortex_integration_configuration" "test" {
 }`, alias, extra, key))
 }
 
+//nolint:unparam // The next integrations in the stack use other segments.
 func checkFake(f *fakeCortexApi, seg, alias, field string, want any) resource.TestCheckFunc {
 	return func(*terraform.State) error {
 		cfg, ok := f.get(seg, alias)
