@@ -10,6 +10,21 @@ resource "cortex_integration_configuration" "datadog" {
   }
 }
 
+resource "cortex_integration_configuration" "gitlab" {
+  alias       = "gitlab"
+  credentials = { token = { value = var.gitlab_token } }
+  gitlab = {
+    host        = "https://gitlab.acme.internal"
+    group_names = ["platform"]
+  }
+}
+
+resource "cortex_integration_configuration" "incident_io" {
+  alias       = "incident-io"
+  credentials = { token = { value = var.incident_io_api_key } }
+  incident_io = {}
+}
+
 resource "cortex_integration_configuration" "pagerduty" {
   credentials = { token = { value = var.pagerduty_token } }
   pagerduty   = { is_token_readonly = true }
