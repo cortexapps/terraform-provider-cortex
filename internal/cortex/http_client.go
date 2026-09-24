@@ -127,6 +127,11 @@ func (c *HttpClient) handleResponseStatus(response *http.Response, apiError *Api
 	}
 }
 
+// HandleResponseStatus maps the status of a response to an error. Clients in other packages use it.
+func (c *HttpClient) HandleResponseStatus(response *http.Response, apiError *ApiError) error {
+	return c.handleResponseStatus(response, apiError)
+}
+
 func (c *HttpClient) Ping(ctx context.Context) error {
 	apiError := new(ApiError)
 	response, err := c.client.Get("/").Receive(nil, apiError)
