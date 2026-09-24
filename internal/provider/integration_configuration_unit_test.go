@@ -35,6 +35,7 @@ func checkFake(f *fakeCortexApi, seg, alias, field string, want any) resource.Te
 	}
 }
 
+//nolint:unparam // The next integrations in the stack use other segments.
 func checkCreates(f *fakeCortexApi, seg string, want int) resource.TestCheckFunc {
 	return func(*terraform.State) error {
 		if got := f.createCount(seg); got != want {
