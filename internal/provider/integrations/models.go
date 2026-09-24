@@ -295,6 +295,8 @@ type integrationConfigurationModel struct {
 	Credentials         types.Object `tfsdk:"credentials"`
 	CredentialsLastFour types.Map    `tfsdk:"credentials_last_four"`
 	Datadog             types.Object `tfsdk:"datadog"`
+	Gitlab              types.Object `tfsdk:"gitlab"`
+	IncidentIo          types.Object `tfsdk:"incident_io"`
 	PagerDuty           types.Object `tfsdk:"pagerduty"`
 }
 
@@ -303,6 +305,10 @@ func (m *integrationConfigurationModel) settings(name string) *types.Object {
 	switch name {
 	case "datadog":
 		return &m.Datadog
+	case "gitlab":
+		return &m.Gitlab
+	case "incident_io":
+		return &m.IncidentIo
 	case "pagerduty":
 		return &m.PagerDuty
 	}
