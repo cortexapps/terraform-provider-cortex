@@ -963,3 +963,68 @@ func TestUnitIntegrationConfiguration_JiraHostChangeResetsFrontendHost(t *testin
 		},
 	})
 }
+
+// Values unknown until apply can change a Jira field that the API ignores on update, so the plan must replace an
+// existing configuration: an unknown jira block (here the on_prem host), and unknown credentials of a cloud_scoped
+// configuration (the email).
+func TestUnitIntegrationConfiguration_JiraUnknownValues(t *testing.T) {
+	for name, tc := range map[string]struct {
+		config func(v string) string
+		field  string
+	}{
+		"settings": {
+			config: func(host string) string {
+				return fmt.Sprintf(`
+resource "terraform_data" "upstream" {
+  input = { on_prem = { host = %q } }
+}
+
+resource "cortex_integration_configuration" "test" {
+  alias       = "jira"
+  credentials = { basic = { username = "bot", password = "fake-token-a1b2" } }
+  jira        = terraform_data.upstream.output
+}`, host)
+			},
+			field: "host",
+		},
+		"cloud_scoped credentials": {
+			config: func(email string) string {
+				return fmt.Sprintf(`
+resource "terraform_data" "upstream" {
+  input = { basic = { username = %q, password = "fake-token-a1b2" } }
+}
+
+resource "cortex_integration_configuration" "test" {
+  alias       = "jira"
+  credentials = terraform_data.upstream.output
+  jira        = { cloud_scoped = { subdomain = "acme", cloud_id = "cloud-123" } }
+}`, email)
+			},
+			field: "email",
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			fake, url := newFakeCortexApi(t)
+			first, second := "https://jira.invalid", "https://jira2.invalid"
+			if tc.field == "email" {
+				first, second = "bot@acme.invalid", "bot2@acme.invalid"
+			}
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config: unitConfig(url, tc.config(first)),
+						Check:  checkFake(fake, "jira", "jira", tc.field, first),
+					},
+					{
+						Config: unitConfig(url, tc.config(second)),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							checkFake(fake, "jira", "jira", tc.field, second),
+							checkCreates(fake, "jira", 2),
+						),
+					},
+				},
+			})
+		})
+	}
+}

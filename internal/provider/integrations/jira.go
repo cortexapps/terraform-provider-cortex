@@ -126,6 +126,10 @@ func (jiraDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 }
 
 func (jiraDefinition) SettingsRequireReplace(ctx context.Context, plan types.Object, state types.Object) (bool, diag.Diagnostics) {
+	// An unknown block can change the variant or a field that the API ignores on update.
+	if settingsUnknown(plan, state) {
+		return true, nil
+	}
 	p, s, diags := asSettings[jiraSettingsModel](ctx, plan, state)
 	if p == nil {
 		return false, diags
@@ -142,11 +146,17 @@ func (jiraDefinition) SettingsRequireReplace(ctx context.Context, plan types.Obj
 	return false, diags
 }
 
-// CredentialsRequireReplace replaces a cloud_scoped configuration when the username (email) changes, because the API
-// ignores the email on update for that variant.
+// CredentialsRequireReplace replaces a cloud_scoped configuration when the username (email) changes or is unknown
+// until apply, because the API ignores the email on update for that variant.
 func (jiraDefinition) CredentialsRequireReplace(ctx context.Context, settings types.Object, plan *credentialsModel, state *credentialsModel) (bool, diag.Diagnostics) {
 	s, err := settingsFrom[jiraSettingsModel](ctx, settings)
-	if err != nil || s.CloudScoped == nil || plan.kind() != credentialBasic || state.kind() != credentialBasic {
+	if err != nil || s.CloudScoped == nil || state.kind() != credentialBasic {
+		return false, nil
+	}
+	if plan == nil {
+		return !state.Basic.Username.IsNull(), nil
+	}
+	if plan.kind() != credentialBasic {
 		return false, nil
 	}
 	before, after := state.Basic.Username, plan.Basic.Username
