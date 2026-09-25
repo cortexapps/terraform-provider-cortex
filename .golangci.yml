@@ -41,6 +41,7 @@ linters:
       - third_party$
       - builtin$
       - examples$
+      - Godeps$
 issues:
   max-same-issues: 0
 formatters:
@@ -52,3 +53,4 @@ formatters:
       - third_party$
       - builtin$
       - examples$
+      - Godeps$
