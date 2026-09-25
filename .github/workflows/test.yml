@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@v7.0.1
       - uses: actions/setup-go@v6.1.0
         with:
           go-version-file: "go.mod"
@@ -42,7 +42,7 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@v7.0.1
       - uses: actions/setup-go@v6.1.0
         with:
           go-version-file: "go.mod"
@@ -64,7 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@v7.0.1
       - uses: actions/setup-go@v6.1.0
         with:
           go-version-file: "go.mod"
@@ -95,7 +95,7 @@ jobs:
       group: cortex-acceptance-tenant
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@v7.0.1
       - uses: actions/setup-go@v6.1.0
         with:
           go-version-file: "go.mod"
