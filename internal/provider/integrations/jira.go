@@ -58,7 +58,6 @@ func (jiraDefinition) Title() string { return "Jira" }
 func (jiraDefinition) CredentialKinds() []credentialKind {
 	return []credentialKind{credentialBasic}
 }
-func (jiraDefinition) CredentialsUpdatable() bool { return true }
 
 func (jiraDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 	required := func(description string) schema.StringAttribute {
