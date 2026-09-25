@@ -714,3 +714,37 @@ func TestUnitIntegrationConfiguration_GitlabRejectsBlankGroupNames(t *testing.T)
 		})
 	}
 }
+
+// The API ignores host on update, so an unknown gitlab block for an existing configuration plans a replacement.
+func TestUnitIntegrationConfiguration_GitlabUnknownSettings(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	withHost := func(host string) string {
+		return unitConfig(url, fmt.Sprintf(`
+resource "terraform_data" "settings" {
+  input = { host = %q, group_names = ["platform"] }
+}
+
+resource "cortex_integration_configuration" "test" {
+  alias       = "gl"
+  credentials = { token = { value = "fake-token-a1b2" } }
+  gitlab      = terraform_data.settings.output
+}`, host))
+	}
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: withHost("https://gitlab.invalid"),
+				Check:  checkFake(fake, "gitlab", "gl", "host", "https://gitlab.invalid"),
+			},
+			{
+				Config: withHost("https://gitlab2.invalid"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "gitlab", "gl", "host", "https://gitlab2.invalid"),
+					checkCreates(fake, "gitlab", 2),
+				),
+			},
+		},
+	})
+}

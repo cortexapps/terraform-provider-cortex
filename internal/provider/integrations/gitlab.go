@@ -69,6 +69,9 @@ func (gitlabDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 }
 
 func (gitlabDefinition) SettingsRequireReplace(ctx context.Context, plan types.Object, state types.Object) (bool, diag.Diagnostics) {
+	if settingsUnknown(plan, state) {
+		return true, nil
+	}
 	p, s, diags := asSettings[gitlabSettingsModel](ctx, plan, state)
 	if p == nil {
 		return false, diags
