@@ -442,3 +442,46 @@ resource "cortex_integration_configuration" "test" {
 		})
 	}
 }
+
+// Only removing a set custom subdomain needs a new configuration, so an unknown custom_subdomain replaces a
+// configuration that has one, and updates a configuration without one in place.
+func TestUnitIntegrationConfiguration_DatadogUnknownCustomSubdomain(t *testing.T) {
+	for name, tc := range map[string]struct {
+		before  string
+		creates int
+	}{
+		"was set":     {before: `custom_subdomain = "acme"`, creates: 2},
+		"was not set": {before: ``, creates: 1},
+	} {
+		t.Run(name, func(t *testing.T) {
+			fake, url := newFakeCortexApi(t)
+			// A new input makes the output of terraform_data unknown until apply.
+			withSettings := func(input, settings string) string {
+				return unitConfig(url, fmt.Sprintf(`
+resource "terraform_data" "subdomain" {
+  input = %q
+}
+
+resource "cortex_integration_configuration" "test" {
+  alias       = "dd"
+  credentials = { key_pair = { key = "fake-api-key-a1b2", secret = "fake-app-key-c3d4" } }
+  datadog     = { region = "US1", %s }
+}`, input, settings))
+			}
+
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{Config: withSettings("acme1", tc.before)},
+					{
+						Config: withSettings("acme2", "custom_subdomain = terraform_data.subdomain.output"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							checkFake(fake, "datadog", "dd", "customSubdomain", "acme2"),
+							checkCreates(fake, "datadog", tc.creates),
+						),
+					},
+				},
+			})
+		})
+	}
+}

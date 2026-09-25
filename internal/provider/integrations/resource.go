@@ -373,8 +373,12 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 	def := configuredDefinition(ctx, req.Plan)
-	credentials, _, diags := decodeCredentials(ctx, plan.Credentials)
+	credentials, known, diags := decodeCredentials(ctx, plan.Credentials)
 	resp.Diagnostics.Append(diags...)
+	if !known {
+		resp.Diagnostics.AddAttributeError(path.Root("credentials"), "Unknown credentials",
+			"The credentials are still unknown at apply time. Please report this issue to the provider developers.")
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -431,8 +435,12 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		return
 	}
 	def := configuredDefinition(ctx, req.Plan)
-	credentials, _, diags := decodeCredentials(ctx, plan.Credentials)
+	credentials, known, diags := decodeCredentials(ctx, plan.Credentials)
 	resp.Diagnostics.Append(diags...)
+	if !known {
+		resp.Diagnostics.AddAttributeError(path.Root("credentials"), "Unknown credentials",
+			"The credentials are still unknown at apply time. Please report this issue to the provider developers.")
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
