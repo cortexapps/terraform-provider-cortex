@@ -748,3 +748,313 @@ resource "cortex_integration_configuration" "test" {
 		},
 	})
 }
+
+func jiraUnit(url, username, jira string) string {
+	return unitConfig(url, fmt.Sprintf(`
+resource "cortex_integration_configuration" "test" {
+  alias       = "jira"
+  credentials = { basic = { username = %q, password = "fake-token-a1b2" } }
+  jira        = %s
+}`, username, jira))
+}
+
+func TestUnitIntegrationConfiguration_JiraCloudLifecycle(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	cloud := `{ cloud = { subdomain = "acme", base_url = "atlassian.net" } }`
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: jiraUnit(url, "bot@acme.invalid", cloud),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "jira", "jira", "type", "CLOUD_BASIC"),
+					checkFake(fake, "jira", "jira", "email", "bot@acme.invalid"),
+					checkFake(fake, "jira", "jira", "apiToken", "fake-token-a1b2"),
+					checkFake(fake, "jira", "jira", "baseUrl", "atlassian.net"),
+					resource.TestCheckResourceAttr(unitResourceName, "credentials_last_four.password", "a1b2"),
+				),
+			},
+			// The API returns the email, so a change outside Terraform shows as a change and the apply restores it.
+			{
+				PreConfig: func() { fake.setField("jira", "jira", "email", "changed@acme.invalid") },
+				Config:    jiraUnit(url, "bot@acme.invalid", cloud),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "jira", "jira", "email", "bot@acme.invalid"),
+					checkCreates(fake, "jira", 1),
+				),
+			},
+			// A change of variant replaces the configuration.
+			{
+				Config: jiraUnit(url, "bot", `{ on_prem = { host = "https://jira.invalid" } }`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "jira", "jira", "type", "ON_PREM_BASIC"),
+					checkFake(fake, "jira", "jira", "username", "bot"),
+					checkFake(fake, "jira", "jira", "password", "fake-token-a1b2"),
+					checkCreates(fake, "jira", 2),
+				),
+			},
+			// The API ignores host on update, so a new host replaces the configuration.
+			{
+				Config: jiraUnit(url, "bot", `{ on_prem = { host = "https://jira2.invalid" } }`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "jira", "jira", "host", "https://jira2.invalid"),
+					checkCreates(fake, "jira", 3),
+				),
+			},
+		},
+	})
+}
+
+// The API never returns cloudId. The testing framework fails a step whose plan after apply is not empty, so this
+// test also proves that cloud_id shows no permanent diff.
+func TestUnitIntegrationConfiguration_JiraCloudScopedKeepsCloudId(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: jiraUnit(url, "bot@acme.invalid", `{ cloud_scoped = { subdomain = "acme", cloud_id = "cloud-123" } }`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "jira.cloud_scoped.cloud_id", "cloud-123"),
+					resource.TestCheckResourceAttr(unitResourceName, "jira.cloud_scoped.base_url", "api.atlassian.com/ex/jira"),
+					checkFake(fake, "jira", "jira", "cloudId", "cloud-123"),
+					checkFake(fake, "jira", "jira", "type", "CLOUD_SCOPED"),
+				),
+			},
+			// The API ignores cloudId on update, so a new cloud ID replaces the configuration.
+			{
+				Config: jiraUnit(url, "bot@acme.invalid", `{ cloud_scoped = { subdomain = "acme", cloud_id = "cloud-456" } }`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "jira", "jira", "cloudId", "cloud-456"),
+					checkCreates(fake, "jira", 2),
+				),
+			},
+		},
+	})
+}
+
+// A configuration of a type the provider does not support must not break Read of other configurations. Today the
+// API fails the whole list for OAuth configurations instead; this covers types that a later API version returns.
+func TestUnitIntegrationConfiguration_JiraSkipsUnknownTypes(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	fake.seed("jira", map[string]any{"alias": "other", "isDefault": true, "type": "SOME_FUTURE_TYPE", "host": "https://jira.invalid"})
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: jiraUnit(url, "bot@acme.invalid", `{ cloud = { subdomain = "acme", base_url = "atlassian.net" } }`),
+			Check:  resource.TestCheckResourceAttr(unitResourceName, "is_default", "false"),
+		}},
+	})
+}
+
+func TestUnitIntegrationConfiguration_JiraVariantValidation(t *testing.T) {
+	_, url := newFakeCortexApi(t)
+	for name, jira := range map[string]string{
+		"no variant":   `{}`,
+		"two variants": `{ cloud = { subdomain = "acme", base_url = "atlassian.net" }, on_prem = { host = "https://jira.invalid" } }`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{{
+					Config:      jiraUnit(url, "bot", jira),
+					ExpectError: regexp.MustCompile(`Invalid Attribute Combination`),
+				}},
+			})
+		})
+	}
+}
+
+// The API fills frontendHost from host when it is not set. The testing framework fails a step whose plan after apply
+// is not empty, so this also proves that frontend_host shows no permanent diff.
+func TestUnitIntegrationConfiguration_JiraOnPremFrontendHostDefault(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: jiraUnit(url, "bot", `{ on_prem = { host = "https://jira.invalid" } }`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "jira.on_prem.frontend_host", "https://jira.invalid"),
+					checkFake(fake, "jira", "jira", "frontendHost", "https://jira.invalid"),
+				),
+			},
+			// A frontend_host set in the configuration differs from the stored one, so it replaces the configuration.
+			{
+				Config: jiraUnit(url, "bot", `{ on_prem = { host = "https://jira.invalid", frontend_host = "https://links.invalid" } }`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "jira", "jira", "frontendHost", "https://links.invalid"),
+					checkCreates(fake, "jira", 2),
+				),
+			},
+		},
+	})
+}
+
+// The API ignores the email on update for cloud_scoped, so a new username replaces the configuration.
+func TestUnitIntegrationConfiguration_JiraCloudScopedUsernameReplaces(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	scoped := `{ cloud_scoped = { subdomain = "acme", cloud_id = "cloud-123" } }`
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: jiraUnit(url, "bot@acme.invalid", scoped)},
+			{
+				Config: jiraUnit(url, "other@acme.invalid", scoped),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "jira", "jira", "email", "other@acme.invalid"),
+					checkCreates(fake, "jira", 2),
+				),
+			},
+		},
+	})
+}
+
+// The API never returns cloudId, so it is null after an import. The next apply adopts the configured value in place
+// instead of replacing the configuration.
+func TestUnitIntegrationConfiguration_JiraCloudScopedImportKeepsConfiguration(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	fake.seed("jira", map[string]any{"alias": "jira", "isDefault": true, "type": "CLOUD_SCOPED", "subdomain": "acme",
+		"baseUrl": "api.atlassian.com/ex/jira", "cloudId": "cloud-123", "email": "bot@acme.invalid", "apiToken": "fake-token-a1b2"})
+	scoped := jiraUnit(url, "bot@acme.invalid", `{ cloud_scoped = { subdomain = "acme", cloud_id = "cloud-123" } }`)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:             scoped,
+				ResourceName:       unitResourceName,
+				ImportState:        true,
+				ImportStateId:      "jira/jira",
+				ImportStatePersist: true,
+			},
+			{
+				Config: scoped,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "jira.cloud_scoped.cloud_id", "cloud-123"),
+					checkCreates(fake, "jira", 0),
+				),
+			},
+		},
+	})
+}
+
+// A host change replaces the configuration. With frontend_host not set, the new configuration must get the new host.
+func TestUnitIntegrationConfiguration_JiraHostChangeResetsFrontendHost(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: jiraUnit(url, "bot", `{ on_prem = { host = "https://a.invalid" } }`)},
+			{
+				Config: jiraUnit(url, "bot", `{ on_prem = { host = "https://b.invalid" } }`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "jira", "jira", "frontendHost", "https://b.invalid"),
+					resource.TestCheckResourceAttr(unitResourceName, "jira.on_prem.frontend_host", "https://b.invalid"),
+					checkCreates(fake, "jira", 2),
+				),
+			},
+		},
+	})
+}
+
+// Values unknown until apply can change a Jira field that the API ignores on update, so the plan must replace an
+// existing configuration: an unknown jira block (here the on_prem host), and unknown credentials of a cloud_scoped
+// configuration (the email).
+func TestUnitIntegrationConfiguration_JiraUnknownValues(t *testing.T) {
+	for name, tc := range map[string]struct {
+		config func(v string) string
+		field  string
+	}{
+		"settings": {
+			config: func(host string) string {
+				return fmt.Sprintf(`
+resource "terraform_data" "upstream" {
+  input = { on_prem = { host = %q } }
+}
+
+resource "cortex_integration_configuration" "test" {
+  alias       = "jira"
+  credentials = { basic = { username = "bot", password = "fake-token-a1b2" } }
+  jira        = terraform_data.upstream.output
+}`, host)
+			},
+			field: "host",
+		},
+		"cloud_scoped credentials": {
+			config: func(email string) string {
+				return fmt.Sprintf(`
+resource "terraform_data" "upstream" {
+  input = { basic = { username = %q, password = "fake-token-a1b2" } }
+}
+
+resource "cortex_integration_configuration" "test" {
+  alias       = "jira"
+  credentials = terraform_data.upstream.output
+  jira        = { cloud_scoped = { subdomain = "acme", cloud_id = "cloud-123" } }
+}`, email)
+			},
+			field: "email",
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			fake, url := newFakeCortexApi(t)
+			first, second := "https://jira.invalid", "https://jira2.invalid"
+			if tc.field == "email" {
+				first, second = "bot@acme.invalid", "bot2@acme.invalid"
+			}
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config: unitConfig(url, tc.config(first)),
+						Check:  checkFake(fake, "jira", "jira", tc.field, first),
+					},
+					{
+						Config: unitConfig(url, tc.config(second)),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							checkFake(fake, "jira", "jira", tc.field, second),
+							checkCreates(fake, "jira", 2),
+						),
+					},
+				},
+			})
+		})
+	}
+}
+
+// The API ignores the email of a cloud_scoped configuration on update. Read stores the email from the API even right
+// after an import, so a new email in the first apply after the import replaces the configuration.
+func TestUnitIntegrationConfiguration_JiraCloudScopedEmailChangeAfterImport(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	fake.seed("jira", map[string]any{"alias": "jira", "isDefault": true, "type": "CLOUD_SCOPED", "subdomain": "acme",
+		"baseUrl": "api.atlassian.com/ex/jira", "cloudId": "cloud-123", "email": "bot@acme.invalid", "apiToken": "fake-token-a1b2"})
+	settings := `{ cloud_scoped = { subdomain = "acme", cloud_id = "cloud-123" } }`
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:             jiraUnit(url, "bot@acme.invalid", settings),
+				ResourceName:       unitResourceName,
+				ImportState:        true,
+				ImportStateId:      "jira/jira",
+				ImportStatePersist: true,
+			},
+			{
+				Config: jiraUnit(url, "bot2@acme.invalid", settings),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "jira", "jira", "email", "bot2@acme.invalid"),
+					resource.TestCheckResourceAttr(unitResourceName, "credentials.basic.username", "bot2@acme.invalid"),
+					checkCreates(fake, "jira", 1),
+				),
+			},
+		},
+	})
+}

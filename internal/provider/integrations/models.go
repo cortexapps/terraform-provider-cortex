@@ -97,6 +97,37 @@ func decodeCredentials(ctx context.Context, obj types.Object) (c *credentialsMod
 	return c, true, diags
 }
 
+// kindWithParts returns the credential kind that has every named part, or "" when no kind has them all.
+func kindWithParts(parts map[string]string) credentialKind {
+	for _, kind := range []credentialKind{credentialToken, credentialBasic, credentialKeyPair} {
+		has := map[string]bool{}
+		for _, p := range credentialParts[kind] {
+			has[p.name] = true
+		}
+		all := true
+		for name := range parts {
+			all = all && has[name]
+		}
+		if all {
+			return kind
+		}
+	}
+	return ""
+}
+
+// emptyCredentials returns a model of the kind with every part null, or nil for an unknown kind.
+func emptyCredentials(kind credentialKind) *credentialsModel {
+	switch kind {
+	case credentialToken:
+		return &credentialsModel{Token: &tokenCredentialModel{Value: types.StringNull()}}
+	case credentialBasic:
+		return &credentialsModel{Basic: &basicCredentialModel{Username: types.StringNull(), Password: types.StringNull()}}
+	case credentialKeyPair:
+		return &credentialsModel{KeyPair: &keyPairCredentialModel{Key: types.StringNull(), Secret: types.StringNull()}}
+	}
+	return nil
+}
+
 // object converts the model back to the credentials object. A nil model gives a null object.
 func (c *credentialsModel) object(ctx context.Context) (types.Object, diag.Diagnostics) {
 	if c == nil {
@@ -297,6 +328,7 @@ type integrationConfigurationModel struct {
 	Datadog             types.Object `tfsdk:"datadog"`
 	Gitlab              types.Object `tfsdk:"gitlab"`
 	IncidentIo          types.Object `tfsdk:"incident_io"`
+	Jira                types.Object `tfsdk:"jira"`
 	PagerDuty           types.Object `tfsdk:"pagerduty"`
 }
 
@@ -309,6 +341,8 @@ func (m *integrationConfigurationModel) settings(name string) *types.Object {
 		return &m.Gitlab
 	case "incident_io":
 		return &m.IncidentIo
+	case "jira":
+		return &m.Jira
 	case "pagerduty":
 		return &m.PagerDuty
 	}

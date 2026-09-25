@@ -32,6 +32,7 @@ type configurationState struct {
 	Alias     string            // multi-instance only
 	IsDefault bool              // multi-instance only
 	Settings  types.Object      // the settings block
+	Readable  map[string]string // credential parts the API returns, for example "username"
 	LastFour  map[string]string // secret credential part -> last four characters
 }
 
@@ -60,6 +61,13 @@ type multiInstanceDefinition interface {
 	Delete(ctx context.Context, c *cortex.HttpClient, alias string) error
 }
 
+// credentialsReplacer is an optional hook for definitions whose API cannot change some credential parts in place for
+// some settings. A true result replaces the configuration. plan is nil when the credentials are unknown until apply;
+// the hook must then return true if the unknown value can change such a part.
+type credentialsReplacer interface {
+	CredentialsRequireReplace(ctx context.Context, settings types.Object, plan *credentialsModel, state *credentialsModel) (bool, diag.Diagnostics)
+}
+
 // singleInstanceDefinition is an integration with at most one configuration per tenant.
 type singleInstanceDefinition interface {
 	integrationDefinition
@@ -75,6 +83,7 @@ var integrationDefinitions = []integrationDefinition{
 	datadogDefinition{},
 	gitlabDefinition{},
 	incidentIoDefinition{},
+	jiraDefinition{},
 	pagerDutyDefinition{},
 }
 
