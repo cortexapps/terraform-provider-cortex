@@ -21,9 +21,9 @@ import (
 // jiraDefinition maps credentials.basic to email and apiToken (cloud variants) or username and password (on-prem).
 // The variant sets the API "type". Every state refresh (create, read, and update) copies the email or username that
 // the API returns into state, also right after an import. The API never returns cloudId, so the refresh keeps it
-// from state. The API ignores host, frontendHost, and
-// cloudId on update, and the email of a cloud_scoped configuration, so a change to one of them replaces the
-// configuration. On create, the API sets frontendHost to host when it is not set.
+// from state. The API ignores host, frontendHost, and cloudId on update, and the email of a cloud_scoped
+// configuration, so a change to one of them replaces the configuration. On create, the API sets frontendHost to host
+// when it is not set.
 type jiraDefinition struct{}
 
 type jiraSettingsModel struct {
