@@ -15,7 +15,7 @@ import (
 )
 
 // datadogDefinition maps credentials.key_pair to apiKey (key) and appKey (secret). The public update endpoint can
-// change only environments, alias, and the default.
+// change every field in place, but it cannot remove a set custom subdomain.
 type datadogDefinition struct{}
 
 type datadogSettingsModel struct {
