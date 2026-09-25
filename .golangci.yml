@@ -23,6 +23,11 @@ linters:
     - unparam
     - unused
   settings:
+    govet:
+      # v2 adds these analyzers to the govet defaults. v1 did not run them.
+      disable:
+        - inline
+        - hostport
     staticcheck:
       # v2 merged gosimple and stylecheck into staticcheck. Keep the v1 set
       # (SA and S checks): stylecheck and quickfix were not enabled before.
