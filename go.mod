@@ -1,6 +1,6 @@
 module github.com/cortexapps/terraform-provider-cortex
 
-go 1.24.1
+go 1.25.0
 
 require (
 	github.com/dghubble/sling v1.4.2
@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/terraform-plugin-framework v1.17.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.19.0
 	github.com/hashicorp/terraform-plugin-go v0.29.0
-	github.com/hashicorp/terraform-plugin-log v0.10.0
+	github.com/hashicorp/terraform-plugin-log v0.11.0
 	github.com/hashicorp/terraform-plugin-testing v1.14.0
 	github.com/life4/genesis v1.10.3
 	github.com/motemen/go-loghttp v0.0.0-20231107055348-29ae44b293f4
