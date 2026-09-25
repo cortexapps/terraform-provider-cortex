@@ -44,8 +44,8 @@ linters:
       - legacy
       - std-error-handling
     # v1 also excluded vendor and testdata. ./... never loads those
-    # directories, so they need no entry here.
-    paths:
+    # directories, so they need no entry here. The formatters reuse this list.
+    paths: &excluded-paths
       - (^|/)third_party($|/)
       - (^|/)builtin($|/)
       - (^|/)examples($|/)
@@ -57,8 +57,4 @@ formatters:
     - gofmt
   exclusions:
     generated: lax
-    paths:
-      - (^|/)third_party($|/)
-      - (^|/)builtin($|/)
-      - (^|/)examples($|/)
-      - (^|/)Godeps($|/)
+    paths: *excluded-paths
