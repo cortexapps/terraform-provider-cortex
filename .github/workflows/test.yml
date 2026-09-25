@@ -80,10 +80,15 @@ jobs:
   # tests use shared, static resource tags against the one tenant — so this job
   # only runs on pushes to main and same-repo PRs, and is serialized repo-wide
   # via the concurrency group below. Fork PRs are verified after merge to main.
+  # Dependabot runs get only Dependabot secrets, not Actions secrets, so the
+  # token is empty there. Skip those runs too; main verifies them after merge.
+  # This applies to any event Dependabot triggers, including push.
   acceptance-test:
     name: Terraform Provider Acceptance Tests
     needs: [build, test]
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
