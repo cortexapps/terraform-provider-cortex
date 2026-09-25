@@ -31,7 +31,6 @@ func (datadogDefinition) Title() string { return "Datadog" }
 func (datadogDefinition) CredentialKinds() []credentialKind {
 	return []credentialKind{credentialKeyPair}
 }
-func (datadogDefinition) CredentialsUpdatable() bool { return true }
 
 func (datadogDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 	return schema.SingleNestedAttribute{

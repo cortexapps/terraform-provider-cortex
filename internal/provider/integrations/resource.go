@@ -263,9 +263,6 @@ func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReques
 	case !known:
 		// The credentials come from a value that is unknown until apply, so they can change.
 		credentialsChanged = true
-		if !def.CredentialsUpdatable() {
-			resp.RequiresReplace = append(resp.RequiresReplace, path.Root("credentials"))
-		}
 	case stateCredentials != nil && planCredentials != nil && stateCredentials.kind() != planCredentials.kind():
 		credentialsChanged = true
 		resp.RequiresReplace = append(resp.RequiresReplace, path.Root("credentials"))
@@ -284,9 +281,6 @@ func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReques
 			if secretChanged(statePart, *planCredentials.part(p.name), want, ok) {
 				credentialsChanged = true
 			}
-		}
-		if credentialsChanged && !def.CredentialsUpdatable() {
-			resp.RequiresReplace = append(resp.RequiresReplace, path.Root("credentials"))
 		}
 	}
 	if !credentialsChanged {

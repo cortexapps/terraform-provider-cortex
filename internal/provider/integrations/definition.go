@@ -43,8 +43,6 @@ type integrationDefinition interface {
 	// Title is the name in messages, for example "Datadog".
 	Title() string
 	CredentialKinds() []credentialKind
-	// CredentialsUpdatable is false when the API cannot change credentials in place, so a change replaces.
-	CredentialsUpdatable() bool
 	SettingsAttribute() schema.SingleNestedAttribute
 	// SettingsRequireReplace tells if a settings change needs a new configuration. When settingsUnknown is true, it
 	// must return true if the unknown block can change a field that needs a new configuration.
