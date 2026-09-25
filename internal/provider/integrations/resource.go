@@ -615,6 +615,11 @@ func applyState(ctx context.Context, m *integrationConfigurationModel, def integ
 	if len(st.Readable) > 0 {
 		credentials, _, d := decodeCredentials(ctx, m.Credentials)
 		diags.Append(d...)
+		// Right after an import the state has no credentials. Store the parts that the API returns, so the plan
+		// compares against them; the secrets stay null until the next apply.
+		if credentials == nil && m.Credentials.IsNull() {
+			credentials = emptyCredentials(kindWithParts(st.Readable))
+		}
 		if credentials != nil {
 			for name, v := range st.Readable {
 				if p := credentials.part(name); p != nil {

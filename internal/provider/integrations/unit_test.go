@@ -1028,3 +1028,33 @@ resource "cortex_integration_configuration" "test" {
 		})
 	}
 }
+
+// The API ignores the email of a cloud_scoped configuration on update. Read stores the email from the API even right
+// after an import, so a new email in the first apply after the import replaces the configuration.
+func TestUnitIntegrationConfiguration_JiraCloudScopedEmailChangeAfterImport(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	fake.seed("jira", map[string]any{"alias": "jira", "isDefault": true, "type": "CLOUD_SCOPED", "subdomain": "acme",
+		"baseUrl": "api.atlassian.com/ex/jira", "cloudId": "cloud-123", "email": "bot@acme.invalid", "apiToken": "fake-token-a1b2"})
+	settings := `{ cloud_scoped = { subdomain = "acme", cloud_id = "cloud-123" } }`
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:             jiraUnit(url, "bot@acme.invalid", settings),
+				ResourceName:       unitResourceName,
+				ImportState:        true,
+				ImportStateId:      "jira/jira",
+				ImportStatePersist: true,
+			},
+			{
+				Config: jiraUnit(url, "bot2@acme.invalid", settings),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "jira", "jira", "email", "bot2@acme.invalid"),
+					resource.TestCheckResourceAttr(unitResourceName, "credentials.basic.username", "bot2@acme.invalid"),
+					checkCreates(fake, "jira", 1),
+				),
+			},
+		},
+	})
+}
