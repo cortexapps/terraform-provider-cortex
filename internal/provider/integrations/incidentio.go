@@ -21,7 +21,6 @@ func (incidentIoDefinition) Title() string { return "incident.io" }
 func (incidentIoDefinition) CredentialKinds() []credentialKind {
 	return []credentialKind{credentialToken}
 }
-func (incidentIoDefinition) CredentialsUpdatable() bool { return true }
 
 func (incidentIoDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 	return schema.SingleNestedAttribute{

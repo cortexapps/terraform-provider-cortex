@@ -34,7 +34,6 @@ func (gitlabDefinition) Title() string { return "GitLab" }
 func (gitlabDefinition) CredentialKinds() []credentialKind {
 	return []credentialKind{credentialToken}
 }
-func (gitlabDefinition) CredentialsUpdatable() bool { return true }
 
 func (gitlabDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 	return schema.SingleNestedAttribute{
