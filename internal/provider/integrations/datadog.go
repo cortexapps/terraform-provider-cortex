@@ -31,13 +31,13 @@ func (datadogDefinition) Title() string { return "Datadog" }
 func (datadogDefinition) CredentialKinds() []credentialKind {
 	return []credentialKind{credentialKeyPair}
 }
-func (datadogDefinition) CredentialsUpdatable() bool { return false }
+func (datadogDefinition) CredentialsUpdatable() bool { return true }
 
 func (datadogDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 	return schema.SingleNestedAttribute{
 		MarkdownDescription: "Datadog settings. Use `credentials.key_pair`: `key` is the Datadog API key and `secret` is " +
-			"the application key. The Cortex API cannot change the keys, `region`, or `custom_subdomain` in place, so a " +
-			"change to one of them replaces the configuration.",
+			"the application key. A change of the keys, `region`, or `custom_subdomain` updates the configuration in place. " +
+			"The Cortex API cannot remove a custom subdomain, so removing `custom_subdomain` replaces the configuration.",
 		Optional: true,
 		Attributes: map[string]schema.Attribute{
 			"region": schema.StringAttribute{
@@ -61,15 +61,21 @@ func (datadogDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 	}
 }
 
+// SettingsRequireReplace replaces only to remove a set custom subdomain: the API keeps the current custom subdomain
+// when an update omits it.
 func (datadogDefinition) SettingsRequireReplace(ctx context.Context, plan types.Object, state types.Object) (bool, diag.Diagnostics) {
 	if settingsUnknown(plan, state) {
-		return true, nil
+		s, err := settingsFrom[datadogSettingsModel](ctx, state)
+		if err != nil {
+			return false, diag.Diagnostics{diag.NewErrorDiagnostic("Invalid Datadog settings", err.Error())}
+		}
+		return !s.CustomSubdomain.IsNull(), nil
 	}
 	p, s, diags := asSettings[datadogSettingsModel](ctx, plan, state)
 	if p == nil {
 		return false, diags
 	}
-	return !p.Region.Equal(s.Region) || !p.CustomSubdomain.Equal(s.CustomSubdomain), diags
+	return !s.CustomSubdomain.IsNull() && (p.CustomSubdomain.IsNull() || p.CustomSubdomain.IsUnknown()), diags
 }
 
 func (d datadogDefinition) List(ctx context.Context, c *cortex.HttpClient, prior types.Object) ([]configurationState, error) {
@@ -109,14 +115,18 @@ func (d datadogDefinition) Create(ctx context.Context, c *cortex.HttpClient, in 
 }
 
 func (d datadogDefinition) Update(ctx context.Context, c *cortex.HttpClient, currentAlias string, in configurationInput) (configurationState, error) {
-	_, environments, err := d.settings(ctx, in)
+	s, environments, err := d.settings(ctx, in)
 	if err != nil {
 		return configurationState{}, err
 	}
 	cfg, err := api.Datadog(c).Update(ctx, currentAlias, in.Alias, api.UpdateDatadogConfigurationRequest{
-		Alias:        in.Alias,
-		IsDefault:    in.IsDefault,
-		Environments: environments,
+		Alias:           in.Alias,
+		IsDefault:       in.IsDefault,
+		Environments:    environments,
+		ApiKey:          in.Credentials.Parts["key"],
+		AppKey:          in.Credentials.Parts["secret"],
+		Region:          s.Region.ValueString(),
+		CustomSubdomain: s.CustomSubdomain.ValueString(),
 	})
 	if err != nil {
 		return configurationState{}, err

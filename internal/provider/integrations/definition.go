@@ -46,8 +46,8 @@ type integrationDefinition interface {
 	// CredentialsUpdatable is false when the API cannot change credentials in place, so a change replaces.
 	CredentialsUpdatable() bool
 	SettingsAttribute() schema.SingleNestedAttribute
-	// SettingsRequireReplace tells if a settings change needs a new configuration. When settingsUnknown is true, a
-	// definition with a field that needs a new configuration must return true.
+	// SettingsRequireReplace tells if a settings change needs a new configuration. When settingsUnknown is true, it
+	// must return true if the unknown block can change a field that needs a new configuration.
 	SettingsRequireReplace(ctx context.Context, plan types.Object, state types.Object) (bool, diag.Diagnostics)
 }
 

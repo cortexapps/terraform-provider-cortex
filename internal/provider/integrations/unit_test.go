@@ -80,21 +80,22 @@ func TestUnitIntegrationConfiguration_DatadogLifecycle(t *testing.T) {
 					checkCreates(fake, "datadog", 1),
 				),
 			},
-			// A new key replaces the configuration, because the API cannot update Datadog keys.
+			// A new key updates the configuration in place.
 			{
 				Config: datadogUnit(url, "dd-renamed", "fake-api-key-e5f6", ""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(unitResourceName, "credentials_last_four.key", "e5f6"),
-					checkCreates(fake, "datadog", 2),
+					checkFake(fake, "datadog", "dd-renamed", "apiKey", "fake-api-key-e5f6"),
+					checkCreates(fake, "datadog", 1),
 				),
 			},
-			// A key rotated outside Terraform shows as a change and replaces the configuration again.
+			// A key rotated outside Terraform shows as a change, and the update restores the configured key.
 			{
 				PreConfig: func() { fake.setField("datadog", "dd-renamed", "apiKey", "rotated-outside-9999") },
 				Config:    datadogUnit(url, "dd-renamed", "fake-api-key-e5f6", ""),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkFake(fake, "datadog", "dd-renamed", "apiKey", "fake-api-key-e5f6"),
-					checkCreates(fake, "datadog", 3),
+					checkCreates(fake, "datadog", 1),
 				),
 			},
 		},
@@ -259,16 +260,21 @@ func TestUnitIntegrationConfiguration_ImportIdErrors(t *testing.T) {
 	}
 }
 
-// The API cannot change region or custom_subdomain in place, so a change to one of them replaces the configuration.
-func TestUnitIntegrationConfiguration_DatadogSettingsReplace(t *testing.T) {
+// A change of region or custom_subdomain updates the configuration in place. The API keeps the current custom
+// subdomain when an update omits it, so only a new configuration can remove it.
+func TestUnitIntegrationConfiguration_DatadogSettingsUpdate(t *testing.T) {
 	fake, url := newFakeCortexApi(t)
 	withSettings := func(region, subdomain string) string {
+		settings := fmt.Sprintf("{ region = %q }", region)
+		if subdomain != "" {
+			settings = fmt.Sprintf("{ region = %q, custom_subdomain = %q }", region, subdomain)
+		}
 		return unitConfig(url, fmt.Sprintf(`
 resource "cortex_integration_configuration" "test" {
   alias       = "dd"
   credentials = { key_pair = { key = "fake-api-key-a1b2", secret = "fake-app-key-c3d4" } }
-  datadog     = { region = %q, custom_subdomain = %q }
-}`, region, subdomain))
+  datadog     = %s
+}`, settings))
 	}
 
 	resource.UnitTest(t, resource.TestCase{
@@ -285,14 +291,22 @@ resource "cortex_integration_configuration" "test" {
 				Config: withSettings("EU1", "acme"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkFake(fake, "datadog", "dd", "region", "EU1"),
-					checkCreates(fake, "datadog", 2),
+					checkCreates(fake, "datadog", 1),
 				),
 			},
 			{
 				Config: withSettings("EU1", "acme2"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkFake(fake, "datadog", "dd", "customSubdomain", "acme2"),
-					checkCreates(fake, "datadog", 3),
+					checkCreates(fake, "datadog", 1),
+				),
+			},
+			{
+				Config: withSettings("EU1", ""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr(unitResourceName, "datadog.custom_subdomain"),
+					checkFake(fake, "datadog", "dd", "customSubdomain", nil),
+					checkCreates(fake, "datadog", 2),
 				),
 			},
 		},
@@ -368,13 +382,12 @@ resource "cortex_integration_configuration" "test" {
 							checkFake(fake, "datadog", "dd", "apiKey", "fake-api-key-a1b2"),
 						),
 					},
-					// Datadog cannot change keys in place, so the unknown credentials replace the configuration.
 					{
 						Config: withKey("fake-api-key-e5f6"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr(unitResourceName, "credentials_last_four.key", "e5f6"),
 							checkFake(fake, "datadog", "dd", "apiKey", "fake-api-key-e5f6"),
-							checkCreates(fake, "datadog", 2),
+							checkCreates(fake, "datadog", 1),
 						),
 					},
 				},
@@ -385,36 +398,47 @@ resource "cortex_integration_configuration" "test" {
 
 // Settings can come from another resource, so the whole settings object is unknown until apply. For an existing
 // configuration the plan must then assume that a field that needs a new configuration changes; else the apply finds
-// the change and Terraform fails on an inconsistent final plan.
+// the change and Terraform fails on an inconsistent final plan. For Datadog, only removing a set custom subdomain
+// needs a new configuration.
 func TestUnitIntegrationConfiguration_UnknownSettings(t *testing.T) {
-	fake, url := newFakeCortexApi(t)
-	withRegion := func(region string) string {
-		return unitConfig(url, fmt.Sprintf(`
+	for name, tc := range map[string]struct {
+		settings string
+		creates  int
+	}{
+		"custom subdomain set":     {settings: `{ region = %q, environments = ["prod"], custom_subdomain = "acme" }`, creates: 2},
+		"custom subdomain not set": {settings: `{ region = %q, environments = ["prod"] }`, creates: 1},
+	} {
+		t.Run(name, func(t *testing.T) {
+			fake, url := newFakeCortexApi(t)
+			withRegion := func(region string) string {
+				return unitConfig(url, fmt.Sprintf(`
 resource "terraform_data" "settings" {
-  input = { region = %q, environments = ["prod"], custom_subdomain = "acme" }
+  input = %s
 }
 
 resource "cortex_integration_configuration" "test" {
   alias       = "dd"
   credentials = { key_pair = { key = "fake-api-key-a1b2", secret = "fake-app-key-c3d4" } }
   datadog     = terraform_data.settings.output
-}`, region))
-	}
+}`, fmt.Sprintf(tc.settings, region)))
+			}
 
-	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: withRegion("US1"),
-				Check:  checkFake(fake, "datadog", "dd", "region", "US1"),
-			},
-			{
-				Config: withRegion("EU1"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					checkFake(fake, "datadog", "dd", "region", "EU1"),
-					checkCreates(fake, "datadog", 2),
-				),
-			},
-		},
-	})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config: withRegion("US1"),
+						Check:  checkFake(fake, "datadog", "dd", "region", "US1"),
+					},
+					{
+						Config: withRegion("EU1"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							checkFake(fake, "datadog", "dd", "region", "EU1"),
+							checkCreates(fake, "datadog", tc.creates),
+						),
+					},
+				},
+			})
+		})
+	}
 }

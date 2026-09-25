@@ -46,7 +46,7 @@ resource "cortex_integration_configuration" "datadog" {
 ### Optional
 
 - `alias` (String) Unique alias of the configuration. Required for integrations that support several configurations. A change renames the configuration in place.
-- `datadog` (Attributes) Datadog settings. Use `credentials.key_pair`: `key` is the Datadog API key and `secret` is the application key. The Cortex API cannot change the keys, `region`, or `custom_subdomain` in place, so a change to one of them replaces the configuration. (see [below for nested schema](#nestedatt--datadog))
+- `datadog` (Attributes) Datadog settings. Use `credentials.key_pair`: `key` is the Datadog API key and `secret` is the application key. A change of the keys, `region`, or `custom_subdomain` updates the configuration in place. The Cortex API cannot remove a custom subdomain, so removing `custom_subdomain` replaces the configuration. (see [below for nested schema](#nestedatt--datadog))
 - `is_default` (Boolean) Whether this is the default configuration of its integration. When not set, Terraform keeps the value from Cortex. Cortex makes the first configuration the default, and does not allow setting the current default to `false`: set `is_default = true` on another configuration and remove `is_default` from this one, apply, and then set it to `false` if necessary. Set `is_default = true` on one configuration per integration only.
 
 ### Read-Only
@@ -114,6 +114,6 @@ The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/c
 terraform import cortex_integration_configuration.datadog datadog/datadog-prod
 
 # The Cortex API never returns secrets, so set credentials in the configuration. Also set settings that the API
-# cannot change in place (for example the Datadog region) to the values in Cortex, or the next apply replaces the
-# configuration.
+# cannot change in place (for example a Datadog custom subdomain) to the values in Cortex, or the next apply replaces
+# the configuration.
 ```
