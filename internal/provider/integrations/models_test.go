@@ -181,3 +181,12 @@ func TestDecodeCredentials(t *testing.T) {
 	assert.False(t, diags.HasError())
 	assert.True(t, back.IsNull())
 }
+
+func TestSettingsUnknown(t *testing.T) {
+	attrTypes := map[string]attr.Type{"region": types.StringType}
+	known := types.ObjectValueMust(attrTypes, map[string]attr.Value{"region": types.StringValue("US1")})
+	unknown := types.ObjectUnknown(attrTypes)
+	assert.True(t, settingsUnknown(unknown, known), "unknown plan for an existing configuration")
+	assert.False(t, settingsUnknown(unknown, types.ObjectNull(attrTypes)), "unknown plan on create")
+	assert.False(t, settingsUnknown(known, known), "known plan")
+}

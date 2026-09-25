@@ -46,7 +46,8 @@ type integrationDefinition interface {
 	// CredentialsUpdatable is false when the API cannot change credentials in place, so a change replaces.
 	CredentialsUpdatable() bool
 	SettingsAttribute() schema.SingleNestedAttribute
-	// SettingsRequireReplace tells if a settings change needs a new configuration.
+	// SettingsRequireReplace tells if a settings change needs a new configuration. When settingsUnknown is true, a
+	// definition with a field that needs a new configuration must return true.
 	SettingsRequireReplace(ctx context.Context, plan types.Object, state types.Object) (bool, diag.Diagnostics)
 }
 
@@ -153,8 +154,15 @@ func settingsObject[T any](ctx context.Context, d integrationDefinition, v T) (t
 	return obj, diagsError(diags)
 }
 
+// settingsUnknown tells if the planned settings block is unknown for an existing configuration, for example because
+// it comes from another resource. The apply can then find a change to any field, so a replace check must assume one.
+func settingsUnknown(plan types.Object, state types.Object) bool {
+	return plan.IsUnknown() && !state.IsNull() && !state.IsUnknown()
+}
+
 // asSettings converts the plan and state settings blocks for a replace check. It returns both values or neither:
-// both are nil when either block is null or unknown, so a caller only needs to check one.
+// both are nil when either block is null or unknown, so a caller only needs to check one. Check settingsUnknown
+// first: a nil result does not mean that nothing changes.
 func asSettings[T any](ctx context.Context, plan types.Object, state types.Object) (*T, *T, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	if plan.IsNull() || plan.IsUnknown() || state.IsNull() || state.IsUnknown() {

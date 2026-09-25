@@ -62,6 +62,9 @@ func (datadogDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 }
 
 func (datadogDefinition) SettingsRequireReplace(ctx context.Context, plan types.Object, state types.Object) (bool, diag.Diagnostics) {
+	if settingsUnknown(plan, state) {
+		return true, nil
+	}
 	p, s, diags := asSettings[datadogSettingsModel](ctx, plan, state)
 	if p == nil {
 		return false, diags

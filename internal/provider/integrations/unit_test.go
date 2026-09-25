@@ -382,3 +382,39 @@ resource "cortex_integration_configuration" "test" {
 		})
 	}
 }
+
+// Settings can come from another resource, so the whole settings object is unknown until apply. For an existing
+// configuration the plan must then assume that a field that needs a new configuration changes; else the apply finds
+// the change and Terraform fails on an inconsistent final plan.
+func TestUnitIntegrationConfiguration_UnknownSettings(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	withRegion := func(region string) string {
+		return unitConfig(url, fmt.Sprintf(`
+resource "terraform_data" "settings" {
+  input = { region = %q, environments = ["prod"], custom_subdomain = "acme" }
+}
+
+resource "cortex_integration_configuration" "test" {
+  alias       = "dd"
+  credentials = { key_pair = { key = "fake-api-key-a1b2", secret = "fake-app-key-c3d4" } }
+  datadog     = terraform_data.settings.output
+}`, region))
+	}
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: withRegion("US1"),
+				Check:  checkFake(fake, "datadog", "dd", "region", "US1"),
+			},
+			{
+				Config: withRegion("EU1"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "datadog", "dd", "region", "EU1"),
+					checkCreates(fake, "datadog", 2),
+				),
+			},
+		},
+	})
+}
