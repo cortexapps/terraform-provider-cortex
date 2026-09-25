@@ -6,7 +6,7 @@ description: |-
   Integration configuration. Set exactly one settings block to pick the integration (datadog), and one credential kind in credentials.
   | Integration | Credential kind | Mapping to the Cortex API |
   |---|---|---|
-  | datadog | key_pair | key = API key, secret = application key |
+  | `datadog` | `key_pair` | `key` = API key, `secret` = application key |
   The Cortex API never returns secrets. Terraform detects a secret changed outside Terraform through credentials_last_four. Cortex does not check credentials when it saves a configuration, so invalid credentials do not fail the apply. Cortex does not allow deleting the default configuration of an integration while other configurations exist.
 ---
 
@@ -106,6 +106,8 @@ Optional:
 ## Import
 
 Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
 
 ```shell
 # Multi-instance integrations: <integration>/<alias>
