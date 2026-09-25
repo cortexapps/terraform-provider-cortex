@@ -3,21 +3,25 @@
 page_title: "cortex_integration_configuration Resource - terraform-provider-cortex"
 subcategory: ""
 description: |-
-  Integration configuration. Set exactly one settings block to pick the integration (datadog, pagerduty), and one credential kind in credentials.
+  Integration configuration. Set exactly one settings block to pick the integration (datadog, gitlab, incident_io, pagerduty), and one credential kind in credentials.
   | Integration | Credential kind | Mapping to the Cortex API |
   |---|---|---|
   | `datadog` | `key_pair` | `key` = API key, `secret` = application key |
+  | `gitlab` | `token` | `value` = personal access token |
+  | `incident_io` | `token` | `value` = API key |
   | `pagerduty` | `token` | `value` = API token |
   The Cortex API never returns secrets. Terraform detects a secret changed outside Terraform through credentials_last_four. Cortex does not check credentials when it saves a configuration, so invalid credentials do not fail the apply. Cortex does not allow deleting the default configuration of an integration while other configurations exist.
 ---
 
 # cortex_integration_configuration (Resource)
 
-Integration configuration. Set exactly one settings block to pick the integration (`datadog`, `pagerduty`), and one credential kind in `credentials`.
+Integration configuration. Set exactly one settings block to pick the integration (`datadog`, `gitlab`, `incident_io`, `pagerduty`), and one credential kind in `credentials`.
 
 | Integration | Credential kind | Mapping to the Cortex API |
 |---|---|---|
 | `datadog` | `key_pair` | `key` = API key, `secret` = application key |
+| `gitlab` | `token` | `value` = personal access token |
+| `incident_io` | `token` | `value` = API key |
 | `pagerduty` | `token` | `value` = API token |
 
 The Cortex API never returns secrets. Terraform detects a secret changed outside Terraform through `credentials_last_four`. Cortex does not check credentials when it saves a configuration, so invalid credentials do not fail the apply. Cortex does not allow deleting the default configuration of an integration while other configurations exist.
@@ -37,6 +41,21 @@ resource "cortex_integration_configuration" "datadog" {
   }
 }
 
+resource "cortex_integration_configuration" "gitlab" {
+  alias       = "gitlab"
+  credentials = { token = { value = var.gitlab_token } }
+  gitlab = {
+    host        = "https://gitlab.acme.internal"
+    group_names = ["platform"]
+  }
+}
+
+resource "cortex_integration_configuration" "incident_io" {
+  alias       = "incident-io"
+  credentials = { token = { value = var.incident_io_api_key } }
+  incident_io = {}
+}
+
 resource "cortex_integration_configuration" "pagerduty" {
   credentials = { token = { value = var.pagerduty_token } }
   pagerduty   = { is_token_readonly = true }
@@ -54,6 +73,8 @@ resource "cortex_integration_configuration" "pagerduty" {
 
 - `alias` (String) Unique alias of the configuration. Required for integrations that support several configurations. Not allowed for integrations with one configuration per tenant, such as PagerDuty. A change renames the configuration in place.
 - `datadog` (Attributes) Datadog settings. Use `credentials.key_pair`: `key` is the Datadog API key and `secret` is the application key. A change of the keys, `region`, or `custom_subdomain` updates the configuration in place. The Cortex API cannot remove a custom subdomain, so removing `custom_subdomain` replaces the configuration. (see [below for nested schema](#nestedatt--datadog))
+- `gitlab` (Attributes) GitLab settings. Use `credentials.token`: `value` is the GitLab personal access token. The Cortex API cannot change `host` in place, so a change replaces the configuration. (see [below for nested schema](#nestedatt--gitlab))
+- `incident_io` (Attributes) incident.io settings. incident.io has no settings, so set `incident_io = {}`. Use `credentials.token`: `value` is the incident.io API key. (see [below for nested schema](#nestedatt--incident_io))
 - `is_default` (Boolean) Whether this is the default configuration of its integration. Not allowed for integrations with one configuration per tenant. When not set, Terraform keeps the value from Cortex. Cortex makes the first configuration the default, and does not allow setting the current default to `false`: set `is_default = true` on another configuration and remove `is_default` from this one, apply, and then set it to `false` if necessary. Set `is_default = true` on one configuration per integration only.
 - `pagerduty` (Attributes) PagerDuty settings. Use `credentials.token`: `value` is the PagerDuty API token. A tenant has one PagerDuty configuration, so `alias` and `is_default` are not allowed. When Cortex already has a PagerDuty configuration, import it with ID `pagerduty`. (see [below for nested schema](#nestedatt--pagerduty))
 
@@ -112,6 +133,20 @@ Optional:
 - `environments` (List of String) Datadog environments to use. Defaults to an empty list.
 
 
+<a id="nestedatt--gitlab"></a>
+### Nested Schema for `gitlab`
+
+Optional:
+
+- `group_names` (List of String) GitLab groups to include. Defaults to an empty list. Names must not be blank.
+- `hide_personal_projects` (Boolean) Whether to hide personal projects. Defaults to `false`.
+- `host` (String) URL of a self-managed GitLab instance. Not set means gitlab.com.
+
+
+<a id="nestedatt--incident_io"></a>
+### Nested Schema for `incident_io`
+
+
 <a id="nestedatt--pagerduty"></a>
 ### Nested Schema for `pagerduty`
 
@@ -133,6 +168,6 @@ terraform import cortex_integration_configuration.datadog datadog/datadog-prod
 terraform import cortex_integration_configuration.pagerduty pagerduty
 
 # The Cortex API never returns secrets, so set credentials in the configuration. Also set settings that the API
-# cannot change in place (for example a Datadog custom subdomain) to the values in Cortex, or the next apply replaces
-# the configuration.
+# cannot change in place (for example the GitLab host or a Datadog custom subdomain) to the values in Cortex, or the
+# next apply replaces the configuration.
 ```
