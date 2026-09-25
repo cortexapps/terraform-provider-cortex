@@ -38,10 +38,10 @@ linters:
       - legacy
       - std-error-handling
     paths:
-      - third_party$
-      - builtin$
-      - examples$
-      - Godeps$
+      - (^|/)third_party($|/)
+      - (^|/)builtin($|/)
+      - (^|/)examples($|/)
+      - (^|/)Godeps($|/)
 issues:
   max-same-issues: 0
 formatters:
@@ -50,7 +50,7 @@ formatters:
   exclusions:
     generated: lax
     paths:
-      - third_party$
-      - builtin$
-      - examples$
-      - Godeps$
+      - (^|/)third_party($|/)
+      - (^|/)builtin($|/)
+      - (^|/)examples($|/)
+      - (^|/)Godeps($|/)
