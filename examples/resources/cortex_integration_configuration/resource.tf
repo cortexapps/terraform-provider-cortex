@@ -9,3 +9,8 @@ resource "cortex_integration_configuration" "datadog" {
     environments = ["prod"]
   }
 }
+
+resource "cortex_integration_configuration" "pagerduty" {
+  credentials = { token = { value = var.pagerduty_token } }
+  pagerduty   = { is_token_readonly = true }
+}
