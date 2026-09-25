@@ -62,7 +62,8 @@ type multiInstanceDefinition interface {
 }
 
 // credentialsReplacer is an optional hook for definitions whose API cannot change some credential parts in place for
-// some settings. A true result replaces the configuration.
+// some settings. A true result replaces the configuration. plan is nil when the credentials are unknown until apply;
+// the hook must then return true if the unknown value can change such a part.
 type credentialsReplacer interface {
 	CredentialsRequireReplace(ctx context.Context, settings types.Object, plan *credentialsModel, state *credentialsModel) (bool, diag.Diagnostics)
 }

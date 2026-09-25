@@ -288,6 +288,13 @@ func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReques
 	case !known:
 		// The credentials come from a value that is unknown until apply, so they can change.
 		credentialsChanged = true
+		if replacer, ok := def.(credentialsReplacer); ok {
+			replace, diags := replacer.CredentialsRequireReplace(ctx, *plan.settings(def.Name()), nil, stateCredentials)
+			resp.Diagnostics.Append(diags...)
+			if replace {
+				resp.RequiresReplace = append(resp.RequiresReplace, path.Root("credentials"))
+			}
+		}
 	case stateCredentials != nil && planCredentials != nil && stateCredentials.kind() != planCredentials.kind():
 		credentialsChanged = true
 		resp.RequiresReplace = append(resp.RequiresReplace, path.Root("credentials"))
