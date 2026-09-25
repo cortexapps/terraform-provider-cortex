@@ -10,3 +10,9 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    groups:
+      # These modules depend on each other's interfaces (for example the
+      # tfprotov5/tfprotov6 ProviderServer), so update them in one pull request.
+      terraform-plugin:
+        patterns:
+          - "github.com/hashicorp/terraform-plugin-*"
