@@ -132,4 +132,52 @@ func TestCredentialKindsAreWired(t *testing.T) {
 			assert.Equal(t, p.secret, attribute.Sensitive, "credentials.%s.%s sensitivity differs from credentialParts", kind, p.name)
 		}
 	}
+	// decodeCredentials and object use credentialsAttrTypes, so it must match the schema.
+	assert.Equal(t, types.ObjectType{AttrTypes: credentialsAttrTypes}, credentialsAttribute().GetType())
+}
+
+func TestDecodeCredentials(t *testing.T) {
+	ctx := context.Background()
+	keyPairType := types.ObjectType{AttrTypes: credentialKindAttrTypes[credentialKeyPair]}
+	credentials := func(keyPair types.Object) types.Object {
+		return types.ObjectValueMust(credentialsAttrTypes, map[string]attr.Value{
+			"token":    types.ObjectNull(credentialKindAttrTypes[credentialToken]),
+			"basic":    types.ObjectNull(credentialKindAttrTypes[credentialBasic]),
+			"key_pair": keyPair,
+		})
+	}
+
+	c, known, diags := decodeCredentials(ctx, types.ObjectNull(credentialsAttrTypes))
+	assert.False(t, diags.HasError())
+	assert.True(t, known)
+	assert.Nil(t, c)
+
+	for name, obj := range map[string]types.Object{
+		"credentials": types.ObjectUnknown(credentialsAttrTypes),
+		"kind":        credentials(types.ObjectUnknown(keyPairType.AttrTypes)),
+	} {
+		c, known, diags = decodeCredentials(ctx, obj)
+		assert.False(t, diags.HasError(), name)
+		assert.False(t, known, name)
+		assert.Nil(t, c, name)
+	}
+
+	obj := credentials(types.ObjectValueMust(keyPairType.AttrTypes, map[string]attr.Value{
+		"key": types.StringValue("k-1234"), "secret": types.StringUnknown(),
+	}))
+	c, known, diags = decodeCredentials(ctx, obj)
+	require.False(t, diags.HasError())
+	assert.True(t, known)
+	require.NotNil(t, c)
+	assert.Equal(t, credentialKeyPair, c.kind())
+	assert.True(t, c.part("secret").IsUnknown(), "an unknown part inside a known kind stays unknown")
+
+	back, diags := c.object(ctx)
+	require.False(t, diags.HasError())
+	assert.True(t, back.Equal(obj), "object must give back the decoded object")
+
+	var none *credentialsModel
+	back, diags = none.object(ctx)
+	assert.False(t, diags.HasError())
+	assert.True(t, back.IsNull())
 }

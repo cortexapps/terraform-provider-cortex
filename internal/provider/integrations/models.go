@@ -3,8 +3,10 @@ package integrations
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 /***********************************************************************************************************************
@@ -31,10 +33,92 @@ var credentialParts = map[credentialKind][]credentialPart{
 	credentialKeyPair: {{name: "key", secret: true}, {name: "secret", secret: true}},
 }
 
+// credentialsModel is the decoded credentials object. The resource model keeps the credentials as a types.Object,
+// because a Go pointer cannot hold a value that is unknown until apply. decodeCredentials builds this model once the
+// values are known, and object converts it back.
 type credentialsModel struct {
 	Token   *tokenCredentialModel   `tfsdk:"token"`
 	Basic   *basicCredentialModel   `tfsdk:"basic"`
 	KeyPair *keyPairCredentialModel `tfsdk:"key_pair"`
+}
+
+// credentialsObjectModel is the credentials object with one types.Object per kind, which can be null or unknown.
+type credentialsObjectModel struct {
+	Token   types.Object `tfsdk:"token"`
+	Basic   types.Object `tfsdk:"basic"`
+	KeyPair types.Object `tfsdk:"key_pair"`
+}
+
+var credentialKindAttrTypes = map[credentialKind]map[string]attr.Type{
+	credentialToken:   {"value": types.StringType},
+	credentialBasic:   {"username": types.StringType, "password": types.StringType},
+	credentialKeyPair: {"key": types.StringType, "secret": types.StringType},
+}
+
+var credentialsAttrTypes = map[string]attr.Type{
+	string(credentialToken):   types.ObjectType{AttrTypes: credentialKindAttrTypes[credentialToken]},
+	string(credentialBasic):   types.ObjectType{AttrTypes: credentialKindAttrTypes[credentialBasic]},
+	string(credentialKeyPair): types.ObjectType{AttrTypes: credentialKindAttrTypes[credentialKeyPair]},
+}
+
+// decodeCredentials converts the credentials object to the model. It returns a nil model when the object is null.
+// known is false, with a nil model, when the object or the object of a kind is unknown. Parts inside a known kind
+// object can still be unknown; the model keeps them as unknown strings.
+func decodeCredentials(ctx context.Context, obj types.Object) (c *credentialsModel, known bool, diags diag.Diagnostics) {
+	if obj.IsNull() {
+		return nil, true, diags
+	}
+	if obj.IsUnknown() {
+		return nil, false, diags
+	}
+	var o credentialsObjectModel
+	diags.Append(obj.As(ctx, &o, basetypes.ObjectAsOptions{})...)
+	if diags.HasError() {
+		return nil, true, diags
+	}
+	for _, kind := range []types.Object{o.Token, o.Basic, o.KeyPair} {
+		if kind.IsUnknown() {
+			return nil, false, diags
+		}
+	}
+	c = &credentialsModel{}
+	if !o.Token.IsNull() {
+		c.Token = &tokenCredentialModel{}
+		diags.Append(o.Token.As(ctx, c.Token, basetypes.ObjectAsOptions{})...)
+	}
+	if !o.Basic.IsNull() {
+		c.Basic = &basicCredentialModel{}
+		diags.Append(o.Basic.As(ctx, c.Basic, basetypes.ObjectAsOptions{})...)
+	}
+	if !o.KeyPair.IsNull() {
+		c.KeyPair = &keyPairCredentialModel{}
+		diags.Append(o.KeyPair.As(ctx, c.KeyPair, basetypes.ObjectAsOptions{})...)
+	}
+	return c, true, diags
+}
+
+// object converts the model back to the credentials object. A nil model gives a null object.
+func (c *credentialsModel) object(ctx context.Context) (types.Object, diag.Diagnostics) {
+	if c == nil {
+		return types.ObjectNull(credentialsAttrTypes), nil
+	}
+	var diags diag.Diagnostics
+	kind := func(k credentialKind, set bool, value any) types.Object {
+		t := credentialKindAttrTypes[k]
+		if !set {
+			return types.ObjectNull(t)
+		}
+		o, d := types.ObjectValueFrom(ctx, t, value)
+		diags.Append(d...)
+		return o
+	}
+	o, d := types.ObjectValueFrom(ctx, credentialsAttrTypes, credentialsObjectModel{
+		Token:   kind(credentialToken, c.Token != nil, c.Token),
+		Basic:   kind(credentialBasic, c.Basic != nil, c.Basic),
+		KeyPair: kind(credentialKeyPair, c.KeyPair != nil, c.KeyPair),
+	})
+	diags.Append(d...)
+	return o, diags
 }
 
 type tokenCredentialModel struct {
@@ -204,13 +288,13 @@ func optionalString(s string) types.String {
  **********************************************************************************************************************/
 
 type integrationConfigurationModel struct {
-	Id                  types.String      `tfsdk:"id"`
-	Integration         types.String      `tfsdk:"integration"`
-	Alias               types.String      `tfsdk:"alias"`
-	IsDefault           types.Bool        `tfsdk:"is_default"`
-	Credentials         *credentialsModel `tfsdk:"credentials"`
-	CredentialsLastFour types.Map         `tfsdk:"credentials_last_four"`
-	Datadog             types.Object      `tfsdk:"datadog"`
+	Id                  types.String `tfsdk:"id"`
+	Integration         types.String `tfsdk:"integration"`
+	Alias               types.String `tfsdk:"alias"`
+	IsDefault           types.Bool   `tfsdk:"is_default"`
+	Credentials         types.Object `tfsdk:"credentials"`
+	CredentialsLastFour types.Map    `tfsdk:"credentials_last_four"`
+	Datadog             types.Object `tfsdk:"datadog"`
 }
 
 // settings returns the settings block of the named integration. Every registered definition needs a case here.

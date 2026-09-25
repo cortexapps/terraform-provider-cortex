@@ -250,23 +250,38 @@ func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReques
 		return
 	}
 
+	stateCredentials, _, diags := decodeCredentials(ctx, state.Credentials)
+	resp.Diagnostics.Append(diags...)
+	planCredentials, known, diags := decodeCredentials(ctx, plan.Credentials)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	credentialsChanged := false
-	if state.Credentials != nil && plan.Credentials != nil && state.Credentials.kind() != plan.Credentials.kind() {
+	switch {
+	case !known:
+		// The credentials come from a value that is unknown until apply, so they can change.
+		credentialsChanged = true
+		if !def.CredentialsUpdatable() {
+			resp.RequiresReplace = append(resp.RequiresReplace, path.Root("credentials"))
+		}
+	case stateCredentials != nil && planCredentials != nil && stateCredentials.kind() != planCredentials.kind():
 		credentialsChanged = true
 		resp.RequiresReplace = append(resp.RequiresReplace, path.Root("credentials"))
-	} else if plan.Credentials != nil {
+	case planCredentials != nil:
 		stateLastFour, diags := stringMap(ctx, state.CredentialsLastFour)
 		resp.Diagnostics.Append(diags...)
-		for _, p := range credentialParts[plan.Credentials.kind()] {
+		for _, p := range credentialParts[planCredentials.kind()] {
 			if !p.secret {
 				continue
 			}
 			statePart := types.StringNull()
-			if s := state.Credentials.part(p.name); s != nil {
+			if s := stateCredentials.part(p.name); s != nil {
 				statePart = *s
 			}
 			want, ok := stateLastFour[p.name]
-			if secretChanged(statePart, *plan.Credentials.part(p.name), want, ok) {
+			if secretChanged(statePart, *planCredentials.part(p.name), want, ok) {
 				credentialsChanged = true
 			}
 		}
@@ -343,7 +358,11 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 	}
 
 	applyState(ctx, &state, def, st, &resp.Diagnostics)
-	clearDriftedSecrets(state.Credentials, st.LastFour)
+	credentials, _, diags := decodeCredentials(ctx, state.Credentials)
+	resp.Diagnostics.Append(diags...)
+	clearDriftedSecrets(credentials, st.LastFour)
+	state.Credentials, diags = credentials.object(ctx)
+	resp.Diagnostics.Append(diags...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -354,7 +373,12 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 	def := configuredDefinition(ctx, req.Plan)
-	in := configurationInput{Alias: plan.Alias.ValueString(), Credentials: plan.Credentials.value(), Settings: *plan.settings(def.Name())}
+	credentials, _, diags := decodeCredentials(ctx, plan.Credentials)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	in := configurationInput{Alias: plan.Alias.ValueString(), Credentials: credentials.value(), Settings: *plan.settings(def.Name())}
 
 	var st configurationState
 	var err error
@@ -407,7 +431,12 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		return
 	}
 	def := configuredDefinition(ctx, req.Plan)
-	in := configurationInput{Alias: plan.Alias.ValueString(), IsDefault: plan.IsDefault.ValueBool(), Credentials: plan.Credentials.value(), Settings: *plan.settings(def.Name())}
+	credentials, _, diags := decodeCredentials(ctx, plan.Credentials)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	in := configurationInput{Alias: plan.Alias.ValueString(), IsDefault: plan.IsDefault.ValueBool(), Credentials: credentials.value(), Settings: *plan.settings(def.Name())}
 
 	var st configurationState
 	var err error

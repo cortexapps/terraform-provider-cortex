@@ -335,3 +335,50 @@ func TestUnitIntegrationConfiguration_CreateKeepsStateWhenDefaultUpdateFails(t *
 	_, orphan := fake.get("datadog", "dd")
 	assert.False(t, orphan, "datadog configuration dd is an orphan")
 }
+
+// Credentials can come from another resource, so the credentials object or the object of one kind is unknown until
+// apply. The plan must accept that, and a later upstream change of the secret must reach Cortex.
+func TestUnitIntegrationConfiguration_UnknownCredentials(t *testing.T) {
+	for name, credentials := range map[string]string{
+		"kind object": `{ key_pair = terraform_data.creds.output }`,
+		"credentials": `terraform_data.creds.output.all`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			fake, url := newFakeCortexApi(t)
+			withKey := func(key string) string {
+				return unitConfig(url, fmt.Sprintf(`
+resource "terraform_data" "creds" {
+  input = { key = %q, secret = "fake-app-key-c3d4", all = { key_pair = { key = %q, secret = "fake-app-key-c3d4" } } }
+}
+
+resource "cortex_integration_configuration" "test" {
+  alias       = "dd"
+  credentials = %s
+  datadog     = { region = "US1" }
+}`, key, key, credentials))
+			}
+
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config: withKey("fake-api-key-a1b2"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr(unitResourceName, "credentials_last_four.key", "a1b2"),
+							checkFake(fake, "datadog", "dd", "apiKey", "fake-api-key-a1b2"),
+						),
+					},
+					// Datadog cannot change keys in place, so the unknown credentials replace the configuration.
+					{
+						Config: withKey("fake-api-key-e5f6"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr(unitResourceName, "credentials_last_four.key", "e5f6"),
+							checkFake(fake, "datadog", "dd", "apiKey", "fake-api-key-e5f6"),
+							checkCreates(fake, "datadog", 2),
+						),
+					},
+				},
+			})
+		})
+	}
+}
