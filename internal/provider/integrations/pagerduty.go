@@ -26,7 +26,6 @@ func (pagerDutyDefinition) Title() string { return "PagerDuty" }
 func (pagerDutyDefinition) CredentialKinds() []credentialKind {
 	return []credentialKind{credentialToken}
 }
-func (pagerDutyDefinition) CredentialsUpdatable() bool { return true }
 
 func (pagerDutyDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 	return schema.SingleNestedAttribute{
