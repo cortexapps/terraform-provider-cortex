@@ -30,12 +30,17 @@ type CreateDatadogConfigurationRequest struct {
 	CustomSubdomain string   `json:"customSubdomain,omitempty"`
 }
 
-// UpdateDatadogConfigurationRequest holds the only fields the public API can change. Alias is the new alias; the
-// current alias goes in the path. The API keys, region, and custom subdomain cannot change after creation.
+// UpdateDatadogConfigurationRequest is the body of an update. Alias is the new alias; the current alias goes in the
+// path. The API keeps the current value of each optional field that the request omits, so an update cannot remove
+// the custom subdomain.
 type UpdateDatadogConfigurationRequest struct {
-	Alias        string   `json:"alias"`
-	IsDefault    bool     `json:"isDefault"`
-	Environments []string `json:"environments"`
+	Alias           string   `json:"alias"`
+	IsDefault       bool     `json:"isDefault"`
+	Environments    []string `json:"environments"`
+	ApiKey          string   `json:"apiKey,omitempty"`
+	AppKey          string   `json:"appKey,omitempty"`
+	Region          string   `json:"region,omitempty"`
+	CustomSubdomain string   `json:"customSubdomain,omitempty"`
 }
 
 // MarshalJSON sends an empty list for nil environments, because the API rejects null.
