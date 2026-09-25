@@ -28,6 +28,7 @@ linters:
       disable:
         - inline
         - hostport
+        - waitgroup
     staticcheck:
       # v2 merged gosimple and stylecheck into staticcheck. Keep the v1 set
       # (SA and S checks): stylecheck and quickfix were not enabled before.
@@ -42,6 +43,8 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
+    # v1 also excluded vendor and testdata. ./... never loads those
+    # directories, so they need no entry here.
     paths:
       - (^|/)third_party($|/)
       - (^|/)builtin($|/)
