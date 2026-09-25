@@ -1,22 +1,18 @@
 # Visit https://golangci-lint.run/ for usage documentation
 # and information on other useful linters
+version: "2"
 run:
   concurrency: 4
   allow-parallel-runners: true
   timeout: 4m
-issues:
-  exclude-dirs-use-default: true
-  max-same-issues: 0
-
 linters:
-  disable-all: true
+  default: none
   enable:
+    - copyloopvar
     - durationcheck
     - errcheck
-    - copyloopvar
     - godot
-    - gofmt
-    - gosimple
+    - govet
     - ineffassign
     - makezero
     - misspell
@@ -26,4 +22,33 @@ linters:
     - unconvert
     - unparam
     - unused
-    - govet
+  settings:
+    staticcheck:
+      # v2 merged gosimple and stylecheck into staticcheck. Keep the v1 set
+      # (SA and S checks): stylecheck and quickfix were not enabled before.
+      checks:
+        - all
+        - -ST*
+        - -QF*
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-same-issues: 0
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
