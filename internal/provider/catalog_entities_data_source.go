@@ -23,25 +23,27 @@ type CatalogEntitiesDataSource struct {
 
 // CatalogEntitiesDataSourceModel describes the data source data model.
 type CatalogEntitiesDataSourceModel struct {
-	Id              types.String                       `tfsdk:"id"`
-	Query           types.String                       `tfsdk:"query"`
-	Groups          []types.String                     `tfsdk:"groups"`
-	Owners          []types.String                     `tfsdk:"owners"`
-	Types           []types.String                     `tfsdk:"types"`
-	GitRepositories []types.String                     `tfsdk:"git_repositories"`
-	IncludeArchived types.Bool                         `tfsdk:"include_archived"`
-	IncludeOwners   types.Bool                         `tfsdk:"include_owners"`
-	Entities        []CatalogEntityDataSourceItemModel `tfsdk:"entities"`
+	Id                   types.String                       `tfsdk:"id"`
+	Query                types.String                       `tfsdk:"query"`
+	Groups               []types.String                     `tfsdk:"groups"`
+	Owners               []types.String                     `tfsdk:"owners"`
+	Types                []types.String                     `tfsdk:"types"`
+	GitRepositories      []types.String                     `tfsdk:"git_repositories"`
+	IncludeArchived      types.Bool                         `tfsdk:"include_archived"`
+	IncludeOwners        types.Bool                         `tfsdk:"include_owners"`
+	IncludeSlackChannels types.Bool                         `tfsdk:"include_slack_channels"`
+	Entities             []CatalogEntityDataSourceItemModel `tfsdk:"entities"`
 }
 
 // CatalogEntityDataSourceItemModel represents a single entity in the list.
 type CatalogEntityDataSourceItemModel struct {
-	Tag         types.String                     `tfsdk:"tag"`
-	Name        types.String                     `tfsdk:"name"`
-	Description types.String                     `tfsdk:"description"`
-	Type        types.String                     `tfsdk:"type"`
-	Git         *CatalogEntityGitItemModel       `tfsdk:"git"`
-	Ownership   *CatalogEntityOwnershipItemModel `tfsdk:"ownership"`
+	Tag           types.String                         `tfsdk:"tag"`
+	Name          types.String                         `tfsdk:"name"`
+	Description   types.String                         `tfsdk:"description"`
+	Type          types.String                         `tfsdk:"type"`
+	Git           *CatalogEntityGitItemModel           `tfsdk:"git"`
+	Ownership     *CatalogEntityOwnershipItemModel     `tfsdk:"ownership"`
+	SlackChannels []CatalogEntitySlackChannelItemModel `tfsdk:"slack_channels"`
 }
 
 // CatalogEntityGitItemModel holds the flat git information returned by the catalog list endpoint.
@@ -68,6 +70,32 @@ type CatalogEntityOwnershipGroupItemModel struct {
 type CatalogEntityOwnershipIndividualItemModel struct {
 	Email       types.String `tfsdk:"email"`
 	Description types.String `tfsdk:"description"`
+}
+
+// CatalogEntitySlackChannelItemModel represents a Slack channel associated with an entity.
+type CatalogEntitySlackChannelItemModel struct {
+	Name                 types.String `tfsdk:"name"`
+	Description          types.String `tfsdk:"description"`
+	NotificationsEnabled types.Bool   `tfsdk:"notifications_enabled"`
+}
+
+func flattenCatalogEntitySlackChannels(
+	channels []cortex.CatalogEntitySlackChannel,
+) []CatalogEntitySlackChannelItemModel {
+	result := make(
+		[]CatalogEntitySlackChannelItemModel,
+		len(channels),
+	)
+
+	for i, channel := range channels {
+		result[i] = CatalogEntitySlackChannelItemModel{
+			Name:                 types.StringValue(channel.Name),
+			Description:          types.StringValue(channel.Description),
+			NotificationsEnabled: types.BoolValue(channel.NotificationsEnabled),
+		}
+	}
+
+	return result
 }
 
 func (d *CatalogEntitiesDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -113,6 +141,10 @@ func (d *CatalogEntitiesDataSource) Schema(ctx context.Context, req datasource.S
 			},
 			"include_owners": schema.BoolAttribute{
 				MarkdownDescription: "When true, each entity in the response will include ownership information (teams and individuals). Corresponds to the `includeOwners` API parameter.",
+				Optional:            true,
+			},
+			"include_slack_channels": schema.BoolAttribute{
+				MarkdownDescription: "When true, each entity in the response will include its associated Slack channels. Corresponds to the `includeSlackChannels` API parameter.",
 				Optional:            true,
 			},
 			"entities": schema.ListNestedAttribute{
@@ -196,6 +228,26 @@ func (d *CatalogEntitiesDataSource) Schema(ctx context.Context, req datasource.S
 								},
 							},
 						},
+						"slack_channels": schema.ListNestedAttribute{
+							MarkdownDescription: "Slack channels associated with the entity. Populated when `include_slack_channels` is true.",
+							Computed:            true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"name": schema.StringAttribute{
+										MarkdownDescription: "Slack channel identifier",
+										Computed:            true,
+									},
+									"description": schema.StringAttribute{
+										MarkdownDescription: "Description of the Slack channel",
+										Computed:            true,
+									},
+									"notifications_enabled": schema.BoolAttribute{
+										MarkdownDescription: "Whether notifications are enabled for the Slack channel",
+										Computed:            true,
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -275,6 +327,9 @@ func (d *CatalogEntitiesDataSource) Read(ctx context.Context, req datasource.Rea
 	if !data.IncludeOwners.IsNull() && !data.IncludeOwners.IsUnknown() {
 		params.IncludeOwners = data.IncludeOwners.ValueBool()
 	}
+	if !data.IncludeSlackChannels.IsNull() && !data.IncludeSlackChannels.IsUnknown() {
+		params.IncludeSlackChannels = data.IncludeSlackChannels.ValueBool()
+	}
 
 	// Fetch all pages of results
 	allEntities := []cortex.CatalogEntity{}
@@ -343,6 +398,11 @@ func (d *CatalogEntitiesDataSource) Read(ctx context.Context, req datasource.Rea
 				}
 			}
 			item.Ownership = &CatalogEntityOwnershipItemModel{Groups: groups, Individuals: individuals}
+		}
+
+		// Slack channels are populated when include_slack_channels is true.
+		if params.IncludeSlackChannels {
+			item.SlackChannels = flattenCatalogEntitySlackChannels(entity.SlackChannels)
 		}
 
 		data.Entities[i] = item
