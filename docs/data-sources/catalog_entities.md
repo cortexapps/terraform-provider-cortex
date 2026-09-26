@@ -21,6 +21,7 @@ Catalog Entities data source - returns a list of catalog entities that match the
 - `groups` (List of String) Filter based on groups, which correspond to the x-cortex-groups field in the Catalog Descriptor
 - `include_archived` (Boolean) Whether to include archived entities in the response
 - `include_owners` (Boolean) When true, each entity in the response will include ownership information (teams and individuals). Corresponds to the `includeOwners` API parameter.
+- `include_slack_channels` (Boolean) When true, each entity in the response will include its associated Slack channels. Corresponds to the `includeSlackChannels` API parameter.
 - `owners` (List of String) Filter based on owner group names, which correspond to the x-cortex-owners field in the Catalog Descriptor
 - `query` (String) Filter based on a search query. This will search across entity properties. If provided, results will be sorted by relevance.
 - `types` (List of String) Filter the response to specific types of entities (e.g., service, resource, domain)
@@ -39,6 +40,7 @@ Read-Only:
 - `git` (Attributes) Git repository information for the entity. Populated when a git integration is configured. (see [below for nested schema](#nestedatt--entities--git))
 - `name` (String) Human-readable name for the entity
 - `ownership` (Attributes) Ownership information for the entity. Populated when `include_owners` is true. (see [below for nested schema](#nestedatt--entities--ownership))
+- `slack_channels` (Attributes List) Slack channels associated with the entity. Populated when `include_slack_channels` is true. (see [below for nested schema](#nestedatt--entities--slack_channels))
 - `tag` (String) Tag of the catalog entity
 - `type` (String) Type of the entity (e.g., service, resource, domain)
 
@@ -77,3 +79,14 @@ Read-Only:
 
 - `description` (String) Description of this ownership entry
 - `email` (String) Email address of the individual owner
+
+
+
+<a id="nestedatt--entities--slack_channels"></a>
+### Nested Schema for `entities.slack_channels`
+
+Read-Only:
+
+- `description` (String) Description of the Slack channel
+- `name` (String) Slack channel identifier
+- `notifications_enabled` (Boolean) Whether notifications are enabled for the Slack channel
