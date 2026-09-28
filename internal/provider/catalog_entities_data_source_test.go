@@ -77,3 +77,35 @@ data "cortex_catalog_entities" "test" {
 	include_owners = true
 }`
 }
+
+func TestAccCatalogEntitiesDataSourceWithSlackChannels(
+	t *testing.T,
+) {
+	recordName := "data.cortex_catalog_entities.test"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+		},
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCatalogEntitiesDataSourceWithSlackChannels(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet(
+						recordName,
+						"entities.#",
+					),
+				),
+			},
+		},
+	})
+}
+
+func testAccCatalogEntitiesDataSourceWithSlackChannels() string {
+	return `
+data "cortex_catalog_entities" "test" {
+  types                  = ["service"]
+  include_slack_channels = true
+}`
+}

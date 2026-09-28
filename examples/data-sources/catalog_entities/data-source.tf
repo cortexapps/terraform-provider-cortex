@@ -36,6 +36,12 @@ data "cortex_catalog_entities" "services_with_owners" {
   include_owners = true
 }
 
+# Include Slack channel information for each entity
+data "cortex_catalog_entities" "services_with_slack_channels" {
+  types                  = ["service"]
+  include_slack_channels = true
+}
+
 # Access the list of entities
 output "entity_tags" {
   value = [for entity in data.cortex_catalog_entities.all_services.entities : entity.tag]
@@ -68,5 +74,20 @@ output "entity_individual_owners" {
     for entity in data.cortex_catalog_entities.services_with_owners.entities :
     entity.tag => [for ind in entity.ownership.individuals : ind.email]
     if entity.ownership != null && length(entity.ownership.individuals) > 0
+  }
+}
+
+# Access Slack channels for each service (requires include_slack_channels = true)
+output "entity_slack_channels" {
+  value = {
+    for entity in data.cortex_catalog_entities.services_with_slack_channels.entities :
+    entity.tag => [
+      for channel in entity.slack_channels : {
+        name                  = channel.name
+        description           = channel.description
+        notifications_enabled = channel.notifications_enabled
+      }
+    ]
+    if length(entity.slack_channels) > 0
   }
 }

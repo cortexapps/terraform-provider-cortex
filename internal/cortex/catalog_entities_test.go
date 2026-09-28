@@ -113,3 +113,77 @@ func TestListCatalogEntitiesDeserializesOwnersAndGit(t *testing.T) {
 	assert.Equal(t, "my-org/my-repo", got.Git.Repository)
 	assert.Equal(t, "https://github.com/my-org/my-repo", got.Git.RepositoryUrl)
 }
+
+func TestListCatalogEntitiesWithSlackChannels(t *testing.T) {
+	resp := &cortex.CatalogEntitiesResponse{
+		Entities: []cortex.CatalogEntity{
+			*testCatalogEntity,
+		},
+	}
+
+	c, teardown, err := setupClient(
+		cortex.Route("catalog_entities", ""),
+		resp,
+		AssertRequestMethod(t, "GET"),
+		AssertRequestURI(t, "/api/v1/catalog/?includeSlackChannels=true"),
+	)
+	assert.Nil(t, err, "could not setup client")
+	defer teardown()
+
+	queryParams := cortex.CatalogEntityListParams{
+		IncludeSlackChannels: true,
+	}
+
+	res, err := c.CatalogEntities().List(
+		context.Background(),
+		&queryParams,
+	)
+	assert.Nil(t, err, "error retrieving entities")
+	assert.NotEmpty(t, res.Entities, "returned no entities")
+}
+
+func TestListCatalogEntitiesDeserializesSlackChannels(t *testing.T) {
+	entity := cortex.CatalogEntity{
+		Tag: "test-catalog-entity",
+		SlackChannels: []cortex.CatalogEntitySlackChannel{
+			{
+				Name:                 "C0123456789",
+				Description:          "x-monitoring-alerts-channel",
+				NotificationsEnabled: true,
+			},
+		},
+	}
+
+	resp := &cortex.CatalogEntitiesResponse{
+		Entities: []cortex.CatalogEntity{entity},
+	}
+
+	c, teardown, err := setupClient(
+		cortex.Route("catalog_entities", ""),
+		resp,
+		AssertRequestMethod(t, "GET"),
+	)
+	assert.Nil(t, err, "could not setup client")
+	defer teardown()
+
+	queryParams := cortex.CatalogEntityListParams{
+		IncludeSlackChannels: true,
+	}
+
+	res, err := c.CatalogEntities().List(
+		context.Background(),
+		&queryParams,
+	)
+	assert.Nil(t, err, "error retrieving entities")
+	assert.Len(t, res.Entities, 1)
+
+	slackChannels := res.Entities[0].SlackChannels
+	assert.Len(t, slackChannels, 1)
+	assert.Equal(t, "C0123456789", slackChannels[0].Name)
+	assert.Equal(
+		t,
+		"x-monitoring-alerts-channel",
+		slackChannels[0].Description,
+	)
+	assert.True(t, slackChannels[0].NotificationsEnabled)
+}

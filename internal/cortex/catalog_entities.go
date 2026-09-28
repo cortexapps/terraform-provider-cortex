@@ -192,15 +192,16 @@ func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag strin
 
 // CatalogEntityListParams are the query parameters for the GET /v1/catalog endpoint.
 type CatalogEntityListParams struct {
-	Groups          []string `url:"groups,omitempty,comma"`
-	Owners          []string `url:"owners,omitempty,comma"`
-	Types           []string `url:"types,omitempty,comma"`
-	GitRepositories []string `url:"gitRepositories,omitempty,comma"`
-	Query           string   `url:"query,omitempty"`
-	IncludeArchived bool     `url:"includeArchived,omitempty"`
-	IncludeOwners   bool     `url:"includeOwners,omitempty"`
-	PageSize        int      `url:"pageSize,omitempty"`
-	Page            int      `url:"page,omitempty"`
+	Groups               []string `url:"groups,omitempty,comma"`
+	Owners               []string `url:"owners,omitempty,comma"`
+	Types                []string `url:"types,omitempty,comma"`
+	GitRepositories      []string `url:"gitRepositories,omitempty,comma"`
+	Query                string   `url:"query,omitempty"`
+	IncludeArchived      bool     `url:"includeArchived,omitempty"`
+	IncludeOwners        bool     `url:"includeOwners,omitempty"`
+	IncludeSlackChannels bool     `url:"includeSlackChannels,omitempty"`
+	PageSize             int      `url:"pageSize,omitempty"`
+	Page                 int      `url:"page,omitempty"`
 }
 
 // CatalogEntitiesResponse is the response from the GET /v1/scorecards endpoint.
