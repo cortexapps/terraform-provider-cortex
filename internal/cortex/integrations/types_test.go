@@ -88,6 +88,15 @@ func TestGitlabClientRoute(t *testing.T) {
 	assert.Equal(t, "a1b2", res.LastFour)
 }
 
+// The API keeps the current value of each optional field that an update omits, so an unset field must not go out.
+func TestDatadogUpdateOmitsUnsetFields(t *testing.T) {
+	body, err := json.Marshal(integrations.UpdateDatadogConfigurationRequest{Alias: "dd"})
+	assert.Nil(t, err)
+	for _, field := range []string{"apiKey", "appKey", "region", "customSubdomain"} {
+		assert.NotContains(t, string(body), field)
+	}
+}
+
 // The backend rejects null for its required lists, so a nil slice must go out as [].
 func TestRequestsSendEmptyListsForNil(t *testing.T) {
 	for name, req := range map[string]any{
