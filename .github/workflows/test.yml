@@ -23,31 +23,31 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v5.0.0
-      - uses: actions/setup-go@v6.1.0
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version-file: "go.mod"
           cache: true
-      - uses: hashicorp/setup-terraform@v3.1.2
+      - uses: hashicorp/setup-terraform@v4.0.1
         with:
           terraform_version: "1.10.*"
           terraform_wrapper: false
       - run: go mod download
       - run: go build -v .
       - name: Run linters
-        uses: golangci/golangci-lint-action@v6.5.0
+        uses: golangci/golangci-lint-action@v9.3.0
         with:
-          version: latest
+          version: v2.14.0
 
   generate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5.0.0
-      - uses: actions/setup-go@v6.1.0
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version-file: "go.mod"
           cache: true
-      - uses: hashicorp/setup-terraform@v3.1.2
+      - uses: hashicorp/setup-terraform@v4.0.1
         with:
           terraform_version: "1.10.*"
           terraform_wrapper: false
@@ -64,8 +64,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v5.0.0
-      - uses: actions/setup-go@v6.1.0
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version-file: "go.mod"
           cache: true
@@ -80,22 +80,27 @@ jobs:
   # tests use shared, static resource tags against the one tenant — so this job
   # only runs on pushes to main and same-repo PRs, and is serialized repo-wide
   # via the concurrency group below. Fork PRs are verified after merge to main.
+  # Dependabot runs get only Dependabot secrets, not Actions secrets, so the
+  # token is empty there. Skip those runs too; main verifies them after merge.
+  # This applies to any event Dependabot triggers, including push.
   acceptance-test:
     name: Terraform Provider Acceptance Tests
     needs: [build, test]
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     concurrency:
       group: cortex-acceptance-tenant
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v5.0.0
-      - uses: actions/setup-go@v6.1.0
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version-file: "go.mod"
           cache: true
-      - uses: hashicorp/setup-terraform@v3.1.2
+      - uses: hashicorp/setup-terraform@v4.0.1
         with:
           terraform_version: "1.10.*"
           terraform_wrapper: false
