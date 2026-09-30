@@ -44,3 +44,34 @@ resource "cortex_catalog" %[1]q {
   is_draft = false
 }`, slug)
 }
+
+func TestAccCatalogDataSource(t *testing.T) {
+	slug := "test-catalog-ds"
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCatalogDataSourceConfig(slug),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.cortex_catalog.test", "slug", slug),
+					resource.TestCheckResourceAttr("data.cortex_catalog.test", "name", "Test Catalog DS"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCatalogDataSourceConfig(slug string) string {
+	return fmt.Sprintf(`
+resource "cortex_catalog" %[1]q {
+  slug     = %[1]q
+  name     = "Test Catalog DS"
+  icon_tag = "cortex"
+  is_draft = false
+}
+
+data "cortex_catalog" "test" {
+  slug = cortex_catalog.%[1]s.slug
+}`, slug)
+}
