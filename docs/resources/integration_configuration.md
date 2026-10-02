@@ -224,7 +224,8 @@ terraform import cortex_integration_configuration.datadog datadog/datadog-prod
 # Single-instance integrations have one configuration per tenant: <integration>
 terraform import cortex_integration_configuration.pagerduty pagerduty
 
-# The Cortex API never returns secrets, so set credentials in the configuration. Also set settings that the API
-# cannot change in place (for example the GitLab host or the Jira host) to the values in Cortex, or the next apply
-# replaces the configuration.
+# The Cortex API never returns secrets, so set credentials in the configuration. Also set every setting to its value
+# in Cortex. A setting that differs or is left out (for example a Datadog custom subdomain) changes Cortex on the
+# next apply. A setting that the API cannot change in place (for example the GitLab host or the Jira host) replaces
+# the configuration.
 ```
