@@ -588,3 +588,163 @@ func TestUnitIntegrationConfiguration_PagerDutyImportIdError(t *testing.T) {
 		}},
 	})
 }
+
+func incidentIoUnit(url, alias, key string) string {
+	return unitConfig(url, fmt.Sprintf(`
+resource "cortex_integration_configuration" "test" {
+  alias       = %q
+  credentials = { token = { value = %q } }
+  incident_io = {}
+}`, alias, key))
+}
+
+func TestUnitIntegrationConfiguration_IncidentIoLifecycle(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: incidentIoUnit(url, "inc", "fake-key-a1b2"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "id", "incident_io/inc"),
+					resource.TestCheckResourceAttr(unitResourceName, "credentials_last_four.value", "a1b2"),
+				),
+			},
+			{
+				ResourceName:            unitResourceName,
+				ImportState:             true,
+				ImportStateId:           "incident_io/inc",
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"credentials"},
+			},
+			// A new key updates in place.
+			{
+				Config: incidentIoUnit(url, "inc", "fake-key-c3d4"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "incidentio", "inc", "apiKey", "fake-key-c3d4"),
+					checkCreates(fake, "incidentio", 1),
+				),
+			},
+		},
+	})
+}
+
+// Changing the settings block to another integration replaces the configuration.
+func TestUnitIntegrationConfiguration_ChangeOfIntegrationReplaces(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: incidentIoUnit(url, "shared", "fake-key-a1b2")},
+			{
+				Config: datadogUnit(url, "shared", "fake-api-key-a1b2", ""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "integration", "datadog"),
+					checkCreates(fake, "datadog", 1),
+					func(*terraform.State) error {
+						if _, ok := fake.get("incidentio", "shared"); ok {
+							return fmt.Errorf("incident.io configuration still exists")
+						}
+						return nil
+					},
+				),
+			},
+		},
+	})
+}
+
+func gitlabUnit(url, token, host, groups string) string {
+	return unitConfig(url, fmt.Sprintf(`
+resource "cortex_integration_configuration" "test" {
+  alias       = "gl"
+  credentials = { token = { value = %q } }
+  gitlab      = { host = %q, group_names = %s }
+}`, token, host, groups))
+}
+
+func TestUnitIntegrationConfiguration_GitlabLifecycle(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: gitlabUnit(url, "fake-token-a1b2", "https://gitlab.invalid", `[]`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "gitlab.host", "https://gitlab.invalid"),
+					resource.TestCheckResourceAttr(unitResourceName, "gitlab.hide_personal_projects", "false"),
+					checkFake(fake, "gitlab", "gl", "personalAccessToken", "fake-token-a1b2"),
+				),
+			},
+			// A new token and new groups update in place.
+			{
+				Config: gitlabUnit(url, "fake-token-c3d4", "https://gitlab.invalid", `["platform"]`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "gitlab.group_names.0", "platform"),
+					checkFake(fake, "gitlab", "gl", "personalAccessToken", "fake-token-c3d4"),
+					checkCreates(fake, "gitlab", 1),
+				),
+			},
+			// The API ignores host on update, so a new host replaces the configuration.
+			{
+				Config: gitlabUnit(url, "fake-token-c3d4", "https://gitlab2.invalid", `["platform"]`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "gitlab", "gl", "host", "https://gitlab2.invalid"),
+					checkCreates(fake, "gitlab", 2),
+				),
+			},
+		},
+	})
+}
+
+// The API drops blank group names, which would make the apply inconsistent, so validation rejects them.
+func TestUnitIntegrationConfiguration_GitlabRejectsBlankGroupNames(t *testing.T) {
+	_, url := newFakeCortexApi(t)
+	for name, groups := range map[string]string{"empty": `[""]`, "blank": `[" "]`} {
+		t.Run(name, func(t *testing.T) {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{{
+					Config:      gitlabUnit(url, "fake-token-a1b2", "https://gitlab.invalid", groups),
+					ExpectError: regexp.MustCompile(`group_names`),
+				}},
+			})
+		})
+	}
+}
+
+// The API ignores host on update, so an unknown gitlab block for an existing configuration plans a replacement.
+func TestUnitIntegrationConfiguration_GitlabUnknownSettings(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	withHost := func(host string) string {
+		return unitConfig(url, fmt.Sprintf(`
+resource "terraform_data" "settings" {
+  input = { host = %q, group_names = ["platform"] }
+}
+
+resource "cortex_integration_configuration" "test" {
+  alias       = "gl"
+  credentials = { token = { value = "fake-token-a1b2" } }
+  gitlab      = terraform_data.settings.output
+}`, host))
+	}
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: withHost("https://gitlab.invalid"),
+				Check:  checkFake(fake, "gitlab", "gl", "host", "https://gitlab.invalid"),
+			},
+			{
+				Config: withHost("https://gitlab2.invalid"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "gitlab", "gl", "host", "https://gitlab2.invalid"),
+					checkCreates(fake, "gitlab", 2),
+				),
+			},
+		},
+	})
+}

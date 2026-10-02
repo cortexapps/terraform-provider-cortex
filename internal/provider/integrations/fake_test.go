@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -13,14 +14,17 @@ import (
 
 // fakeIntegrationSpec describes how the fake stores and returns one integration.
 type fakeIntegrationSpec struct {
-	multi bool              // several configurations per tenant, identified by alias
-	masks map[string]string // secret request field -> response field with its last four characters
+	multi          bool              // several configurations per tenant, identified by alias
+	masks          map[string]string // secret request field -> response field with its last four characters
+	ignoreOnUpdate []string          // request fields the API ignores on update
 }
 
 // fakeSpecs follow the backend contract. The key is the path segment under /api/v1.
 var fakeSpecs = map[string]fakeIntegrationSpec{
-	"datadog":   {multi: true, masks: map[string]string{"apiKey": "lastFourApiKey", "appKey": "lastFourAppKey"}},
-	"pagerduty": {multi: false, masks: map[string]string{"token": "lastFour"}},
+	"datadog":    {multi: true, masks: map[string]string{"apiKey": "lastFourApiKey", "appKey": "lastFourAppKey"}},
+	"pagerduty":  {multi: false, masks: map[string]string{"token": "lastFour"}},
+	"gitlab":     {multi: true, masks: map[string]string{"personalAccessToken": "lastFour"}, ignoreOnUpdate: []string{"host"}},
+	"incidentio": {multi: true, masks: map[string]string{"apiKey": "lastFour"}},
 }
 
 // fakeCortexApi is an in-memory Cortex API for the integration configuration routes. It applies the same alias,
@@ -111,7 +115,7 @@ func (f *fakeCortexApi) serveMulti(w http.ResponseWriter, r *http.Request, seg, 
 			return
 		}
 		for k, v := range body {
-			if v == nil || k == "isDefault" {
+			if v == nil || k == "isDefault" || slices.Contains(fakeSpecs[seg].ignoreOnUpdate, k) {
 				continue
 			}
 			f.configs[seg][i][k] = v

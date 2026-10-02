@@ -73,6 +73,8 @@ type singleInstanceDefinition interface {
 
 var integrationDefinitions = []integrationDefinition{
 	datadogDefinition{},
+	gitlabDefinition{},
+	incidentIoDefinition{},
 	pagerDutyDefinition{},
 }
 
