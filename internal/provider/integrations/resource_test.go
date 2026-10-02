@@ -83,16 +83,20 @@ resource "cortex_integration_configuration" "test" {
 	})
 }
 
+// The update changes the host and the groups in place.
 func TestAccIntegrationConfigurationGitlab(t *testing.T) {
-	body := func(groups string) string {
+	body := func(host, groups string) string {
 		return fmt.Sprintf(`
 resource "cortex_integration_configuration" "test" {
   alias       = "tf-acc-test-gitlab"
   credentials = { token = { value = "tf-acc-fake-token-a1b2" } }
-  gitlab      = { host = "https://gitlab.invalid", group_names = %s }
-}`, groups)
+  gitlab      = { host = %q, group_names = %s }
+}`, host, groups)
 	}
-	accIntegrationTest(t, "gitlab/tf-acc-test-gitlab", body(`[]`), body(`["tf-acc"]`))
+	accIntegrationTest(t, "gitlab/tf-acc-test-gitlab",
+		body("https://gitlab.invalid", `[]`),
+		body("https://gitlab2.invalid", `["tf-acc"]`),
+		plancheck.ExpectResourceAction(accResourceName, plancheck.ResourceActionUpdate))
 }
 
 func TestAccIntegrationConfigurationIncidentIo(t *testing.T) {

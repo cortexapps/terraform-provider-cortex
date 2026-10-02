@@ -38,6 +38,10 @@ func TestGitlabRequestWireFormat(t *testing.T) {
 	update, err := json.Marshal(integrations.UpdateGitlabConfigurationRequest{Alias: "gl", GroupNames: []string{"platform"}, PersonalAccessToken: "t"})
 	assert.Nil(t, err)
 	assert.JSONEq(t, `{"alias":"gl","isDefault":false,"hidePersonalProjects":false,"groupNames":["platform"],"personalAccessToken":"t"}`, string(update))
+
+	withHost, err := json.Marshal(integrations.UpdateGitlabConfigurationRequest{Alias: "gl", Host: "https://gitlab.invalid", GroupNames: []string{}})
+	assert.Nil(t, err)
+	assert.JSONEq(t, `{"alias":"gl","isDefault":false,"host":"https://gitlab.invalid","hidePersonalProjects":false,"groupNames":[]}`, string(withHost))
 }
 
 func TestIncidentIoRequestWireFormat(t *testing.T) {

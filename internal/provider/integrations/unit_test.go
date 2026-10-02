@@ -687,11 +687,31 @@ func TestUnitIntegrationConfiguration_GitlabLifecycle(t *testing.T) {
 					checkCreates(fake, "gitlab", 1),
 				),
 			},
-			// The API ignores host on update, so a new host replaces the configuration.
+			// A new host updates in place.
 			{
 				Config: gitlabUnit(url, "fake-token-c3d4", "https://gitlab2.invalid", `["platform"]`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectResourceAction(unitResourceName, plancheck.ResourceActionUpdate)},
+				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkFake(fake, "gitlab", "gl", "host", "https://gitlab2.invalid"),
+					checkCreates(fake, "gitlab", 1),
+				),
+			},
+			// The API keeps the current host when an update omits it, so removing host replaces the configuration.
+			{
+				Config: unitConfig(url, `
+resource "cortex_integration_configuration" "test" {
+  alias       = "gl"
+  credentials = { token = { value = "fake-token-c3d4" } }
+  gitlab      = { group_names = ["platform"] }
+}`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectResourceAction(unitResourceName, plancheck.ResourceActionReplace)},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr(unitResourceName, "gitlab.host"),
+					checkFake(fake, "gitlab", "gl", "host", nil),
 					checkCreates(fake, "gitlab", 2),
 				),
 			},
@@ -715,38 +735,106 @@ func TestUnitIntegrationConfiguration_GitlabRejectsBlankGroupNames(t *testing.T)
 	}
 }
 
-// The API ignores host on update, so an unknown gitlab block for an existing configuration plans a replacement.
+// The API keeps the current host on a blank update, which would make the apply inconsistent, so validation rejects
+// a blank host.
+func TestUnitIntegrationConfiguration_GitlabRejectsBlankHost(t *testing.T) {
+	_, url := newFakeCortexApi(t)
+	for name, host := range map[string]string{"empty": ``, "blank": ` `} {
+		t.Run(name, func(t *testing.T) {
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{{
+					Config:      gitlabUnit(url, "fake-token-a1b2", host, `[]`),
+					ExpectError: regexp.MustCompile(`must not be blank`),
+				}},
+			})
+		})
+	}
+}
+
+// Only removing a set host needs a new configuration, so an unknown gitlab block replaces a configuration that has a
+// host, and updates a configuration without a host in place.
 func TestUnitIntegrationConfiguration_GitlabUnknownSettings(t *testing.T) {
-	fake, url := newFakeCortexApi(t)
-	withHost := func(host string) string {
-		return unitConfig(url, fmt.Sprintf(`
+	for name, tc := range map[string]struct {
+		settings string
+		creates  int
+	}{
+		"host set":     {settings: `{ host = "https://gitlab.invalid", group_names = [%q] }`, creates: 2},
+		"host not set": {settings: `{ group_names = [%q] }`, creates: 1},
+	} {
+		t.Run(name, func(t *testing.T) {
+			fake, url := newFakeCortexApi(t)
+			withGroup := func(group string) string {
+				return unitConfig(url, fmt.Sprintf(`
 resource "terraform_data" "settings" {
-  input = { host = %q, group_names = ["platform"] }
+  input = %s
 }
 
 resource "cortex_integration_configuration" "test" {
   alias       = "gl"
   credentials = { token = { value = "fake-token-a1b2" } }
   gitlab      = terraform_data.settings.output
-}`, host))
-	}
+}`, fmt.Sprintf(tc.settings, group)))
+			}
 
-	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: withHost("https://gitlab.invalid"),
-				Check:  checkFake(fake, "gitlab", "gl", "host", "https://gitlab.invalid"),
-			},
-			{
-				Config: withHost("https://gitlab2.invalid"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					checkFake(fake, "gitlab", "gl", "host", "https://gitlab2.invalid"),
-					checkCreates(fake, "gitlab", 2),
-				),
-			},
-		},
-	})
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{Config: withGroup("platform")},
+					{
+						Config: withGroup("infra"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr(unitResourceName, "gitlab.group_names.0", "infra"),
+							checkCreates(fake, "gitlab", tc.creates),
+						),
+					},
+				},
+			})
+		})
+	}
+}
+
+// A host that is unknown until apply can resolve to null, which needs a new configuration when a host is set. Without
+// a host in state, the unknown host updates the configuration in place.
+func TestUnitIntegrationConfiguration_GitlabUnknownHost(t *testing.T) {
+	for name, tc := range map[string]struct {
+		before  string
+		creates int
+	}{
+		"was set":     {before: `host = "https://gitlab.invalid",`, creates: 2},
+		"was not set": {before: ``, creates: 1},
+	} {
+		t.Run(name, func(t *testing.T) {
+			fake, url := newFakeCortexApi(t)
+			// A new input makes the output of terraform_data unknown until apply.
+			withSettings := func(input, settings string) string {
+				return unitConfig(url, fmt.Sprintf(`
+resource "terraform_data" "host" {
+  input = %q
+}
+
+resource "cortex_integration_configuration" "test" {
+  alias       = "gl"
+  credentials = { token = { value = "fake-token-a1b2" } }
+  gitlab      = { %s group_names = [] }
+}`, input, settings))
+			}
+
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{Config: withSettings("https://gitlab1.invalid", tc.before)},
+					{
+						Config: withSettings("https://gitlab2.invalid", "host = terraform_data.host.output,"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							checkFake(fake, "gitlab", "gl", "host", "https://gitlab2.invalid"),
+							checkCreates(fake, "gitlab", tc.creates),
+						),
+					},
+				},
+			})
+		})
+	}
 }
 
 func jiraUnit(url, username, jira string) string {

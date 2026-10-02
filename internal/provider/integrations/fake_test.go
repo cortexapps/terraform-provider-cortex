@@ -30,7 +30,7 @@ var fakeSpecs = map[string]fakeIntegrationSpec{
 	"datadog": {multi: true, masks: map[string]string{"apiKey": "lastFourApiKey", "appKey": "lastFourAppKey"},
 		nullRemovesOnUpdate: []string{"customSubdomain"}},
 	"pagerduty":  {multi: false, masks: map[string]string{"token": "lastFour"}},
-	"gitlab":     {multi: true, masks: map[string]string{"personalAccessToken": "lastFour"}, ignoreOnUpdate: []string{"host"}},
+	"gitlab":     {multi: true, masks: map[string]string{"personalAccessToken": "lastFour"}},
 	"incidentio": {multi: true, masks: map[string]string{"apiKey": "lastFour"}},
 	"jira": {multi: true, masks: map[string]string{"apiToken": "lastFour", "password": "lastFour"},
 		ignoreOnUpdate:        []string{"host", "frontendHost", "cloudId"},
