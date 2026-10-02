@@ -13,16 +13,18 @@ import (
 
 // fakeIntegrationSpec describes how the fake stores and returns one integration.
 type fakeIntegrationSpec struct {
+	multi bool              // several configurations per tenant, identified by alias
 	masks map[string]string // secret request field -> response field with its last four characters
 }
 
 // fakeSpecs follow the backend contract. The key is the path segment under /api/v1.
 var fakeSpecs = map[string]fakeIntegrationSpec{
-	"datadog": {masks: map[string]string{"apiKey": "lastFourApiKey", "appKey": "lastFourAppKey"}},
+	"datadog":   {multi: true, masks: map[string]string{"apiKey": "lastFourApiKey", "appKey": "lastFourAppKey"}},
+	"pagerduty": {multi: false, masks: map[string]string{"token": "lastFour"}},
 }
 
-// fakeCortexApi is an in-memory Cortex API for the integration configuration routes. It applies the same alias and
-// default rules as the backend.
+// fakeCortexApi is an in-memory Cortex API for the integration configuration routes. It applies the same alias,
+// default, and single-instance rules as the backend.
 type fakeCortexApi struct {
 	mu      sync.Mutex
 	configs map[string][]map[string]any
@@ -45,7 +47,8 @@ func (f *fakeCortexApi) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer f.mu.Unlock()
 
 	seg, route, _ := strings.Cut(strings.TrimPrefix(r.URL.Path, "/api/v1/"), "/")
-	if _, ok := fakeSpecs[seg]; !ok {
+	spec, ok := fakeSpecs[seg]
+	if !ok {
 		fail(w, http.StatusNotFound, "unexpected request "+r.URL.Path)
 		return
 	}
@@ -56,7 +59,11 @@ func (f *fakeCortexApi) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	f.serveMulti(w, r, seg, route, body)
+	if spec.multi {
+		f.serveMulti(w, r, seg, route, body)
+	} else {
+		f.serveSingle(w, r, seg, route, body)
+	}
 }
 
 func (f *fakeCortexApi) serveMulti(w http.ResponseWriter, r *http.Request, seg, route string, body map[string]any) {
@@ -127,6 +134,33 @@ func (f *fakeCortexApi) serveMulti(w http.ResponseWriter, r *http.Request, seg, 
 	}
 }
 
+func (f *fakeCortexApi) serveSingle(w http.ResponseWriter, r *http.Request, seg, route string, body map[string]any) {
+	switch {
+	case r.Method == http.MethodGet && route == "default-configuration":
+		if len(f.configs[seg]) == 0 {
+			fail(w, http.StatusNotFound, "No configuration")
+			return
+		}
+		writeJSON(w, f.render(seg, f.configs[seg][0]))
+	case r.Method == http.MethodPost && route == "configuration":
+		f.creates[seg]++
+		if len(f.configs[seg]) > 0 {
+			fail(w, http.StatusBadRequest, seg+" configuration already exists")
+			return
+		}
+		f.configs[seg] = []map[string]any{body}
+		writeJSON(w, map[string]any{"configurations": []any{f.render(seg, body)}})
+	case r.Method == http.MethodPut && route == "configuration":
+		f.configs[seg] = []map[string]any{body}
+		writeJSON(w, map[string]any{"configurations": []any{f.render(seg, body)}})
+	case r.Method == http.MethodDelete && route == "configurations":
+		f.configs[seg] = nil
+		writeJSON(w, map[string]any{"configurations": []any{}})
+	default:
+		fail(w, http.StatusNotFound, "unexpected request")
+	}
+}
+
 // render returns the configuration as the API does: no secrets, and the last four characters of each secret.
 func (f *fakeCortexApi) render(seg string, cfg map[string]any) map[string]any {
 	spec := fakeSpecs[seg]
@@ -175,11 +209,22 @@ func (f *fakeCortexApi) defaultIndex(seg string) int {
  * Test controls: change the fake outside Terraform
  **********************************************************************************************************************/
 
+// index returns the position of a stored configuration. For single-instance integrations, alias is ignored.
+func (f *fakeCortexApi) index(seg, alias string) int {
+	if !fakeSpecs[seg].multi {
+		if len(f.configs[seg]) == 0 {
+			return -1
+		}
+		return 0
+	}
+	return f.find(seg, alias)
+}
+
 // get returns a copy of a stored configuration.
 func (f *fakeCortexApi) get(seg, alias string) (map[string]any, bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	i := f.find(seg, alias)
+	i := f.index(seg, alias)
 	if i < 0 {
 		return nil, false
 	}
@@ -193,7 +238,7 @@ func (f *fakeCortexApi) get(seg, alias string) (map[string]any, bool) {
 func (f *fakeCortexApi) setField(seg, alias, field string, value any) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.configs[seg][f.find(seg, alias)][field] = value
+	f.configs[seg][f.index(seg, alias)][field] = value
 }
 
 func (f *fakeCortexApi) setDefault(seg, alias string) {
@@ -208,7 +253,7 @@ func (f *fakeCortexApi) setDefault(seg, alias string) {
 func (f *fakeCortexApi) remove(seg, alias string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if i := f.find(seg, alias); i >= 0 {
+	if i := f.index(seg, alias); i >= 0 {
 		f.configs[seg] = append(f.configs[seg][:i], f.configs[seg][i+1:]...)
 	}
 }

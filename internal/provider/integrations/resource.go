@@ -48,12 +48,14 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 	attributes := map[string]schema.Attribute{
 		"alias": schema.StringAttribute{
 			MarkdownDescription: "Unique alias of the configuration. Required for integrations that support several " +
-				"configurations. A change renames the configuration in place.",
+				"configurations. Not allowed for integrations with one configuration per tenant, such as PagerDuty. A " +
+				"change renames the configuration in place.",
 			Optional:   true,
 			Validators: []validator.String{stringvalidator.LengthAtLeast(1)},
 		},
 		"is_default": schema.BoolAttribute{
-			MarkdownDescription: "Whether this is the default configuration of its integration. When not set, Terraform " +
+			MarkdownDescription: "Whether this is the default configuration of its integration. Not allowed for " +
+				"integrations with one configuration per tenant. When not set, Terraform " +
 				"keeps the value from Cortex. Cortex makes the first configuration the default, and does not allow " +
 				"setting the current default to `false`: set `is_default = true` on another configuration and remove " +
 				"`is_default` from this one, apply, and then set it to `false` if necessary. Set `is_default = true` on " +
@@ -72,8 +74,9 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 			Computed:    true,
 		},
 		"id": schema.StringAttribute{
-			MarkdownDescription: "`<integration>/<alias>`. Same as the import ID.",
-			Computed:            true,
+			MarkdownDescription: "`<integration>/<alias>`, or `<integration>` for integrations with one configuration per " +
+				"tenant. Same as the import ID.",
+			Computed: true,
 		},
 		"integration": schema.StringAttribute{
 			MarkdownDescription: "Name of the integration, from the settings block that is set.",
@@ -89,7 +92,8 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 			"(`" + strings.ReplaceAll(definitionNames(), ", ", "`, `") + "`), and one credential kind in `credentials`.\n\n" +
 			"| Integration | Credential kind | Mapping to the Cortex API |\n" +
 			"|---|---|---|\n" +
-			"| `datadog` | `key_pair` | `key` = API key, `secret` = application key |\n\n" +
+			"| `datadog` | `key_pair` | `key` = API key, `secret` = application key |\n" +
+			"| `pagerduty` | `token` | `value` = API token |\n\n" +
 			"The Cortex API never returns secrets. Terraform detects a secret changed outside Terraform through " +
 			"`credentials_last_four`. Cortex does not check credentials when it saves a configuration, so invalid " +
 			"credentials do not fail the apply. Cortex does not allow deleting the default configuration of an " +
@@ -191,16 +195,29 @@ func (r *Resource) ValidateConfig(ctx context.Context, req resource.ValidateConf
 		return
 	}
 	var alias types.String
+	var isDefault types.Bool
 	var credentials types.Object
 	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("alias"), &alias)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("is_default"), &isDefault)...)
 	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("credentials"), &credentials)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if isMultiInstance(def) && alias.IsNull() {
-		resp.Diagnostics.AddAttributeError(path.Root("alias"), "Missing alias",
-			fmt.Sprintf("%s supports several configurations, so alias is required.", def.Title()))
+	if isMultiInstance(def) {
+		if alias.IsNull() {
+			resp.Diagnostics.AddAttributeError(path.Root("alias"), "Missing alias",
+				fmt.Sprintf("%s supports several configurations, so alias is required.", def.Title()))
+		}
+	} else {
+		if !alias.IsNull() {
+			resp.Diagnostics.AddAttributeError(path.Root("alias"), "Alias not allowed",
+				fmt.Sprintf("%s has one configuration per tenant, so alias is not allowed.", def.Title()))
+		}
+		if !isDefault.IsNull() {
+			resp.Diagnostics.AddAttributeError(path.Root("is_default"), "is_default not allowed",
+				fmt.Sprintf("%s has one configuration per tenant, so is_default is not allowed.", def.Title()))
+		}
 	}
 
 	if credentials.IsNull() || credentials.IsUnknown() {
@@ -230,8 +247,13 @@ func (r *Resource) ModifyPlan(ctx context.Context, req resource.ModifyPlanReques
 	}
 
 	plan.Integration = types.StringValue(def.Name())
-	if !plan.Alias.IsNull() && !plan.Alias.IsUnknown() {
-		plan.Id = types.StringValue(def.Name() + "/" + plan.Alias.ValueString())
+	if isMultiInstance(def) {
+		if !plan.Alias.IsNull() && !plan.Alias.IsUnknown() {
+			plan.Id = types.StringValue(def.Name() + "/" + plan.Alias.ValueString())
+		}
+	} else {
+		plan.Id = types.StringValue(def.Name())
+		plan.IsDefault = types.BoolNull()
 	}
 
 	if req.State.Raw.IsNull() {
@@ -346,6 +368,17 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 			return
 		}
 		st = found
+	case singleInstanceDefinition:
+		found, err := d.Get(ctx, r.client, prior)
+		if errors.Is(err, cortex.ApiErrorNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read %s configuration, got error: %s", def.Name(), err))
+			return
+		}
+		st = found
 	default:
 		addUnsupportedEngineError(&resp.Diagnostics, def)
 		return
@@ -411,6 +444,22 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 				st = updated
 			}
 		}
+	case singleInstanceDefinition:
+		_, gerr := d.Get(ctx, r.client, in.Settings)
+		if gerr == nil {
+			resp.Diagnostics.AddError("Configuration already exists",
+				fmt.Sprintf("Cortex already has a %s configuration. Terraform does not overwrite it. Import it instead: terraform import <address> %s", def.Title(), def.Name()))
+			return
+		}
+		if !errors.Is(gerr, cortex.ApiErrorNotFound) {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read %s configuration, got error: %s", def.Name(), gerr))
+			return
+		}
+		st, err = d.Create(ctx, r.client, in)
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create %s configuration, got error: %s", def.Name(), err))
+			return
+		}
 	default:
 		addUnsupportedEngineError(&resp.Diagnostics, def)
 		return
@@ -460,6 +509,8 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 			in.IsDefault = live.IsDefault
 		}
 		st, err = d.Update(ctx, r.client, state.Alias.ValueString(), in)
+	case singleInstanceDefinition:
+		st, err = d.Replace(ctx, r.client, in)
 	default:
 		addUnsupportedEngineError(&resp.Diagnostics, def)
 		return
@@ -484,6 +535,8 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 	switch d := def.(type) {
 	case multiInstanceDefinition:
 		err = d.Delete(ctx, r.client, state.Alias.ValueString())
+	case singleInstanceDefinition:
+		err = d.Delete(ctx, r.client)
 	default:
 		addUnsupportedEngineError(&resp.Diagnostics, def)
 		return
@@ -493,7 +546,7 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 	}
 }
 
-// ImportState takes <integration>/<alias>.
+// ImportState takes <integration>/<alias> for multi-instance integrations and <integration> for single-instance ones.
 func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	name, alias, hasAlias := strings.Cut(req.ID, "/")
 	def := definitionByName(name)
@@ -503,6 +556,10 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 	}
 	if isMultiInstance(def) && (!hasAlias || alias == "") {
 		resp.Diagnostics.AddError("Invalid import ID", fmt.Sprintf("The import ID for %s is %s/<alias>.", def.Title(), def.Name()))
+		return
+	}
+	if !isMultiInstance(def) && hasAlias {
+		resp.Diagnostics.AddError("Invalid import ID", fmt.Sprintf("The import ID for %s is %s.", def.Title(), def.Name()))
 		return
 	}
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("integration"), name)...)
@@ -519,9 +576,14 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 // applyState copies what the API returned into the model.
 func applyState(ctx context.Context, m *integrationConfigurationModel, def integrationDefinition, st configurationState, diags *diag.Diagnostics) {
 	m.Integration = types.StringValue(def.Name())
-	m.Alias = types.StringValue(st.Alias)
-	m.IsDefault = types.BoolValue(st.IsDefault)
-	m.Id = types.StringValue(def.Name() + "/" + st.Alias)
+	if isMultiInstance(def) {
+		m.Alias = types.StringValue(st.Alias)
+		m.IsDefault = types.BoolValue(st.IsDefault)
+		m.Id = types.StringValue(def.Name() + "/" + st.Alias)
+	} else {
+		m.IsDefault = types.BoolNull()
+		m.Id = types.StringValue(def.Name())
+	}
 	*m.settings(def.Name()) = st.Settings
 
 	lastFours := st.LastFour

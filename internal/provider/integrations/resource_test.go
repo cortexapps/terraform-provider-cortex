@@ -1,9 +1,15 @@
 package integrations_test
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"os"
 	"testing"
 
+	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
+	api "github.com/cortexapps/terraform-provider-cortex/internal/cortex/integrations"
+	"github.com/cortexapps/terraform-provider-cortex/internal/provider"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 )
@@ -46,4 +52,46 @@ resource "cortex_integration_configuration" "test" {
 		body("a1b2", `{ region = "US1", environments = ["tf-acc"] }`),
 		body("e5f6", `{ region = "EU1", custom_subdomain = "tf-acc", environments = ["tf-acc", "tf-acc-2"] }`),
 		plancheck.ExpectResourceAction(accResourceName, plancheck.ResourceActionUpdate))
+}
+
+// A tenant has one PagerDuty configuration. The test skips when the tenant already has one, so it never touches a
+// real configuration.
+func TestAccIntegrationConfigurationPagerDuty(t *testing.T) {
+	body := func(readonly bool) string {
+		return fmt.Sprintf(`
+resource "cortex_integration_configuration" "test" {
+  credentials = { token = { value = "tf-acc-fake-token-a1b2" } }
+  pagerduty   = { is_token_readonly = %t }
+}`, readonly)
+	}
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			skipWhenPagerDutyConfigured(t)
+		},
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: body(true), Check: resource.TestCheckResourceAttr(accResourceName, "id", "pagerduty")},
+			{ResourceName: accResourceName, ImportState: true, ImportStateId: "pagerduty", ImportStateVerify: true, ImportStateVerifyIgnore: []string{"credentials"}},
+			{Config: body(false)},
+		},
+	})
+}
+
+func skipWhenPagerDutyConfigured(t *testing.T) {
+	url := os.Getenv("CORTEX_API_URL")
+	if url == "" {
+		url = provider.DefaultBaseApiUrl
+	}
+	client, err := cortex.NewClient(cortex.WithURL(url), cortex.WithToken(os.Getenv("CORTEX_API_TOKEN")), cortex.WithVersion("acctest"))
+	if err != nil {
+		t.Fatalf("could not build client: %s", err)
+	}
+	_, err = api.PagerDuty(client).Get(context.Background())
+	switch {
+	case err == nil:
+		t.Skip("the tenant already has a PagerDuty configuration")
+	case !errors.Is(err, cortex.ApiErrorNotFound):
+		t.Fatalf("could not read the PagerDuty configuration: %s", err)
+	}
 }
