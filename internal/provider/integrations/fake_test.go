@@ -21,11 +21,14 @@ type fakeIntegrationSpec struct {
 	ignoreOnUpdateForType map[string][]string
 	// defaults fills a missing request field from another field on create, as the API does.
 	defaults map[string]string
+	// nullRemovesOnUpdate lists request fields that an explicit null removes on update, as the API does.
+	nullRemovesOnUpdate []string
 }
 
 // fakeSpecs follow the backend contract. The key is the path segment under /api/v1.
 var fakeSpecs = map[string]fakeIntegrationSpec{
-	"datadog":    {multi: true, masks: map[string]string{"apiKey": "lastFourApiKey", "appKey": "lastFourAppKey"}},
+	"datadog": {multi: true, masks: map[string]string{"apiKey": "lastFourApiKey", "appKey": "lastFourAppKey"},
+		nullRemovesOnUpdate: []string{"customSubdomain"}},
 	"pagerduty":  {multi: false, masks: map[string]string{"token": "lastFour"}},
 	"gitlab":     {multi: true, masks: map[string]string{"personalAccessToken": "lastFour"}, ignoreOnUpdate: []string{"host"}},
 	"incidentio": {multi: true, masks: map[string]string{"apiKey": "lastFour"}},
@@ -129,6 +132,10 @@ func (f *fakeCortexApi) serveMulti(w http.ResponseWriter, r *http.Request, seg, 
 		}
 		ignoredForType := fakeSpecs[seg].ignoreOnUpdateForType[fmt.Sprint(f.configs[seg][i]["type"])]
 		for k, v := range body {
+			if v == nil && slices.Contains(fakeSpecs[seg].nullRemovesOnUpdate, k) {
+				delete(f.configs[seg][i], k)
+				continue
+			}
 			if v == nil || k == "isDefault" || slices.Contains(fakeSpecs[seg].ignoreOnUpdate, k) || slices.Contains(ignoredForType, k) {
 				continue
 			}

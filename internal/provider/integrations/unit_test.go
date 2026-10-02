@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/assert"
 )
@@ -258,8 +259,7 @@ func TestUnitIntegrationConfiguration_ImportIdErrors(t *testing.T) {
 	}
 }
 
-// A change of region or custom_subdomain updates the configuration in place. The API keeps the current custom
-// subdomain when an update omits it, so only a new configuration can remove it.
+// A change of region or custom_subdomain, including removing custom_subdomain, updates the configuration in place.
 func TestUnitIntegrationConfiguration_DatadogSettingsUpdate(t *testing.T) {
 	fake, url := newFakeCortexApi(t)
 	withSettings := func(region, subdomain string) string {
@@ -304,7 +304,7 @@ resource "cortex_integration_configuration" "test" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckNoResourceAttr(unitResourceName, "datadog.custom_subdomain"),
 					checkFake(fake, "datadog", "dd", "customSubdomain", nil),
-					checkCreates(fake, "datadog", 2),
+					checkCreates(fake, "datadog", 1),
 				),
 			},
 		},
@@ -396,14 +396,14 @@ resource "cortex_integration_configuration" "test" {
 
 // Settings can come from another resource, so the whole settings object is unknown until apply. For an existing
 // configuration the plan must then assume that a field that needs a new configuration changes; else the apply finds
-// the change and Terraform fails on an inconsistent final plan. For Datadog, only removing a set custom subdomain
-// needs a new configuration.
+// the change and Terraform fails on an inconsistent final plan. Every Datadog field updates in place, so the
+// configuration is updated also when the unknown block removes the custom subdomain.
 func TestUnitIntegrationConfiguration_UnknownSettings(t *testing.T) {
 	for name, tc := range map[string]struct {
 		settings string
 		creates  int
 	}{
-		"custom subdomain set":     {settings: `{ region = %q, environments = ["prod"], custom_subdomain = "acme" }`, creates: 2},
+		"custom subdomain set":     {settings: `{ region = %q, environments = ["prod"], custom_subdomain = "acme" }`, creates: 1},
 		"custom subdomain not set": {settings: `{ region = %q, environments = ["prod"] }`, creates: 1},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -441,14 +441,14 @@ resource "cortex_integration_configuration" "test" {
 	}
 }
 
-// Only removing a set custom subdomain needs a new configuration, so an unknown custom_subdomain replaces a
-// configuration that has one, and updates a configuration without one in place.
+// A custom_subdomain that is unknown until apply updates the configuration in place, with or without a custom
+// subdomain in state.
 func TestUnitIntegrationConfiguration_DatadogUnknownCustomSubdomain(t *testing.T) {
 	for name, tc := range map[string]struct {
 		before  string
 		creates int
 	}{
-		"was set":     {before: `custom_subdomain = "acme"`, creates: 2},
+		"was set":     {before: `custom_subdomain = "acme"`, creates: 1},
 		"was not set": {before: ``, creates: 1},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -1170,6 +1170,38 @@ func TestUnitIntegrationConfiguration_JiraOnPremImportReplacesOtherFrontendHost(
 				Check: resource.ComposeAggregateTestCheckFunc(
 					checkFake(fake, "jira", "jira", "frontendHost", "https://jira.invalid"),
 					checkCreates(fake, "jira", 1),
+				),
+			},
+		},
+	})
+}
+
+// Removing custom_subdomain sends an explicit null, which removes it in Cortex without a new configuration.
+func TestUnitIntegrationConfiguration_DatadogRemoveCustomSubdomainInPlace(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: datadogUnit(url, "dd", "fake-api-key-a1b2", ""), Check: checkCreates(fake, "datadog", 1)},
+			{
+				Config: unitConfig(url, `
+resource "cortex_integration_configuration" "test" {
+  alias       = "dd"
+  credentials = { key_pair = { key = "fake-api-key-a1b2", secret = "fake-app-key-c3d4" } }
+  datadog     = { region = "US1", custom_subdomain = "acme" }
+}`),
+				Check: checkFake(fake, "datadog", "dd", "customSubdomain", "acme"),
+			},
+			{
+				Config: datadogUnit(url, "dd", "fake-api-key-a1b2", ""),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectResourceAction(unitResourceName, plancheck.ResourceActionUpdate)},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "datadog", "dd", "customSubdomain", nil),
+					resource.TestCheckNoResourceAttr(unitResourceName, "datadog.custom_subdomain"),
+					checkCreates(fake, "datadog", 1),
 				),
 			},
 		},

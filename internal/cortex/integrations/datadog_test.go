@@ -100,6 +100,7 @@ func TestCreateDatadogConfiguration(t *testing.T) {
 
 func TestUpdateDatadogConfiguration(t *testing.T) {
 	oldAlias := "old-datadog"
+	subdomain := "acme"
 	req := integrations.UpdateDatadogConfigurationRequest{
 		Alias:           testDatadogConfiguration.Alias,
 		IsDefault:       true,
@@ -107,7 +108,7 @@ func TestUpdateDatadogConfiguration(t *testing.T) {
 		ApiKey:          "fake-api-key-e5f6",
 		AppKey:          "fake-app-key-g7h8",
 		Region:          "EU1",
-		CustomSubdomain: "acme",
+		CustomSubdomain: &subdomain,
 	}
 	c, teardown, err := setupClient(
 		"/api/v1/datadog/configuration/"+oldAlias,

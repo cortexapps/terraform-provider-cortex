@@ -88,13 +88,15 @@ func TestGitlabClientRoute(t *testing.T) {
 	assert.Equal(t, "a1b2", res.LastFour)
 }
 
-// The API keeps the current value of each optional field that an update omits, so an unset field must not go out.
+// The API keeps the current value of each optional field that an update omits, so an unset key or region must not
+// go out. An explicit null removes the custom subdomain, so an unset custom subdomain goes out as null.
 func TestDatadogUpdateOmitsUnsetFields(t *testing.T) {
 	body, err := json.Marshal(integrations.UpdateDatadogConfigurationRequest{Alias: "dd"})
 	assert.Nil(t, err)
-	for _, field := range []string{"apiKey", "appKey", "region", "customSubdomain"} {
+	for _, field := range []string{"apiKey", "appKey", "region"} {
 		assert.NotContains(t, string(body), field)
 	}
+	assert.Contains(t, string(body), `"customSubdomain":null`)
 }
 
 // The backend rejects null for its required lists, so a nil slice must go out as [].
@@ -108,7 +110,8 @@ func TestRequestsSendEmptyListsForNil(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			body, err := json.Marshal(req)
 			assert.Nil(t, err)
-			assert.NotContains(t, string(body), "null")
+			assert.NotContains(t, string(body), `"environments":null`)
+			assert.NotContains(t, string(body), `"groupNames":null`)
 		})
 	}
 }
