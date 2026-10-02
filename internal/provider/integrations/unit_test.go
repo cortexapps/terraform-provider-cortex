@@ -868,8 +868,8 @@ func TestUnitIntegrationConfiguration_JiraVariantValidation(t *testing.T) {
 	}
 }
 
-// The API fills frontendHost from host when it is not set. The testing framework fails a step whose plan after apply
-// is not empty, so this also proves that frontend_host shows no permanent diff.
+// When frontend_host is not set, the plan and the configuration in Cortex use host. The testing framework fails a step
+// whose plan after apply is not empty, so this also proves that frontend_host shows no permanent diff.
 func TestUnitIntegrationConfiguration_JiraOnPremFrontendHostDefault(t *testing.T) {
 	fake, url := newFakeCortexApi(t)
 
@@ -1106,6 +1106,70 @@ func TestUnitIntegrationConfiguration_JiraOnPremImportWithoutFrontendHost(t *tes
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(unitResourceName, "jira.on_prem.frontend_host", "https://jira.invalid"),
 					checkCreates(fake, "jira", 0),
+				),
+			},
+		},
+	})
+}
+
+// A host that is unknown until apply, with frontend_host not set, still gives a frontend_host equal to the new host.
+func TestUnitIntegrationConfiguration_JiraOnPremUnknownHost(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	withHost := func(host string) string {
+		return unitConfig(url, fmt.Sprintf(`
+resource "terraform_data" "host" {
+  input = %q
+}
+
+resource "cortex_integration_configuration" "test" {
+  alias       = "jira"
+  credentials = { basic = { username = "bot", password = "fake-token-a1b2" } }
+  jira        = { on_prem = { host = terraform_data.host.output } }
+}`, host))
+	}
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: withHost("https://a.invalid"),
+				Check:  checkFake(fake, "jira", "jira", "frontendHost", "https://a.invalid"),
+			},
+			{
+				Config: withHost("https://b.invalid"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "jira", "jira", "frontendHost", "https://b.invalid"),
+					resource.TestCheckResourceAttr(unitResourceName, "jira.on_prem.frontend_host", "https://b.invalid"),
+					checkCreates(fake, "jira", 2),
+				),
+			},
+		},
+	})
+}
+
+// After an import, a frontend_host in Cortex that differs from host does not match a configuration without
+// frontend_host, so the next apply replaces the configuration and Cortex then uses host.
+func TestUnitIntegrationConfiguration_JiraOnPremImportReplacesOtherFrontendHost(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	fake.seed("jira", map[string]any{"alias": "jira", "isDefault": true, "type": "ON_PREM_BASIC",
+		"host": "https://jira.invalid", "frontendHost": "https://links.invalid", "username": "bot", "password": "fake-token-a1b2"})
+	onPrem := jiraUnit(url, "bot", `{ on_prem = { host = "https://jira.invalid" } }`)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:             onPrem,
+				ResourceName:       unitResourceName,
+				ImportState:        true,
+				ImportStateId:      "jira/jira",
+				ImportStatePersist: true,
+			},
+			{
+				Config: onPrem,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "jira", "jira", "frontendHost", "https://jira.invalid"),
+					checkCreates(fake, "jira", 1),
 				),
 			},
 		},

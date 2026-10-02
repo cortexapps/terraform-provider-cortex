@@ -21,8 +21,8 @@ import (
 // The variant sets the API "type". Every state refresh (create, read, and update) copies the email or username that
 // the API returns into state, also right after an import. The API never returns cloudId, so the refresh keeps it
 // from state. The API ignores host, frontendHost, and cloudId on update, and the email of a cloud_scoped
-// configuration, so a change to one of them replaces the configuration. On create, the API sets frontendHost to host
-// when it is not set.
+// configuration, so a change to one of them replaces the configuration. When frontend_host is not set, the plan uses
+// host, the value that Cortex uses then.
 type jiraDefinition struct{}
 
 type jiraSettingsModel struct {
@@ -294,5 +294,8 @@ func (frontendHostDefaultsToHost) PlanModifyString(ctx context.Context, req plan
 	}
 	var host types.String
 	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, req.Path.ParentPath().AtName("host"), &host)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	resp.PlanValue = host
 }
