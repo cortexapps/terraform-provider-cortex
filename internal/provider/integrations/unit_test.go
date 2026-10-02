@@ -1058,3 +1058,56 @@ func TestUnitIntegrationConfiguration_JiraCloudScopedEmailChangeAfterImport(t *t
 		},
 	})
 }
+
+// When frontend_host is removed from the configuration, Cortex must use host again. The API ignores frontendHost on
+// update, so the removal replaces the configuration.
+func TestUnitIntegrationConfiguration_JiraRemoveFrontendHost(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: jiraUnit(url, "bot", `{ on_prem = { host = "https://jira.invalid", frontend_host = "https://links.invalid" } }`),
+				Check:  checkFake(fake, "jira", "jira", "frontendHost", "https://links.invalid"),
+			},
+			{
+				Config: jiraUnit(url, "bot", `{ on_prem = { host = "https://jira.invalid" } }`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "jira", "jira", "frontendHost", "https://jira.invalid"),
+					resource.TestCheckResourceAttr(unitResourceName, "jira.on_prem.frontend_host", "https://jira.invalid"),
+					checkCreates(fake, "jira", 2),
+				),
+			},
+		},
+	})
+}
+
+// After an import, a frontend_host that Cortex set to host matches a configuration without frontend_host, so the next
+// apply keeps the configuration.
+func TestUnitIntegrationConfiguration_JiraOnPremImportWithoutFrontendHost(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	fake.seed("jira", map[string]any{"alias": "jira", "isDefault": true, "type": "ON_PREM_BASIC",
+		"host": "https://jira.invalid", "frontendHost": "https://jira.invalid", "username": "bot", "password": "fake-token-a1b2"})
+	onPrem := jiraUnit(url, "bot", `{ on_prem = { host = "https://jira.invalid" } }`)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:             onPrem,
+				ResourceName:       unitResourceName,
+				ImportState:        true,
+				ImportStateId:      "jira/jira",
+				ImportStatePersist: true,
+			},
+			{
+				Config: onPrem,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "jira.on_prem.frontend_host", "https://jira.invalid"),
+					checkCreates(fake, "jira", 0),
+				),
+			},
+		},
+	})
+}

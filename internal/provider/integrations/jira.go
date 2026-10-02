@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -116,7 +115,7 @@ func (jiraDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 						Optional:            true,
 						Computed:            true,
 						Validators:          []validator.String{stringvalidator.LengthAtLeast(1)},
-						PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+						PlanModifiers:       []planmodifier.String{frontendHostDefaultsToHost{}},
 					},
 				},
 			},
@@ -275,4 +274,25 @@ func (d jiraDefinition) state(ctx context.Context, cfg api.JiraConfiguration, pr
 		Readable:  readable,
 		LastFour:  map[string]string{"password": cfg.LastFour},
 	}, err
+}
+
+// frontendHostDefaultsToHost plans host as frontend_host when the configuration does not set frontend_host, because
+// Cortex then uses host. A removed frontend_host thus shows as a change, which replaces the configuration.
+type frontendHostDefaultsToHost struct{}
+
+func (frontendHostDefaultsToHost) Description(context.Context) string {
+	return "Defaults to host when not set."
+}
+
+func (m frontendHostDefaultsToHost) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (frontendHostDefaultsToHost) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	if !req.ConfigValue.IsNull() {
+		return
+	}
+	var host types.String
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, req.Path.ParentPath().AtName("host"), &host)...)
+	resp.PlanValue = host
 }
