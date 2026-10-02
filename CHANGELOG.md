@@ -2,6 +2,7 @@ Changelog for the Cortex terraform provider.
 
 ## Unreleased
 * Add `cortex_integration_configuration` resource to manage integration configurations for Datadog, GitLab, incident.io, Jira, and PagerDuty.
+* `cortex_integration_configuration`: removing the Datadog `custom_subdomain` now updates the configuration in place instead of replacing it.
 
 ## 0.5.0
 

@@ -54,6 +54,35 @@ resource "cortex_integration_configuration" "test" {
 		plancheck.ExpectResourceAction(accResourceName, plancheck.ResourceActionUpdate))
 }
 
+// Removing custom_subdomain updates the configuration in place.
+func TestAccIntegrationConfigurationDatadogRemoveCustomSubdomain(t *testing.T) {
+	body := func(settings string) string {
+		return fmt.Sprintf(`
+resource "cortex_integration_configuration" "test" {
+  alias       = "tf-acc-test-datadog-subdomain"
+  credentials = { key_pair = { key = "tf-acc-fake-api-key-a1b2", secret = "tf-acc-fake-app-key-c3d4" } }
+  datadog     = %s
+}`, settings)
+	}
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: body(`{ region = "US1", custom_subdomain = "tf-acc" }`),
+				Check:  resource.TestCheckResourceAttr(accResourceName, "datadog.custom_subdomain", "tf-acc"),
+			},
+			{
+				Config: body(`{ region = "US1" }`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectResourceAction(accResourceName, plancheck.ResourceActionUpdate)},
+				},
+				Check: resource.TestCheckNoResourceAttr(accResourceName, "datadog.custom_subdomain"),
+			},
+		},
+	})
+}
+
 func TestAccIntegrationConfigurationGitlab(t *testing.T) {
 	body := func(groups string) string {
 		return fmt.Sprintf(`
