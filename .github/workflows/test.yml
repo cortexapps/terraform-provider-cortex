@@ -70,7 +70,7 @@ jobs:
           go-version-file: "go.mod"
           cache: true
       # resource.UnitTest cases run the Terraform CLI.
-      - uses: hashicorp/setup-terraform@v3.1.2
+      - uses: hashicorp/setup-terraform@v4.0.1
         with:
           terraform_version: "1.10.*"
           terraform_wrapper: false
