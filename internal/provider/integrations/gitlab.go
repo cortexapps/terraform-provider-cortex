@@ -29,6 +29,8 @@ type gitlabSettingsModel struct {
 
 var _ multiInstanceDefinition = gitlabDefinition{}
 
+var nonBlank = regexp.MustCompile(`\S`)
+
 func (gitlabDefinition) Name() string  { return "gitlab" }
 func (gitlabDefinition) Title() string { return "GitLab" }
 func (gitlabDefinition) CredentialKinds() []credentialKind {
@@ -47,7 +49,7 @@ func (gitlabDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 				MarkdownDescription: "URL of a self-managed GitLab instance. Not set means gitlab.com. Must not be blank.",
 				Optional:            true,
 				// The API keeps the current host on a blank update, so a blank host would make the apply inconsistent.
-				Validators: []validator.String{stringvalidator.RegexMatches(regexp.MustCompile(`\S`), "must not be blank")},
+				Validators: []validator.String{stringvalidator.RegexMatches(nonBlank, "must not be blank")},
 			},
 			"group_names": schema.ListAttribute{
 				MarkdownDescription: "GitLab groups to include. Defaults to an empty list. Names must not be blank.",
@@ -57,7 +59,7 @@ func (gitlabDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 				Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 				// The API drops blank names, so they would make the apply inconsistent.
 				Validators: []validator.List{listvalidator.ValueStringsAre(
-					stringvalidator.RegexMatches(regexp.MustCompile(`\S`), "must not be blank"),
+					stringvalidator.RegexMatches(nonBlank, "must not be blank"),
 				)},
 			},
 			"hide_personal_projects": schema.BoolAttribute{
@@ -71,19 +73,25 @@ func (gitlabDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 }
 
 // SettingsRequireReplace replaces only to remove a set host: the API keeps the current host when an update omits it.
+// A host in an unknown settings block is unknown too.
 func (gitlabDefinition) SettingsRequireReplace(ctx context.Context, plan types.Object, state types.Object) (bool, diag.Diagnostics) {
+	var planHost, stateHost types.String
+	var diags diag.Diagnostics
 	if settingsUnknown(plan, state) {
 		s, err := settingsFrom[gitlabSettingsModel](ctx, state)
 		if err != nil {
 			return false, diag.Diagnostics{diag.NewErrorDiagnostic("Invalid GitLab settings", err.Error())}
 		}
-		return !s.Host.IsNull(), nil
+		planHost, stateHost = types.StringUnknown(), s.Host
+	} else {
+		var p, s *gitlabSettingsModel
+		p, s, diags = asSettings[gitlabSettingsModel](ctx, plan, state)
+		if p == nil {
+			return false, diags
+		}
+		planHost, stateHost = p.Host, s.Host
 	}
-	p, s, diags := asSettings[gitlabSettingsModel](ctx, plan, state)
-	if p == nil {
-		return false, diags
-	}
-	return !s.Host.IsNull() && (p.Host.IsNull() || p.Host.IsUnknown()), diags
+	return !stateHost.IsNull() && (planHost.IsNull() || planHost.IsUnknown()), diags
 }
 
 func (d gitlabDefinition) List(ctx context.Context, c *cortex.HttpClient, prior types.Object) ([]configurationState, error) {
