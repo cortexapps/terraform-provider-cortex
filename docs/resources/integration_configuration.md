@@ -85,7 +85,7 @@ resource "cortex_integration_configuration" "pagerduty" {
 
 - `alias` (String) Unique alias of the configuration. Required for integrations that support several configurations. Not allowed for integrations with one configuration per tenant, such as PagerDuty. A change renames the configuration in place.
 - `datadog` (Attributes) Datadog settings. Use `credentials.key_pair`: `key` is the Datadog API key and `secret` is the application key. A change of the keys, `region`, or `custom_subdomain`, including removing `custom_subdomain`, updates the configuration in place. (see [below for nested schema](#nestedatt--datadog))
-- `gitlab` (Attributes) GitLab settings. Use `credentials.token`: `value` is the GitLab personal access token. The Cortex API cannot change `host` in place, so a change replaces the configuration. (see [below for nested schema](#nestedatt--gitlab))
+- `gitlab` (Attributes) GitLab settings. Use `credentials.token`: `value` is the GitLab personal access token. A change of `host` updates the configuration in place. The Cortex API cannot remove a host, so removing `host` replaces the configuration. A `host` that is unknown until apply can resolve to null, so it also replaces a configuration that has a host. (see [below for nested schema](#nestedatt--gitlab))
 - `incident_io` (Attributes) incident.io settings. incident.io has no settings, so set `incident_io = {}`. Use `credentials.token`: `value` is the incident.io API key. (see [below for nested schema](#nestedatt--incident_io))
 - `is_default` (Boolean) Whether this is the default configuration of its integration. Not allowed for integrations with one configuration per tenant. When not set, Terraform keeps the value from Cortex. Cortex makes the first configuration the default, and does not allow setting the current default to `false`: set `is_default = true` on another configuration and remove `is_default` from this one, apply, and then set it to `false` if necessary. Set `is_default = true` on one configuration per integration only.
 - `jira` (Attributes) Jira settings. Set exactly one variant. Use `credentials.basic`: for the cloud variants, `username` is the email and `password` is the API token; for `on_prem`, they are the username and password. The Cortex API cannot change the variant, `host`, `frontend_host`, `cloud_id`, or the `cloud_scoped` email (`credentials.basic.username`) in place, so a change to one of them replaces the configuration. When the tenant has a Jira OAuth configuration, the Cortex API cannot list Jira configurations, so this resource cannot manage Jira in that tenant. (see [below for nested schema](#nestedatt--jira))
@@ -153,7 +153,7 @@ Optional:
 
 - `group_names` (List of String) GitLab groups to include. Defaults to an empty list. Names must not be blank.
 - `hide_personal_projects` (Boolean) Whether to hide personal projects. Defaults to `false`.
-- `host` (String) URL of a self-managed GitLab instance. Not set means gitlab.com.
+- `host` (String) URL of a self-managed GitLab instance. Not set means gitlab.com. Must not be blank.
 
 
 <a id="nestedatt--incident_io"></a>
@@ -226,6 +226,6 @@ terraform import cortex_integration_configuration.pagerduty pagerduty
 
 # The Cortex API never returns secrets, so set credentials in the configuration. Also set every setting to its value
 # in Cortex. A setting that differs or is left out (for example a Datadog custom subdomain) changes Cortex on the
-# next apply. A setting that the API cannot change in place (for example the GitLab host or the Jira host) replaces
-# the configuration.
+# next apply. A setting that the API cannot change in place (for example the Jira host, or a GitLab host that is left
+# out) replaces the configuration.
 ```

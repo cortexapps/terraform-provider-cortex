@@ -17,8 +17,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// gitlabDefinition maps credentials.token to personalAccessToken. The API ignores host on update, so a host change
-// replaces the configuration.
+// gitlabDefinition maps credentials.token to personalAccessToken. The API changes the host in place, but it keeps the
+// current host when an update omits it, so only removing a set host replaces the configuration.
 type gitlabDefinition struct{}
 
 type gitlabSettingsModel struct {
@@ -29,6 +29,8 @@ type gitlabSettingsModel struct {
 
 var _ multiInstanceDefinition = gitlabDefinition{}
 
+var nonBlank = regexp.MustCompile(`\S`)
+
 func (gitlabDefinition) Name() string  { return "gitlab" }
 func (gitlabDefinition) Title() string { return "GitLab" }
 func (gitlabDefinition) CredentialKinds() []credentialKind {
@@ -38,13 +40,16 @@ func (gitlabDefinition) CredentialKinds() []credentialKind {
 func (gitlabDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 	return schema.SingleNestedAttribute{
 		MarkdownDescription: "GitLab settings. Use `credentials.token`: `value` is the GitLab personal access token. " +
-			"The Cortex API cannot change `host` in place, so a change replaces the configuration.",
+			"A change of `host` updates the configuration in place. The Cortex API cannot remove a host, so removing " +
+			"`host` replaces the configuration. A `host` that is unknown until apply can resolve to null, so it also " +
+			"replaces a configuration that has a host.",
 		Optional: true,
 		Attributes: map[string]schema.Attribute{
 			"host": schema.StringAttribute{
-				MarkdownDescription: "URL of a self-managed GitLab instance. Not set means gitlab.com.",
+				MarkdownDescription: "URL of a self-managed GitLab instance. Not set means gitlab.com. Must not be blank.",
 				Optional:            true,
-				Validators:          []validator.String{stringvalidator.LengthAtLeast(1)},
+				// The API keeps the current host on a blank update, so a blank host would make the apply inconsistent.
+				Validators: []validator.String{stringvalidator.RegexMatches(nonBlank, "must not be blank")},
 			},
 			"group_names": schema.ListAttribute{
 				MarkdownDescription: "GitLab groups to include. Defaults to an empty list. Names must not be blank.",
@@ -54,7 +59,7 @@ func (gitlabDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 				Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 				// The API drops blank names, so they would make the apply inconsistent.
 				Validators: []validator.List{listvalidator.ValueStringsAre(
-					stringvalidator.RegexMatches(regexp.MustCompile(`\S`), "must not be blank"),
+					stringvalidator.RegexMatches(nonBlank, "must not be blank"),
 				)},
 			},
 			"hide_personal_projects": schema.BoolAttribute{
@@ -67,15 +72,26 @@ func (gitlabDefinition) SettingsAttribute() schema.SingleNestedAttribute {
 	}
 }
 
+// SettingsRequireReplace replaces only to remove a set host: the API keeps the current host when an update omits it.
+// A host in an unknown settings block is unknown too.
 func (gitlabDefinition) SettingsRequireReplace(ctx context.Context, plan types.Object, state types.Object) (bool, diag.Diagnostics) {
+	var planHost, stateHost types.String
+	var diags diag.Diagnostics
 	if settingsUnknown(plan, state) {
-		return true, nil
+		s, err := settingsFrom[gitlabSettingsModel](ctx, state)
+		if err != nil {
+			return false, diag.Diagnostics{diag.NewErrorDiagnostic("Invalid GitLab settings", err.Error())}
+		}
+		planHost, stateHost = types.StringUnknown(), s.Host
+	} else {
+		var p, s *gitlabSettingsModel
+		p, s, diags = asSettings[gitlabSettingsModel](ctx, plan, state)
+		if p == nil {
+			return false, diags
+		}
+		planHost, stateHost = p.Host, s.Host
 	}
-	p, s, diags := asSettings[gitlabSettingsModel](ctx, plan, state)
-	if p == nil {
-		return false, diags
-	}
-	return !p.Host.Equal(s.Host), diags
+	return !stateHost.IsNull() && (planHost.IsNull() || planHost.IsUnknown()), diags
 }
 
 func (d gitlabDefinition) List(ctx context.Context, c *cortex.HttpClient, prior types.Object) ([]configurationState, error) {
@@ -121,6 +137,7 @@ func (d gitlabDefinition) Update(ctx context.Context, c *cortex.HttpClient, curr
 	cfg, err := api.Gitlab(c).Update(ctx, currentAlias, in.Alias, api.UpdateGitlabConfigurationRequest{
 		Alias:                in.Alias,
 		IsDefault:            in.IsDefault,
+		Host:                 s.Host.ValueString(),
 		HidePersonalProjects: s.HidePersonalProjects.ValueBool(),
 		GroupNames:           groups,
 		PersonalAccessToken:  in.Credentials.Parts["value"],

@@ -15,10 +15,11 @@ type CreateGitlabConfigurationRequest struct {
 	GroupNames           []string `json:"groupNames"`
 }
 
-// UpdateGitlabConfigurationRequest has no host: the API ignores a host on update.
+// UpdateGitlabConfigurationRequest omits an unset host: the API keeps the current host when an update omits it.
 type UpdateGitlabConfigurationRequest struct {
 	Alias                string   `json:"alias"`
 	IsDefault            bool     `json:"isDefault"`
+	Host                 string   `json:"host,omitempty"`
 	HidePersonalProjects bool     `json:"hidePersonalProjects"`
 	GroupNames           []string `json:"groupNames"`
 	PersonalAccessToken  string   `json:"personalAccessToken,omitempty"`
