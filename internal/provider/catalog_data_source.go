@@ -152,6 +152,9 @@ func (d *CatalogDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	data.FromApiModel(ctx, &resp.Diagnostics, entity)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Write to TF state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
@@ -178,6 +179,12 @@ func (r *CatalogResource) Read(ctx context.Context, req resource.ReadRequest, re
 	// Issue API request
 	entity, err := r.client.Catalogs().Get(ctx, data.Slug.ValueString())
 	if err != nil {
+		// If the catalog was deleted outside of Terraform, remove it from state
+		// so that a subsequent plan recreates it instead of erroring.
+		if errors.Is(err, cortex.ApiErrorNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read catalog, got error: %s", err))
 		return
 	}

@@ -49,20 +49,12 @@ type UpsertCatalogRequest struct {
 	Filter              *CatalogFilter `json:"filter,omitempty"`
 }
 
-type CatalogsResponse struct {
-	CatalogPages []Catalog `json:"catalogPages"`
-	Page         int       `json:"page"`
-	Total        int       `json:"total"`
-	TotalPages   int       `json:"totalPages"`
-}
-
 /***********************************************************************************************************************
  * Interface & Client
  **********************************************************************************************************************/
 
 type CatalogsClientInterface interface {
 	Get(ctx context.Context, slug string) (Catalog, error)
-	List(ctx context.Context) (CatalogsResponse, error)
 	Upsert(ctx context.Context, req UpsertCatalogRequest) (Catalog, error)
 	Delete(ctx context.Context, slug string) error
 }
@@ -93,33 +85,6 @@ func (c *CatalogsClient) Get(ctx context.Context, slug string) (Catalog, error) 
 	err = c.client.handleResponseStatus(response, &apiError)
 	if err != nil {
 		return data, errors.Join(errors.New("Failed getting catalog: "), err)
-	}
-
-	return data, nil
-}
-
-/***********************************************************************************************************************
- * GET /api/v1/catalog-pages/
- **********************************************************************************************************************/
-
-type catalogListParams struct {
-	PageSize int `url:"pageSize"`
-	Page     int `url:"page"`
-}
-
-func (c *CatalogsClient) List(ctx context.Context) (CatalogsResponse, error) {
-	data := CatalogsResponse{}
-	apiError := ApiError{}
-
-	params := catalogListParams{PageSize: 1000, Page: 0}
-	response, err := c.Client().Get(Route("catalog_pages", "")).QueryStruct(&params).Receive(&data, &apiError)
-	if err != nil {
-		return data, errors.New("could not get catalogs: " + err.Error())
-	}
-
-	err = c.client.handleResponseStatus(response, &apiError)
-	if err != nil {
-		return data, err
 	}
 
 	return data, nil

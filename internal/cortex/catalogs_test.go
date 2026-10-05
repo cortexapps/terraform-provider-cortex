@@ -33,25 +33,6 @@ func TestCatalogsClient_Get(t *testing.T) {
 	assert.Equal(t, testCatalogResponse.IsCortexManaged, res.IsCortexManaged)
 }
 
-var testCatalogsListResponse = &cortex.CatalogsResponse{
-	CatalogPages: []cortex.Catalog{
-		*testCatalogResponse,
-		*testCatalogResponse,
-	},
-	Page:       0,
-	Total:      2,
-	TotalPages: 1,
-}
-
-func TestCatalogsClient_List(t *testing.T) {
-	c, teardown, err := setupClient(cortex.Route("catalog_pages", ""), testCatalogsListResponse, AssertRequestMethod(t, "GET"))
-	assert.Nil(t, err, "could not setup client")
-	defer teardown()
-
-	res, err := c.Catalogs().List(context.Background())
-	assert.Nil(t, err, "error listing catalogs")
-	assert.Len(t, res.CatalogPages, 2)
-}
 
 func TestCatalogsClient_Upsert(t *testing.T) {
 	req := cortex.UpsertCatalogRequest{
