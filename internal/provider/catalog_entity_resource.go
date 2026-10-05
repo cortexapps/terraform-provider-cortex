@@ -1190,6 +1190,7 @@ func (r *CatalogEntityResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 	oldMetadata := data.Metadata
+	oldStaticAnalysis := data.StaticAnalysis
 
 	// Parse configuration into an upsert entity
 	upsertRequest := r.toUpsertRequest(ctx, &resp.Diagnostics, &data)
@@ -1210,6 +1211,7 @@ func (r *CatalogEntityResource) Create(ctx context.Context, req resource.CreateR
 	if data.IgnoreMetadata.ValueBool() {
 		data.Metadata = oldMetadata
 	}
+	data.StaticAnalysis = keepEmptyObject(ctx, oldStaticAnalysis, data.StaticAnalysis)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -1228,6 +1230,7 @@ func (r *CatalogEntityResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 	oldMetadata := data.Metadata
+	oldStaticAnalysis := data.StaticAnalysis
 
 	// Issue API request
 	entity, err := r.client.CatalogEntities().GetFromDescriptor(ctx, data.Tag.ValueString())
@@ -1242,6 +1245,7 @@ func (r *CatalogEntityResource) Read(ctx context.Context, req resource.ReadReque
 	if data.IgnoreMetadata.ValueBool() {
 		data.Metadata = oldMetadata
 	}
+	data.StaticAnalysis = keepEmptyObject(ctx, oldStaticAnalysis, data.StaticAnalysis)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -1259,6 +1263,7 @@ func (r *CatalogEntityResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 	oldMetadata := data.Metadata
+	oldStaticAnalysis := data.StaticAnalysis
 
 	// Parse configuration into API entity
 	upsertRequest := r.toUpsertRequest(ctx, &resp.Diagnostics, &data)
@@ -1279,6 +1284,7 @@ func (r *CatalogEntityResource) Update(ctx context.Context, req resource.UpdateR
 	if data.IgnoreMetadata.ValueBool() {
 		data.Metadata = oldMetadata
 	}
+	data.StaticAnalysis = keepEmptyObject(ctx, oldStaticAnalysis, data.StaticAnalysis)
 	if resp.Diagnostics.HasError() {
 		return
 	}

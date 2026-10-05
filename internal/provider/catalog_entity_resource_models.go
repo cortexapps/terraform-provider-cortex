@@ -3229,13 +3229,13 @@ func (o *CatalogEntityStaticAnalysisMendResourceModel) ToApiModel() cortex.Catal
 }
 
 func (o *CatalogEntityStaticAnalysisMendResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityStaticAnalysisMend) types.Object {
-	applicationIds := make([]types.String, len(entity.ApplicationIDs))
-	for i, e := range entity.ApplicationIDs {
-		applicationIds[i] = types.StringValue(e)
+	// A nil slice reads as a null list, matching an ID list left out of the configuration.
+	var applicationIds, projectIds []types.String
+	for _, e := range entity.ApplicationIDs {
+		applicationIds = append(applicationIds, types.StringValue(e))
 	}
-	projectIds := make([]types.String, len(entity.ProjectIDs))
-	for i, e := range entity.ProjectIDs {
-		projectIds[i] = types.StringValue(e)
+	for _, e := range entity.ProjectIDs {
+		projectIds = append(projectIds, types.StringValue(e))
 	}
 
 	ob := CatalogEntityStaticAnalysisMendResourceModel{

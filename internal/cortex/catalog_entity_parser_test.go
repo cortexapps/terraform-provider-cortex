@@ -152,3 +152,16 @@ info:
 		})
 	}
 }
+
+func TestYamlToEntityReadsMendWithOneIdList(t *testing.T) {
+	entity, err := parseDescriptor(t, `
+info:
+  x-cortex-tag: test
+  x-cortex-static-analysis:
+    mend:
+      applicationIds: ["123"]
+`)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"123"}, entity.StaticAnalysis.Mend.ApplicationIDs)
+	assert.Empty(t, entity.StaticAnalysis.Mend.ProjectIDs)
+}

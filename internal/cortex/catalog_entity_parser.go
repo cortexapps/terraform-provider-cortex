@@ -934,13 +934,13 @@ func (c *CatalogEntityParser) interpolateStaticAnalysisCodeCov(entity *CatalogEn
 
 func (c *CatalogEntityParser) interpolateStaticAnalysisMend(entity *CatalogEntityData, data map[string]interface{}) {
 	entity.StaticAnalysis.Mend = CatalogEntityStaticAnalysisMend{}
-	applicationIds := data["applicationIds"].([]interface{})
+	applicationIds, _ := data["applicationIds"].([]interface{})
 	for _, applicationId := range applicationIds {
 		if applicationId.(string) != "" {
 			entity.StaticAnalysis.Mend.ApplicationIDs = append(entity.StaticAnalysis.Mend.ApplicationIDs, applicationId.(string))
 		}
 	}
-	projectIds := data["projectIds"].([]interface{})
+	projectIds, _ := data["projectIds"].([]interface{})
 	for _, projectId := range projectIds {
 		if projectId.(string) != "" {
 			entity.StaticAnalysis.Mend.ProjectIDs = append(entity.StaticAnalysis.Mend.ProjectIDs, projectId.(string))
