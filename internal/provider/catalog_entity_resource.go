@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
@@ -1234,9 +1235,15 @@ func (r *CatalogEntityResource) Read(ctx context.Context, req resource.ReadReque
 
 	// Issue API request
 	entity, err := r.client.CatalogEntities().GetFromDescriptor(ctx, data.Tag.ValueString())
-
+	if errors.Is(err, cortex.ApiErrorNotFound) {
+		// Deleted outside Terraform: drop it from state so that the plan creates it again.
+		resp.Diagnostics.AddWarning("Catalog entity not found",
+			fmt.Sprintf("Catalog entity %s was not found, so Terraform treats it as deleted. If the entity still exists, check that the API token can see it.", data.Tag.ValueString()))
+		resp.State.RemoveResource(ctx)
+		return
+	}
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read example, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read catalog entity %s, got error: %s", data.Tag.ValueString(), err))
 		return
 	}
 

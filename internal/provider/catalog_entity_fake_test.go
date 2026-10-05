@@ -18,6 +18,8 @@ import (
 type fakeCatalogApi struct {
 	mu          sync.Mutex
 	descriptors map[string]map[string]any
+	readFails   bool
+	deletes     int
 }
 
 func newFakeCatalogApi(t *testing.T) (*fakeCatalogApi, string) {
@@ -45,6 +47,8 @@ func (f *fakeCatalogApi) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f.descriptors[tag] = descriptor
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"ok":true,"violations":[]}`))
+	case r.Method == http.MethodGet && strings.HasSuffix(path, "/openapi") && f.readFails:
+		fakeCatalogFail(w, http.StatusInternalServerError, "read failed")
 	case r.Method == http.MethodGet && strings.HasSuffix(path, "/openapi") && r.URL.Query().Get("yaml") == "true":
 		descriptor, ok := f.descriptors[strings.TrimSuffix(strings.TrimPrefix(path, "/api/v1/catalog/"), "/openapi")]
 		if !ok {
@@ -55,6 +59,7 @@ func (f *fakeCatalogApi) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/yaml")
 		_, _ = w.Write(out)
 	case r.Method == http.MethodDelete && strings.HasPrefix(path, "/api/v1/catalog/"):
+		f.deletes++
 		tag := strings.TrimPrefix(path, "/api/v1/catalog/")
 		if _, ok := f.descriptors[tag]; !ok {
 			fakeCatalogFail(w, http.StatusNotFound, "entity not found")
@@ -63,7 +68,8 @@ func (f *fakeCatalogApi) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		delete(f.descriptors, tag)
 		w.WriteHeader(http.StatusOK)
 	default:
-		fakeCatalogFail(w, http.StatusNotFound, "unexpected request "+r.Method+" "+path)
+		// Not 404: Read treats a 404 as an entity deleted outside Terraform.
+		fakeCatalogFail(w, http.StatusInternalServerError, "unexpected request "+r.Method+" "+path)
 	}
 }
 
@@ -84,6 +90,33 @@ func (f *fakeCatalogApi) seed(t *testing.T, descriptor string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.descriptors[tag] = parsed
+}
+
+// deleteEntity removes an entity as if a client other than Terraform had deleted it.
+func (f *fakeCatalogApi) deleteEntity(tag string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	delete(f.descriptors, tag)
+}
+
+// setReadFails makes descriptor reads answer 500.
+func (f *fakeCatalogApi) setReadFails(fails bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.readFails = fails
+}
+
+func (f *fakeCatalogApi) deleteCount() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.deletes
+}
+
+func (f *fakeCatalogApi) stored(tag string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	_, ok := f.descriptors[tag]
+	return ok
 }
 
 func fakeCatalogFail(w http.ResponseWriter, status int, message string) {

@@ -2,6 +2,7 @@ package provider_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -208,4 +209,100 @@ info:
 			})
 		})
 	}
+}
+
+func minimalCatalogEntity(url string) string {
+	return catalogUnitConfig(url, `
+resource "cortex_catalog_entity" "test" {
+  name = "Unit Test Entity"
+  tag  = "unit-test-entity"
+}`)
+}
+
+func checkStored(f *fakeCatalogApi, tag string) resource.TestCheckFunc {
+	return func(*terraform.State) error {
+		if !f.stored(tag) {
+			return fmt.Errorf("fake does not store entity %q", tag)
+		}
+		return nil
+	}
+}
+
+func TestUnitCatalogEntity_DeletedOutsideTerraform(t *testing.T) {
+	fake, url := newFakeCatalogApi(t)
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: minimalCatalogEntity(url)},
+			{
+				PreConfig: func() { fake.deleteEntity("unit-test-entity") },
+				Config:    minimalCatalogEntity(url),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("cortex_catalog_entity.test", plancheck.ResourceActionCreate),
+					},
+				},
+				Check: checkStored(fake, "unit-test-entity"),
+			},
+		},
+	})
+}
+
+// Destroy refreshes first, so an entity deleted outside Terraform leaves state without a delete call.
+func TestUnitCatalogEntity_DestroyAfterDeletedOutsideTerraform(t *testing.T) {
+	fake, url := newFakeCatalogApi(t)
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: minimalCatalogEntity(url)},
+			{
+				PreConfig: func() { fake.deleteEntity("unit-test-entity") },
+				Config:    minimalCatalogEntity(url),
+				Destroy:   true,
+				Check: func(*terraform.State) error {
+					if n := fake.deleteCount(); n != 0 {
+						return fmt.Errorf("destroy sent %d delete requests, want 0", n)
+					}
+					return nil
+				},
+			},
+		},
+	})
+}
+
+func TestUnitCatalogEntity_ImportMissingEntity(t *testing.T) {
+	_, url := newFakeCatalogApi(t)
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:        minimalCatalogEntity(url),
+				ResourceName:  "cortex_catalog_entity.test",
+				ImportState:   true,
+				ImportStateId: "unit-test-entity",
+				ExpectError:   regexp.MustCompile(`Cannot import non-existent remote object`),
+			},
+		},
+	})
+}
+
+// Only a 404 means the entity is gone. Any other read error must fail the plan and keep the entity in state.
+func TestUnitCatalogEntity_ReadErrorKeepsState(t *testing.T) {
+	fake, url := newFakeCatalogApi(t)
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: minimalCatalogEntity(url)},
+			{
+				PreConfig:   func() { fake.setReadFails(true) },
+				Config:      minimalCatalogEntity(url),
+				ExpectError: regexp.MustCompile(`Unable to read catalog entity unit-test-entity`),
+			},
+			{
+				PreConfig: func() { fake.setReadFails(false) },
+				Config:    minimalCatalogEntity(url),
+				PlanOnly:  true,
+			},
+		},
+	})
 }
