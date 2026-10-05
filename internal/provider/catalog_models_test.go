@@ -84,16 +84,16 @@ func TestCatalogResourceModel_FromApiModel_WithFilter(t *testing.T) {
 
 func TestCatalogResourceModel_ToApiModel_Minimal(t *testing.T) {
 	model := CatalogResourceModel{
-		Id:              types.StringValue("my-catalog"),
-		Slug:            types.StringValue("my-catalog"),
-		Name:            types.StringValue("My Catalog"),
-		IconTag:         types.StringValue("cortex"),
-		IsDraft:         types.BoolValue(false),
-		Description:     types.StringNull(),
-		Type:            types.StringNull(),
+		Id:                  types.StringValue("my-catalog"),
+		Slug:                types.StringValue("my-catalog"),
+		Name:                types.StringValue("My Catalog"),
+		IconTag:             types.StringValue("cortex"),
+		IsDraft:             types.BoolValue(false),
+		Description:         types.StringNull(),
+		Type:                types.StringNull(),
 		RelationshipTypeTag: types.StringNull(),
-		Filter:          nil,
-		IsCortexManaged: types.BoolValue(false),
+		Filter:              nil,
+		IsCortexManaged:     types.BoolValue(false),
 	}
 
 	ctx := context.Background()
