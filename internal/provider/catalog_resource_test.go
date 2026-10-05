@@ -42,6 +42,7 @@ resource "cortex_catalog" %[1]q {
   name     = "Test Catalog Minimal"
   icon_tag = "cortex"
   is_draft = false
+  type     = "DOMAIN"
 }`, slug)
 }
 
@@ -69,6 +70,7 @@ resource "cortex_catalog" %[1]q {
   name     = "Test Catalog DS"
   icon_tag = "cortex"
   is_draft = false
+  type     = "DOMAIN"
 }
 
 data "cortex_catalog" "test" {
