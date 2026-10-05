@@ -2,6 +2,7 @@ package cortex
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 )
 
@@ -81,7 +82,10 @@ func (c *CatalogEntityParser) YamlToEntity(yamlEntity map[string]interface{}) (C
 	}
 
 	if info["x-cortex-apm"] != nil {
-		c.interpolateApm(&entity, info["x-cortex-apm"].(map[string]interface{}))
+		err := c.interpolateApm(&entity, info["x-cortex-apm"].(map[string]interface{}))
+		if err != nil {
+			return entity, err
+		}
 	}
 
 	if info["x-cortex-static-analysis"] != nil {
@@ -494,11 +498,14 @@ func (c *CatalogEntityParser) interpolateSumoLogicSLOs(entity *CatalogEntityData
  * APM
  **********************************************************************************************************************/
 
-func (c *CatalogEntityParser) interpolateApm(entity *CatalogEntityData, apm map[string]interface{}) {
+func (c *CatalogEntityParser) interpolateApm(entity *CatalogEntityData, apm map[string]interface{}) error {
 	entity.Apm = CatalogEntityApm{}
 
 	if apm["datadog"] != nil {
-		c.interpolateDataDogApm(entity, apm["datadog"].(map[string]interface{}))
+		err := c.interpolateDataDogApm(entity, apm["datadog"].(map[string]interface{}))
+		if err != nil {
+			return err
+		}
 	}
 	if apm["dynatrace"] != nil {
 		c.interpolateDynatraceApm(entity, apm["dynatrace"].(map[string]interface{}))
@@ -506,18 +513,43 @@ func (c *CatalogEntityParser) interpolateApm(entity *CatalogEntityData, apm map[
 	if apm["newrelic"] != nil {
 		c.interpolateNewRelicApm(entity, apm["newrelic"].([]interface{}))
 	}
+	return nil
 }
 
 // DataDog
 
-func (c *CatalogEntityParser) interpolateDataDogApm(entity *CatalogEntityData, apm map[string]interface{}) {
+func (c *CatalogEntityParser) interpolateDataDogApm(entity *CatalogEntityData, apm map[string]interface{}) error {
 	entity.Apm.DataDog = CatalogEntityApmDataDog{}
 	if apm["monitors"] != nil {
 		entity.Apm.DataDog.Monitors = make([]int64, len(apm["monitors"].([]interface{})))
 		for i, monitor := range apm["monitors"].([]interface{}) {
-			entity.Apm.DataDog.Monitors[i] = int64(monitor.(int))
+			id, err := dataDogMonitorId(monitor)
+			if err != nil {
+				return err
+			}
+			entity.Apm.DataDog.Monitors[i] = id
 		}
 	}
+	return nil
+}
+
+// dataDogMonitorId accepts both forms the API stores: a bare ID, or an object with an ID and an optional alias.
+// The schema has no alias attribute, so a monitor with one is an error rather than an alias dropped on the next apply.
+func dataDogMonitorId(monitor interface{}) (int64, error) {
+	if monitorMap, ok := monitor.(map[string]interface{}); ok {
+		if alias, _ := monitorMap["alias"].(string); alias != "" {
+			return 0, fmt.Errorf("datadog monitor %v uses alias %q, which the provider does not support", monitorMap["id"], alias)
+		}
+		monitor = monitorMap["id"]
+	}
+	if monitor == nil {
+		return 0, fmt.Errorf("datadog monitor has no id")
+	}
+	id, err := AnyToFloat64(monitor)
+	if err != nil || id != math.Trunc(id) {
+		return 0, fmt.Errorf("datadog monitor id %v is not an integer", monitor)
+	}
+	return int64(id), nil
 }
 
 // Dynatrace
