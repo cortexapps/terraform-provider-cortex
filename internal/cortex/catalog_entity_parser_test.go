@@ -2,6 +2,7 @@ package cortex_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
@@ -24,10 +25,10 @@ info:
   x-cortex-tag: test
   x-cortex-apm:
     datadog:
-      monitors: [123, 456]
+      monitors: [123, 9007199254740993]
 `)
 	require.NoError(t, err)
-	assert.Equal(t, []int64{123, 456}, entity.Apm.DataDog.Monitors)
+	assert.Equal(t, []int64{123, 9007199254740993}, entity.Apm.DataDog.Monitors)
 }
 
 func TestYamlToEntityReadsDatadogMonitorsAsObjects(t *testing.T) {
@@ -51,6 +52,7 @@ func TestYamlToEntityRejectsDatadogMonitorWithAlias(t *testing.T) {
 		"string":  `second-account`,
 		"number":  `2024`,
 		"boolean": `true`,
+		"empty":   `""`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			_, err := parseDescriptor(t, `
@@ -63,21 +65,21 @@ info:
           alias: `+alias+`
 `)
 			require.Error(t, err)
-			assert.Contains(t, err.Error(), fmt.Sprintf("alias %q", alias))
+			assert.Contains(t, err.Error(), fmt.Sprintf("alias %q", strings.Trim(alias, `"`)))
 		})
 	}
 }
 
-func TestYamlToEntityReadsDatadogMonitorIDAsString(t *testing.T) {
+func TestYamlToEntityReadsDatadogMonitorObjectIDAsString(t *testing.T) {
 	entity, err := parseDescriptor(t, `
 info:
   x-cortex-tag: test
   x-cortex-apm:
     datadog:
-      monitors: ["123", {id: "456"}]
+      monitors: [{id: "456"}]
 `)
 	require.NoError(t, err)
-	assert.Equal(t, []int64{123, 456}, entity.Apm.DataDog.Monitors)
+	assert.Equal(t, []int64{456}, entity.Apm.DataDog.Monitors)
 }
 
 func TestYamlToEntityRejectsDatadogMonitorWithoutIntegerID(t *testing.T) {
@@ -85,8 +87,9 @@ func TestYamlToEntityRejectsDatadogMonitorWithoutIntegerID(t *testing.T) {
 		"null":          {`[null]`, "has no id"},
 		"object no id":  {`[{}]`, "has no id"},
 		"object null":   {`[{id: null}]`, "has no id"},
-		"string":        {`["abc"]`, "is not an integer"},
-		"object bad id": {`[{id: abc}]`, "is not an integer"},
+		"bare string":   {`["123"]`, "must be a number or an object"},
+		"object string": {`[{id: abc}]`, "is not an integer"},
+		"exponent":      {`[1e3]`, "is not an integer (float64)"},
 		"fraction":      {`[1.5]`, "is not an integer"},
 		"infinity":      {`[.inf]`, "is not an integer"},
 		"too large":     {`[18446744073709551615]`, "is not an integer"},
@@ -107,18 +110,19 @@ info:
 }
 
 func TestYamlToEntityRejectsMalformedDatadogApm(t *testing.T) {
-	for name, datadog := range map[string]string{
-		"datadog not a map":   `datadog: [1]`,
-		"monitors not a list": `datadog: {monitors: 123}`,
+	for name, tc := range map[string]struct{ datadog, message string }{
+		"datadog not a map":   {`datadog: [1]`, "datadog apm is not an object"},
+		"monitors not a list": {`datadog: {monitors: 123}`, "datadog monitors is not a list"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			_, err := parseDescriptor(t, `
 info:
   x-cortex-tag: test
   x-cortex-apm:
-    `+datadog+`
+    `+tc.datadog+`
 `)
-			assert.Error(t, err)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tc.message)
 		})
 	}
 }

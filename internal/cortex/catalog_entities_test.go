@@ -194,7 +194,7 @@ func TestGetFromDescriptorNamesEntityInParseError(t *testing.T) {
 		"info": map[string]interface{}{
 			"x-cortex-tag": testTag,
 			"x-cortex-apm": map[string]interface{}{
-				"datadog": map[string]interface{}{"monitors": []interface{}{"abc"}},
+				"datadog": map[string]interface{}{"monitors": []interface{}{1.5}},
 			},
 		},
 	}

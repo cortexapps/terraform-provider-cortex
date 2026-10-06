@@ -1,6 +1,7 @@
 package cortex
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -504,7 +505,7 @@ func (c *CatalogEntityParser) interpolateApm(entity *CatalogEntityData, apm map[
 	if apm["datadog"] != nil {
 		datadog, ok := apm["datadog"].(map[string]interface{})
 		if !ok {
-			return fmt.Errorf("datadog apm is not an object")
+			return errors.New("datadog apm is not an object")
 		}
 		err := c.interpolateDataDogApm(entity, datadog)
 		if err != nil {
@@ -527,7 +528,7 @@ func (c *CatalogEntityParser) interpolateDataDogApm(entity *CatalogEntityData, a
 	if apm["monitors"] != nil {
 		monitors, ok := apm["monitors"].([]interface{})
 		if !ok {
-			return fmt.Errorf("datadog monitors is not a list")
+			return errors.New("datadog monitors is not a list")
 		}
 		entity.Apm.DataDog.Monitors = make([]int64, len(monitors))
 		for i, monitor := range monitors {
@@ -544,25 +545,36 @@ func (c *CatalogEntityParser) interpolateDataDogApm(entity *CatalogEntityData, a
 // dataDogMonitorID accepts both forms the API stores: a bare ID, or an object with an ID and an optional alias.
 // The schema has no alias attribute, so a monitor with one is an error; otherwise the next apply would drop the alias.
 func dataDogMonitorID(monitor interface{}) (int64, error) {
-	if monitorMap, ok := monitor.(map[string]interface{}); ok {
-		if alias := monitorMap["alias"]; alias != nil && fmt.Sprint(alias) != "" {
-			return 0, fmt.Errorf("datadog monitor %v uses alias %q, which the provider does not support; remove the alias in Cortex to manage this entity with Terraform", monitorMap["id"], fmt.Sprint(alias))
-		}
+	monitorMap, isObject := monitor.(map[string]interface{})
+	if isObject {
 		monitor = monitorMap["id"]
 	}
-	switch id := monitor.(type) {
+	var id int64
+	switch value := monitor.(type) {
 	case nil:
-		return 0, fmt.Errorf("datadog monitor has no id")
+		return 0, errors.New("datadog monitor has no id")
 	case int:
-		return int64(id), nil
+		id = int64(value)
 	case int64:
-		return id, nil
+		id = value
 	case string:
-		if parsed, err := strconv.ParseInt(id, 10, 64); err == nil {
-			return parsed, nil
+		// The API converts a string id inside an object, but drops a bare string monitor.
+		if !isObject {
+			return 0, fmt.Errorf("datadog monitor %q must be a number or an object with an id", value)
 		}
+		parsed, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("datadog monitor id %q is not an integer", value)
+		}
+		id = parsed
+	default:
+		return 0, fmt.Errorf("datadog monitor id %v is not an integer (%T)", value, value)
 	}
-	return 0, fmt.Errorf("datadog monitor id %v is not an integer", monitor)
+	// The API treats an empty alias as an alias name, not as the default configuration.
+	if alias := monitorMap["alias"]; alias != nil {
+		return 0, fmt.Errorf("datadog monitor %d uses alias %q, which the provider does not support; remove the alias in Cortex to manage this entity with Terraform", id, fmt.Sprint(alias))
+	}
+	return id, nil
 }
 
 // Dynatrace
