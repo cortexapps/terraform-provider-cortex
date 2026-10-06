@@ -187,3 +187,22 @@ func TestListCatalogEntitiesDeserializesSlackChannels(t *testing.T) {
 	)
 	assert.True(t, slackChannels[0].NotificationsEnabled)
 }
+
+func TestGetFromDescriptorNamesEntityInParseError(t *testing.T) {
+	testTag := "test-catalog-entity"
+	descriptor := map[string]interface{}{
+		"info": map[string]interface{}{
+			"x-cortex-tag": testTag,
+			"x-cortex-apm": map[string]interface{}{
+				"datadog": map[string]interface{}{"monitors": []interface{}{"abc"}},
+			},
+		},
+	}
+	c, teardown, err := setupYamlClient(cortex.Route("catalog_entities", testTag+"/openapi"), descriptor, AssertRequestMethod(t, "GET"))
+	assert.Nil(t, err, "could not setup client")
+	defer teardown()
+
+	_, err = c.CatalogEntities().GetFromDescriptor(context.Background(), testTag)
+	assert.ErrorContains(t, err, testTag)
+	assert.ErrorContains(t, err, "is not an integer")
+}

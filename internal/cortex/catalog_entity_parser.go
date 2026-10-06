@@ -2,8 +2,8 @@ package cortex
 
 import (
 	"fmt"
-	"math"
 	"reflect"
+	"strconv"
 )
 
 type CatalogEntityParser struct{}
@@ -502,7 +502,11 @@ func (c *CatalogEntityParser) interpolateApm(entity *CatalogEntityData, apm map[
 	entity.Apm = CatalogEntityApm{}
 
 	if apm["datadog"] != nil {
-		err := c.interpolateDataDogApm(entity, apm["datadog"].(map[string]interface{}))
+		datadog, ok := apm["datadog"].(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("datadog apm is not an object")
+		}
+		err := c.interpolateDataDogApm(entity, datadog)
 		if err != nil {
 			return err
 		}
@@ -521,9 +525,13 @@ func (c *CatalogEntityParser) interpolateApm(entity *CatalogEntityData, apm map[
 func (c *CatalogEntityParser) interpolateDataDogApm(entity *CatalogEntityData, apm map[string]interface{}) error {
 	entity.Apm.DataDog = CatalogEntityApmDataDog{}
 	if apm["monitors"] != nil {
-		entity.Apm.DataDog.Monitors = make([]int64, len(apm["monitors"].([]interface{})))
-		for i, monitor := range apm["monitors"].([]interface{}) {
-			id, err := dataDogMonitorId(monitor)
+		monitors, ok := apm["monitors"].([]interface{})
+		if !ok {
+			return fmt.Errorf("datadog monitors is not a list")
+		}
+		entity.Apm.DataDog.Monitors = make([]int64, len(monitors))
+		for i, monitor := range monitors {
+			id, err := dataDogMonitorID(monitor)
 			if err != nil {
 				return err
 			}
@@ -533,23 +541,28 @@ func (c *CatalogEntityParser) interpolateDataDogApm(entity *CatalogEntityData, a
 	return nil
 }
 
-// dataDogMonitorId accepts both forms the API stores: a bare ID, or an object with an ID and an optional alias.
-// The schema has no alias attribute, so a monitor with one is an error rather than an alias dropped on the next apply.
-func dataDogMonitorId(monitor interface{}) (int64, error) {
+// dataDogMonitorID accepts both forms the API stores: a bare ID, or an object with an ID and an optional alias.
+// The schema has no alias attribute, so a monitor with one is an error; otherwise the next apply would drop the alias.
+func dataDogMonitorID(monitor interface{}) (int64, error) {
 	if monitorMap, ok := monitor.(map[string]interface{}); ok {
-		if alias, _ := monitorMap["alias"].(string); alias != "" {
-			return 0, fmt.Errorf("datadog monitor %v uses alias %q, which the provider does not support", monitorMap["id"], alias)
+		if alias := monitorMap["alias"]; alias != nil && fmt.Sprint(alias) != "" {
+			return 0, fmt.Errorf("datadog monitor %v uses alias %q, which the provider does not support; remove the alias in Cortex to manage this entity with Terraform", monitorMap["id"], fmt.Sprint(alias))
 		}
 		monitor = monitorMap["id"]
 	}
-	if monitor == nil {
+	switch id := monitor.(type) {
+	case nil:
 		return 0, fmt.Errorf("datadog monitor has no id")
+	case int:
+		return int64(id), nil
+	case int64:
+		return id, nil
+	case string:
+		if parsed, err := strconv.ParseInt(id, 10, 64); err == nil {
+			return parsed, nil
+		}
 	}
-	id, err := AnyToFloat64(monitor)
-	if err != nil || id != math.Trunc(id) {
-		return 0, fmt.Errorf("datadog monitor id %v is not an integer", monitor)
-	}
-	return int64(id), nil
+	return 0, fmt.Errorf("datadog monitor id %v is not an integer", monitor)
 }
 
 // Dynatrace
