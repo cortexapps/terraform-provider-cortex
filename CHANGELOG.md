@@ -4,6 +4,7 @@ Changelog for the Cortex terraform provider.
 * Add `cortex_integration_configuration` resource to manage integration configurations for Datadog, GitLab, incident.io, Jira, and PagerDuty.
 * `cortex_integration_configuration`: removing the Datadog `custom_subdomain` now updates the configuration in place instead of replacing it.
 * `cortex_integration_configuration`: a change of the GitLab `host` now updates the configuration in place instead of replacing it. Removing `host` still replaces the configuration. This needs a Cortex version that applies the GitLab host on update; with an older version, the apply of a host change fails with an inconsistent result.
+* `cortex_catalog_entity`: reading an entity no longer crashes the provider when its Datadog monitors are stored as objects (`- id: 123`). A monitor with an `alias` is now an error, because the provider cannot store the alias.
 
 ## 0.5.0
 
