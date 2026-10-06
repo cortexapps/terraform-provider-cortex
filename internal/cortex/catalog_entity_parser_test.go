@@ -166,18 +166,18 @@ info:
 	assert.Empty(t, entity.StaticAnalysis.Mend.ProjectIDs)
 }
 
-func TestYamlToEntityReadsMendNumericIds(t *testing.T) {
+func TestYamlToEntityReadsMendIdsOfAnyScalar(t *testing.T) {
 	entity, err := parseDescriptor(t, `
 info:
   x-cortex-tag: test
   x-cortex-static-analysis:
     mend:
       applicationIds: ["a1", null, ""]
-      projectIds: [123, "p2", 1.5, 18446744073709551615]
+      projectIds: [123, "p2", 1.5, 18446744073709551615, true, [1], {id: 1}]
 `)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"a1"}, entity.StaticAnalysis.Mend.ApplicationIDs)
-	assert.Equal(t, []string{"123", "p2", "1.5", "18446744073709551615"}, entity.StaticAnalysis.Mend.ProjectIDs)
+	assert.Equal(t, []string{"123", "p2", "1.5", "18446744073709551615", "true"}, entity.StaticAnalysis.Mend.ProjectIDs)
 }
 
 func TestYamlToEntityReadsVeracodeWithOnlySandboxes(t *testing.T) {
@@ -201,8 +201,8 @@ info:
   x-cortex-tag: test
   x-cortex-static-analysis:
     veracode:
-      applicationNames: ["app", null, 123]
+      applicationNames: ["app", null, 123, ""]
 `)
 	require.NoError(t, err)
-	assert.Equal(t, []string{"app", "123"}, entity.StaticAnalysis.Veracode.ApplicationNames)
+	assert.Equal(t, []string{"app", "123", ""}, entity.StaticAnalysis.Veracode.ApplicationNames)
 }

@@ -99,9 +99,12 @@ func checkStoredInfoAbsent(f *fakeCatalogApi, tag, key string) resource.TestChec
 // Each integration reads as null when the descriptor has none, so a block with one integration imports cleanly.
 func TestUnitCatalogEntity_StaticAnalysisWithOneIntegration(t *testing.T) {
 	for name, staticAnalysis := range map[string]string{
-		"sonar qube only":         `{ sonar_qube = { project = "p" } }`,
-		"veracode names only":     `{ veracode = { application_names = ["app"] } }`,
-		"veracode sandboxes only": `{ veracode = { sandboxes = [{ application_name = "app", sandbox_name = "staging" }] } }`,
+		"sonar qube only":          `{ sonar_qube = { project = "p" } }`,
+		"veracode names only":      `{ veracode = { application_names = ["app"] } }`,
+		"veracode sandboxes only":  `{ veracode = { sandboxes = [{ application_name = "app", sandbox_name = "staging" }] } }`,
+		"mend with an empty list":  `{ mend = { application_ids = ["1"], project_ids = [] } }`,
+		"veracode empty sandboxes": `{ veracode = { application_names = ["app"], sandboxes = [] } }`,
+		"veracode empty name":      `{ veracode = { application_names = ["app", ""] } }`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			_, url := newFakeCatalogApi(t)

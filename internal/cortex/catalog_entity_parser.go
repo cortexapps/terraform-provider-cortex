@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strconv"
 )
 
@@ -936,22 +937,23 @@ func (c *CatalogEntityParser) interpolateStaticAnalysisMend(entity *CatalogEntit
 	applicationIds, _ := data["applicationIds"].([]interface{})
 	projectIds, _ := data["projectIds"].([]interface{})
 	entity.StaticAnalysis.Mend = CatalogEntityStaticAnalysisMend{
-		ApplicationIDs: stringValues(applicationIds),
-		ProjectIDs:     stringValues(projectIds),
+		ApplicationIDs: slices.DeleteFunc(stringValues(applicationIds), isEmptyString),
+		ProjectIDs:     slices.DeleteFunc(stringValues(projectIds), isEmptyString),
 	}
 }
 
-// stringValues skips null and empty values and converts other scalars, such as numeric IDs that the API accepts.
+func isEmptyString(s string) bool {
+	return s == ""
+}
+
+// stringValues skips null values and non-scalars, and converts numbers and booleans, such as numeric IDs that the API accepts.
 func stringValues(values []interface{}) []string {
 	var strs []string
 	for _, value := range values {
 		switch v := value.(type) {
-		case nil:
 		case string:
-			if v != "" {
-				strs = append(strs, v)
-			}
-		default:
+			strs = append(strs, v)
+		case int, int64, uint64, float64, bool:
 			strs = append(strs, fmt.Sprint(v))
 		}
 	}
