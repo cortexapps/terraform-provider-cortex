@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
@@ -18,7 +19,7 @@ resource "cortex_catalog_entity" "test" {
 }`)
 }
 
-// The API does not store an empty static analysis block, so these blocks are absent on read.
+// The provider omits an empty static analysis block on write, so these blocks are absent on read.
 func TestUnitCatalogEntity_EmptyStaticAnalysis(t *testing.T) {
 	for name, staticAnalysis := range map[string]string{
 		"no integrations": `{}`,
@@ -93,4 +94,75 @@ func checkStoredInfoAbsent(f *fakeCatalogApi, tag, key string) resource.TestChec
 		}
 		return nil
 	}
+}
+
+// Each integration reads as null when the descriptor has none, so a block with one integration imports cleanly.
+func TestUnitCatalogEntity_StaticAnalysisWithOneIntegration(t *testing.T) {
+	for name, staticAnalysis := range map[string]string{
+		"sonar qube only":         `{ sonar_qube = { project = "p" } }`,
+		"veracode names only":     `{ veracode = { application_names = ["app"] } }`,
+		"veracode sandboxes only": `{ veracode = { sandboxes = [{ application_name = "app", sandbox_name = "staging" }] } }`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, url := newFakeCatalogApi(t)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{Config: catalogEntityWithStaticAnalysis(url, staticAnalysis)},
+					{
+						ResourceName:                         "cortex_catalog_entity.test",
+						ImportState:                          true,
+						ImportStateId:                        "unit-test-entity",
+						ImportStateVerify:                    true,
+						ImportStateVerifyIdentifierAttribute: "tag",
+					},
+				},
+			})
+		})
+	}
+}
+
+func TestUnitCatalogEntity_UpdateMendToEmptyAndBack(t *testing.T) {
+	_, url := newFakeCatalogApi(t)
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: catalogEntityWithStaticAnalysis(url, `{ mend = { application_ids = ["1"], project_ids = ["2"] } }`)},
+			{
+				Config: catalogEntityWithStaticAnalysis(url, `{ mend = {} }`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("cortex_catalog_entity.test", plancheck.ResourceActionUpdate),
+					},
+				},
+			},
+			{
+				Config: catalogEntityWithStaticAnalysis(url, `{ mend = { project_ids = ["3"] } }`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.mend.project_ids.0", "3"),
+					resource.TestCheckNoResourceAttr("cortex_catalog_entity.test", "static_analysis.mend.application_ids"),
+				),
+			},
+		},
+	})
+}
+
+// Keeping a configured empty block must not hide a change made outside Terraform.
+func TestUnitCatalogEntity_EmptyStaticAnalysisShowsRemoteChange(t *testing.T) {
+	fake, url := newFakeCatalogApi(t)
+	config := catalogEntityWithStaticAnalysis(url, `{ mend = {} }`)
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: config},
+			{
+				PreConfig: func() {
+					fake.setInfo("unit-test-entity", "x-cortex-static-analysis", map[string]any{"mend": map[string]any{"applicationIds": []any{"remote"}}})
+				},
+				Config:             config,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 }

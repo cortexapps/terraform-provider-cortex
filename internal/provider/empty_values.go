@@ -7,8 +7,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// keepEmptyObject returns prior where prior and read are both empty, at any depth. The API does not store an empty
-// block or list, so without this a configured empty value reads back as null and Terraform reports an inconsistent result.
+// keepEmptyObject returns prior where prior and read are both empty, at any depth. The provider omits an empty block
+// or list on write, so without this a configured empty value reads back as null and the apply is inconsistent.
 func keepEmptyObject(ctx context.Context, prior, read types.Object) types.Object {
 	if isEmptyValue(prior) && isEmptyValue(read) {
 		return prior
@@ -20,18 +20,18 @@ func keepEmptyObject(ctx context.Context, prior, read types.Object) types.Object
 	attrs := map[string]attr.Value{}
 	for name, value := range read.Attributes() {
 		attrs[name] = value
-		priorValue, ok := priorAttrs[name]
-		if !ok {
-			continue
-		}
-		if priorObject, ok := priorValue.(types.Object); ok {
+		switch priorValue := priorAttrs[name].(type) {
+		case types.Object:
 			if readObject, ok := value.(types.Object); ok {
-				attrs[name] = keepEmptyObject(ctx, priorObject, readObject)
+				attrs[name] = keepEmptyObject(ctx, priorValue, readObject)
 			}
-		} else if isEmptyValue(priorValue) && isEmptyValue(value) {
-			attrs[name] = priorValue
+		case attr.Value:
+			if isEmptyValue(priorValue) && isEmptyValue(value) {
+				attrs[name] = priorValue
+			}
 		}
 	}
+	// prior and read share the schema's attribute types, so this cannot fail; read is a safe fallback.
 	obj, diags := types.ObjectValue(read.AttributeTypes(ctx), attrs)
 	if diags.HasError() {
 		return read

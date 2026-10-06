@@ -933,19 +933,28 @@ func (c *CatalogEntityParser) interpolateStaticAnalysisCodeCov(entity *CatalogEn
 // Mend
 
 func (c *CatalogEntityParser) interpolateStaticAnalysisMend(entity *CatalogEntityData, data map[string]interface{}) {
-	entity.StaticAnalysis.Mend = CatalogEntityStaticAnalysisMend{}
 	applicationIds, _ := data["applicationIds"].([]interface{})
-	for _, applicationId := range applicationIds {
-		if applicationId.(string) != "" {
-			entity.StaticAnalysis.Mend.ApplicationIDs = append(entity.StaticAnalysis.Mend.ApplicationIDs, applicationId.(string))
-		}
-	}
 	projectIds, _ := data["projectIds"].([]interface{})
-	for _, projectId := range projectIds {
-		if projectId.(string) != "" {
-			entity.StaticAnalysis.Mend.ProjectIDs = append(entity.StaticAnalysis.Mend.ProjectIDs, projectId.(string))
+	entity.StaticAnalysis.Mend = CatalogEntityStaticAnalysisMend{
+		ApplicationIDs: mendIDs(applicationIds),
+		ProjectIDs:     mendIDs(projectIds),
+	}
+}
+
+// mendIDs skips empty and null IDs. The API also accepts numeric IDs, which read as strings.
+func mendIDs(values []interface{}) []string {
+	var ids []string
+	for _, value := range values {
+		switch id := value.(type) {
+		case string:
+			if id != "" {
+				ids = append(ids, id)
+			}
+		case int, int64:
+			ids = append(ids, fmt.Sprint(id))
 		}
 	}
+	return ids
 }
 
 // SonarQube
@@ -960,7 +969,7 @@ func (c *CatalogEntityParser) interpolateStaticAnalysisSonarQube(entity *Catalog
 // Veracode
 
 func (c *CatalogEntityParser) interpolateStaticAnalysisVeracode(entity *CatalogEntityData, mendMap map[string]interface{}) {
-	applicationNames := mendMap["applicationNames"].([]interface{})
+	applicationNames, _ := mendMap["applicationNames"].([]interface{})
 	if len(applicationNames) == 0 && mendMap["sandboxes"] == nil {
 		return
 	}

@@ -4,17 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/assert"
 )
 
-var mendTypes = map[string]attr.Type{
-	"application_ids": types.ListType{ElemType: types.StringType},
-	"project_ids":     types.ListType{ElemType: types.StringType},
-}
+var mendTypes = (&CatalogEntityStaticAnalysisMendResourceModel{}).AttrTypes()
 
 func mendObject(applicationIds, projectIds types.List) types.Object {
 	return types.ObjectValueMust(mendTypes, map[string]attr.Value{"application_ids": applicationIds, "project_ids": projectIds})
@@ -52,11 +47,25 @@ func TestKeepEmptyObject(t *testing.T) {
 	}
 }
 
-func TestCatalogEntityStaticAnalysisMendResourceModel_FromApiModel_MissingIdsAreNull(t *testing.T) {
+func TestKeepEmptyObject_Nested(t *testing.T) {
 	ctx := context.Background()
-	diags := diag.Diagnostics{}
-	model := CatalogEntityStaticAnalysisMendResourceModel{}
-	got := model.FromApiModel(ctx, &diags, &cortex.CatalogEntityStaticAnalysisMend{ApplicationIDs: []string{"1"}})
-	assert.False(t, diags.HasError())
-	assert.Equal(t, mendObject(stringList("1"), types.ListNull(types.StringType)), got)
+	outerTypes := map[string]attr.Type{"mend": types.ObjectType{AttrTypes: mendTypes}, "name": types.StringType}
+	outer := func(mend types.Object, name types.String) types.Object {
+		return types.ObjectValueMust(outerTypes, map[string]attr.Value{"mend": mend, "name": name})
+	}
+	emptyMend := mendObject(stringList(), types.ListNull(types.StringType))
+
+	t.Run("keeps an empty child of a set parent", func(t *testing.T) {
+		got := keepEmptyObject(ctx, outer(emptyMend, types.StringValue("a")), outer(types.ObjectNull(mendTypes), types.StringValue("a")))
+		assert.Equal(t, outer(emptyMend, types.StringValue("a")), got)
+	})
+	t.Run("reads a changed sibling", func(t *testing.T) {
+		got := keepEmptyObject(ctx, outer(emptyMend, types.StringValue("a")), outer(types.ObjectNull(mendTypes), types.StringValue("b")))
+		assert.Equal(t, outer(emptyMend, types.StringValue("b")), got)
+	})
+	t.Run("reads a child set remotely", func(t *testing.T) {
+		setMend := mendObject(stringList("1"), types.ListNull(types.StringType))
+		got := keepEmptyObject(ctx, outer(emptyMend, types.StringNull()), outer(setMend, types.StringNull()))
+		assert.Equal(t, outer(mendObject(stringList("1"), types.ListNull(types.StringType)), types.StringNull()), got)
+	})
 }

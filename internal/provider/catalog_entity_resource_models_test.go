@@ -1,9 +1,11 @@
 package provider
 
 import (
+	"context"
 	"testing"
 
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -248,4 +250,29 @@ func TestCatalogEntityOwnerResourceModel_RoundTrip_WithInheritance(t *testing.T)
 			assert.Equal(t, tt.model.Inheritance, actual.Inheritance, "Inheritance field should be preserved in round trip")
 		})
 	}
+}
+
+func TestCatalogEntityStaticAnalysisMendResourceModel_FromApiModel_MissingIdsAreNull(t *testing.T) {
+	ctx := context.Background()
+	diags := diag.Diagnostics{}
+	model := CatalogEntityStaticAnalysisMendResourceModel{}
+	got := model.FromApiModel(ctx, &diags, &cortex.CatalogEntityStaticAnalysisMend{ApplicationIDs: []string{"1"}})
+	assert.False(t, diags.HasError())
+	assert.Equal(t, mendObject(stringList("1"), types.ListNull(types.StringType)), got)
+}
+
+func TestCatalogEntityStaticAnalysisMendResourceModel_FromApiModel_NoIdsIsNull(t *testing.T) {
+	diags := diag.Diagnostics{}
+	model := CatalogEntityStaticAnalysisMendResourceModel{}
+	got := model.FromApiModel(context.Background(), &diags, &cortex.CatalogEntityStaticAnalysisMend{})
+	assert.False(t, diags.HasError())
+	assert.True(t, got.IsNull())
+}
+
+func TestCatalogEntityStaticAnalysisVeracodeResourceModel_FromApiModel_MissingListsAreNull(t *testing.T) {
+	diags := diag.Diagnostics{}
+	model := CatalogEntityStaticAnalysisVeracodeResourceModel{}
+	got := model.FromApiModel(context.Background(), &diags, &cortex.CatalogEntityStaticAnalysisVeracode{ApplicationNames: []string{"app"}})
+	assert.False(t, diags.HasError())
+	assert.True(t, got.Attributes()["sandboxes"].IsNull())
 }

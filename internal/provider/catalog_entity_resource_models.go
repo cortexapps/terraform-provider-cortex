@@ -3229,6 +3229,10 @@ func (o *CatalogEntityStaticAnalysisMendResourceModel) ToApiModel() cortex.Catal
 }
 
 func (o *CatalogEntityStaticAnalysisMendResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.CatalogEntityStaticAnalysisMend) types.Object {
+	if !entity.Enabled() {
+		return types.ObjectNull(o.AttrTypes())
+	}
+
 	// A nil slice reads as a null list, matching an ID list left out of the configuration.
 	var applicationIds, projectIds []types.String
 	for _, e := range entity.ApplicationIDs {
@@ -3325,14 +3329,15 @@ func (o *CatalogEntityStaticAnalysisVeracodeResourceModel) FromApiModel(ctx cont
 		return types.ObjectNull(o.AttrTypes())
 	}
 
-	var sandboxes = make([]CatalogEntityStaticAnalysisVeracodeSandboxResourceModel, len(entity.Sandboxes))
-	for i, e := range entity.Sandboxes {
+	// A nil slice reads as a null list, matching a list left out of the configuration.
+	var sandboxes []CatalogEntityStaticAnalysisVeracodeSandboxResourceModel
+	for _, e := range entity.Sandboxes {
 		ob := CatalogEntityStaticAnalysisVeracodeSandboxResourceModel{}
-		sandboxes[i] = ob.FromApiModel(&e)
+		sandboxes = append(sandboxes, ob.FromApiModel(&e))
 	}
-	applicationNames := make([]types.String, len(entity.ApplicationNames))
-	for i, e := range entity.ApplicationNames {
-		applicationNames[i] = types.StringValue(e)
+	var applicationNames []types.String
+	for _, e := range entity.ApplicationNames {
+		applicationNames = append(applicationNames, types.StringValue(e))
 	}
 	ob := CatalogEntityStaticAnalysisVeracodeResourceModel{
 		ApplicationNames: applicationNames,

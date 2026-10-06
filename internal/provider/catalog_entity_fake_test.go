@@ -67,6 +67,13 @@ func (f *fakeCatalogApi) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// setInfo changes one info key of a stored descriptor, as if a client other than Terraform had changed it.
+func (f *fakeCatalogApi) setInfo(tag, key string, value any) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.descriptors[tag]["info"].(map[string]any)[key] = value
+}
+
 func fakeCatalogFail(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
