@@ -1,9 +1,11 @@
 package provider_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func catalogEntityWithStaticAnalysis(url, staticAnalysis string) string {
@@ -24,11 +26,14 @@ func TestUnitCatalogEntity_EmptyStaticAnalysis(t *testing.T) {
 		"empty mend ids":  `{ mend = { application_ids = [], project_ids = [] } }`,
 	} {
 		t.Run(name, func(t *testing.T) {
-			_, url := newFakeCatalogApi(t)
+			fake, url := newFakeCatalogApi(t)
 			resource.UnitTest(t, resource.TestCase{
 				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 				Steps: []resource.TestStep{
-					{Config: catalogEntityWithStaticAnalysis(url, staticAnalysis)},
+					{
+						Config: catalogEntityWithStaticAnalysis(url, staticAnalysis),
+						Check:  checkStoredInfoAbsent(fake, "unit-test-entity", "x-cortex-static-analysis"),
+					},
 				},
 			})
 		})
@@ -72,4 +77,20 @@ func TestUnitCatalogEntity_MendWithBothIdLists(t *testing.T) {
 			},
 		},
 	})
+}
+
+func checkStoredInfoAbsent(f *fakeCatalogApi, tag, key string) resource.TestCheckFunc {
+	return func(*terraform.State) error {
+		f.mu.Lock()
+		defer f.mu.Unlock()
+		descriptor, ok := f.descriptors[tag]
+		if !ok {
+			return fmt.Errorf("entity %q does not exist", tag)
+		}
+		info, _ := descriptor["info"].(map[string]any)
+		if _, ok := info[key]; ok {
+			return fmt.Errorf("entity %q stores %s: %v", tag, key, info[key])
+		}
+		return nil
+	}
 }
