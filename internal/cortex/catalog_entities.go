@@ -183,7 +183,11 @@ func (c *CatalogEntitiesClient) GetFromDescriptor(ctx context.Context, tag strin
 
 	tflog.Debug(ctx, fmt.Sprintf("body: %+v", entityDescriptorResponse))
 
-	return c.parser.YamlToEntity(entityDescriptorResponse)
+	entity, err := c.parser.YamlToEntity(entityDescriptorResponse)
+	if err != nil {
+		return entity, fmt.Errorf("failed parsing catalog entity descriptor for %s: %w", tag, err)
+	}
+	return entity, nil
 }
 
 /***********************************************************************************************************************
