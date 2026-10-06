@@ -33,7 +33,6 @@ func TestCatalogsClient_Get(t *testing.T) {
 	assert.Equal(t, testCatalogResponse.IsCortexManaged, res.IsCortexManaged)
 }
 
-
 func TestCatalogsClient_Upsert(t *testing.T) {
 	req := cortex.UpsertCatalogRequest{
 		Slug:    testCatalogResponse.Slug,
