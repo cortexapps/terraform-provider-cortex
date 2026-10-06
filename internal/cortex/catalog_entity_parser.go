@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strconv"
 )
 
@@ -933,19 +934,30 @@ func (c *CatalogEntityParser) interpolateStaticAnalysisCodeCov(entity *CatalogEn
 // Mend
 
 func (c *CatalogEntityParser) interpolateStaticAnalysisMend(entity *CatalogEntityData, data map[string]interface{}) {
-	entity.StaticAnalysis.Mend = CatalogEntityStaticAnalysisMend{}
-	applicationIds := data["applicationIds"].([]interface{})
-	for _, applicationId := range applicationIds {
-		if applicationId.(string) != "" {
-			entity.StaticAnalysis.Mend.ApplicationIDs = append(entity.StaticAnalysis.Mend.ApplicationIDs, applicationId.(string))
+	applicationIds, _ := data["applicationIds"].([]interface{})
+	projectIds, _ := data["projectIds"].([]interface{})
+	entity.StaticAnalysis.Mend = CatalogEntityStaticAnalysisMend{
+		ApplicationIDs: slices.DeleteFunc(stringValues(applicationIds), isEmptyString),
+		ProjectIDs:     slices.DeleteFunc(stringValues(projectIds), isEmptyString),
+	}
+}
+
+func isEmptyString(s string) bool {
+	return s == ""
+}
+
+// stringValues skips null values and non-scalars, and converts numbers and booleans, such as numeric IDs that the API accepts.
+func stringValues(values []interface{}) []string {
+	var strs []string
+	for _, value := range values {
+		switch v := value.(type) {
+		case string:
+			strs = append(strs, v)
+		case int, int64, uint64, float64, bool:
+			strs = append(strs, fmt.Sprint(v))
 		}
 	}
-	projectIds := data["projectIds"].([]interface{})
-	for _, projectId := range projectIds {
-		if projectId.(string) != "" {
-			entity.StaticAnalysis.Mend.ProjectIDs = append(entity.StaticAnalysis.Mend.ProjectIDs, projectId.(string))
-		}
-	}
+	return strs
 }
 
 // SonarQube
@@ -959,19 +971,18 @@ func (c *CatalogEntityParser) interpolateStaticAnalysisSonarQube(entity *Catalog
 
 // Veracode
 
-func (c *CatalogEntityParser) interpolateStaticAnalysisVeracode(entity *CatalogEntityData, mendMap map[string]interface{}) {
-	applicationNames := mendMap["applicationNames"].([]interface{})
-	if len(applicationNames) == 0 && mendMap["sandboxes"] == nil {
+func (c *CatalogEntityParser) interpolateStaticAnalysisVeracode(entity *CatalogEntityData, data map[string]interface{}) {
+	applicationNames, _ := data["applicationNames"].([]interface{})
+	if len(applicationNames) == 0 && data["sandboxes"] == nil {
 		return
 	}
 
-	entity.StaticAnalysis.Veracode = CatalogEntityStaticAnalysisVeracode{}
-	for _, applicationName := range applicationNames {
-		entity.StaticAnalysis.Veracode.ApplicationNames = append(entity.StaticAnalysis.Veracode.ApplicationNames, applicationName.(string))
+	entity.StaticAnalysis.Veracode = CatalogEntityStaticAnalysisVeracode{
+		ApplicationNames: stringValues(applicationNames),
 	}
-	if mendMap["sandboxes"] != nil {
+	if data["sandboxes"] != nil {
 		entity.StaticAnalysis.Veracode.Sandboxes = []CatalogEntityStaticAnalysisVeracodeSandbox{}
-		sandboxes := mendMap["sandboxes"].([]interface{})
+		sandboxes := data["sandboxes"].([]interface{})
 		for _, sandbox := range sandboxes {
 			sandboxMap := sandbox.(map[string]interface{})
 			if sandboxMap["applicationName"] != nil || sandboxMap["sandboxName"] != nil {
