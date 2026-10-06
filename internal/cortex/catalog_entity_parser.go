@@ -542,7 +542,7 @@ func (c *CatalogEntityParser) interpolateDataDogApm(entity *CatalogEntityData, a
 	return nil
 }
 
-// dataDogMonitorID accepts both forms the API stores: a bare ID, or an object with an ID and an optional alias.
+// dataDogMonitorID accepts both forms the API stores: a bare integer ID, or an object with an ID and an optional alias.
 // The schema has no alias attribute, so a monitor with one is an error; otherwise the next apply would drop the alias.
 func dataDogMonitorID(monitor interface{}) (int64, error) {
 	monitorMap, isObject := monitor.(map[string]interface{})

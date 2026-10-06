@@ -70,6 +70,32 @@ info:
 	}
 }
 
+func TestYamlToEntityReportsParsedIDForDatadogMonitorWithAlias(t *testing.T) {
+	_, err := parseDescriptor(t, `
+info:
+  x-cortex-tag: test
+  x-cortex-apm:
+    datadog:
+      monitors: [{id: "456", alias: x}]
+`)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "datadog monitor 456 uses alias")
+}
+
+func TestYamlToEntityReadsDatadogMonitorsAsInt64(t *testing.T) {
+	parser := cortex.CatalogEntityParser{}
+	entity, err := parser.YamlToEntity(map[string]interface{}{
+		"info": map[string]interface{}{
+			"x-cortex-tag": "test",
+			"x-cortex-apm": map[string]interface{}{
+				"datadog": map[string]interface{}{"monitors": []interface{}{int64(5), map[string]interface{}{"id": int64(6)}}},
+			},
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []int64{5, 6}, entity.Apm.DataDog.Monitors)
+}
+
 func TestYamlToEntityReadsDatadogMonitorObjectIDAsString(t *testing.T) {
 	entity, err := parseDescriptor(t, `
 info:
