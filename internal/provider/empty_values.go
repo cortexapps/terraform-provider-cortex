@@ -21,11 +21,13 @@ func keepEmptyObject(ctx context.Context, prior, read types.Object) types.Object
 	for name, value := range read.Attributes() {
 		attrs[name] = value
 		switch priorValue := priorAttrs[name].(type) {
+		case nil:
+			// Not in prior: keep the read value.
 		case types.Object:
 			if readObject, ok := value.(types.Object); ok {
 				attrs[name] = keepEmptyObject(ctx, priorValue, readObject)
 			}
-		case attr.Value:
+		default:
 			if isEmptyValue(priorValue) && isEmptyValue(value) {
 				attrs[name] = priorValue
 			}

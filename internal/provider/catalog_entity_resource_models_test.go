@@ -272,7 +272,11 @@ func TestCatalogEntityStaticAnalysisMendResourceModel_FromApiModel_NoIdsIsNull(t
 func TestCatalogEntityStaticAnalysisVeracodeResourceModel_FromApiModel_MissingListsAreNull(t *testing.T) {
 	diags := diag.Diagnostics{}
 	model := CatalogEntityStaticAnalysisVeracodeResourceModel{}
-	got := model.FromApiModel(context.Background(), &diags, &cortex.CatalogEntityStaticAnalysisVeracode{ApplicationNames: []string{"app"}})
+	namesOnly := model.FromApiModel(context.Background(), &diags, &cortex.CatalogEntityStaticAnalysisVeracode{ApplicationNames: []string{"app"}})
+	sandboxesOnly := model.FromApiModel(context.Background(), &diags, &cortex.CatalogEntityStaticAnalysisVeracode{
+		Sandboxes: []cortex.CatalogEntityStaticAnalysisVeracodeSandbox{{ApplicationName: "app", SandboxName: "staging"}},
+	})
 	assert.False(t, diags.HasError())
-	assert.True(t, got.Attributes()["sandboxes"].IsNull())
+	assert.True(t, namesOnly.Attributes()["sandboxes"].IsNull())
+	assert.True(t, sandboxesOnly.Attributes()["application_names"].IsNull())
 }

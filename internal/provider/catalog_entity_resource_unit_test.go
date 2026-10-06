@@ -163,6 +163,46 @@ func TestUnitCatalogEntity_EmptyStaticAnalysisShowsRemoteChange(t *testing.T) {
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
 			},
+			{
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+				Check:              resource.TestCheckResourceAttr("cortex_catalog_entity.test", "static_analysis.mend.application_ids.0", "remote"),
+			},
 		},
 	})
+}
+
+// ImportStateVerify treats an empty list as absent, so plan after the import to catch an empty list in state.
+func TestUnitCatalogEntity_ImportThenPlanIsEmpty(t *testing.T) {
+	for name, tc := range map[string]struct{ descriptor, staticAnalysis string }{
+		"mend one id list":        {`mend: {applicationIds: ["123"]}`, `{ mend = { application_ids = ["123"] } }`},
+		"sonar qube only":         {`sonarqube: {project: p}`, `{ sonar_qube = { project = "p" } }`},
+		"veracode names only":     {`veracode: {applicationNames: [app]}`, `{ veracode = { application_names = ["app"] } }`},
+		"veracode sandboxes only": {`veracode: {sandboxes: [{applicationName: app, sandboxName: staging}]}`, `{ veracode = { sandboxes = [{ application_name = "app", sandbox_name = "staging" }] } }`},
+	} {
+		t.Run(name, func(t *testing.T) {
+			fake, url := newFakeCatalogApi(t)
+			fake.seed(t, `
+info:
+  title: Unit Test Entity
+  x-cortex-tag: unit-test-entity
+  x-cortex-type: service
+  x-cortex-static-analysis: {`+tc.descriptor+`}
+`)
+			config := catalogEntityWithStaticAnalysis(url, tc.staticAnalysis)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config:             config,
+						ResourceName:       "cortex_catalog_entity.test",
+						ImportState:        true,
+						ImportStateId:      "unit-test-entity",
+						ImportStatePersist: true,
+					},
+					{Config: config, PlanOnly: true},
+				},
+			})
+		})
+	}
 }

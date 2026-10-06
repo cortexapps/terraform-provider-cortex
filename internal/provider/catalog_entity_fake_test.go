@@ -74,6 +74,18 @@ func (f *fakeCatalogApi) setInfo(tag, key string, value any) {
 	f.descriptors[tag]["info"].(map[string]any)[key] = value
 }
 
+// seed stores a descriptor as if a client other than Terraform had created the entity.
+func (f *fakeCatalogApi) seed(t *testing.T, descriptor string) {
+	var parsed map[string]any
+	if err := yaml.Unmarshal([]byte(descriptor), &parsed); err != nil {
+		t.Fatalf("bad seed descriptor: %v", err)
+	}
+	tag, _ := parsed["info"].(map[string]any)["x-cortex-tag"].(string)
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.descriptors[tag] = parsed
+}
+
 func fakeCatalogFail(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)

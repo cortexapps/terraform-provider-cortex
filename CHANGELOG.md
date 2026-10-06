@@ -5,7 +5,7 @@ Changelog for the Cortex terraform provider.
 * `cortex_integration_configuration`: removing the Datadog `custom_subdomain` now updates the configuration in place instead of replacing it.
 * `cortex_integration_configuration`: a change of the GitLab `host` now updates the configuration in place instead of replacing it. Removing `host` still replaces the configuration. This needs a Cortex version that applies the GitLab host on update; with an older version, the apply of a host change fails with an inconsistent result.
 * `cortex_catalog_entity`: reading an entity no longer crashes the provider when its Datadog monitors are stored as objects (`- id: 123`). A monitor with an `alias` is now an error, because the provider cannot store the alias.
-* `cortex_catalog_entity`: these `static_analysis` configurations no longer fail the apply with "Provider produced inconsistent result after apply": an empty `static_analysis` or `mend` block, an empty Mend ID list, a `static_analysis` block without `mend`, and a `veracode` block without `sandboxes`. Reads no longer crash the provider for a `mend` block with only one ID list, numeric or null Mend IDs, or a `veracode` block without `application_names`.
+* `cortex_catalog_entity`: these `static_analysis` configurations no longer fail the apply with "Provider produced inconsistent result after apply": an empty `static_analysis` or `mend` block, an empty Mend ID list, a `static_analysis` block without `mend`, and a `veracode` block without `sandboxes`. Reads no longer crash the provider for a `mend` block with only one ID list, numeric or null Mend IDs or Veracode application names, or a `veracode` block without `application_names`.
 
 ## 0.5.0
 
