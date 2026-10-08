@@ -51,8 +51,8 @@ Read-Only:
 
 Read-Only:
 
-- `exclude` (List of String) List of groups to exclude.
-- `include` (List of String) List of groups to include.
+- `exclude` (Set of String) Set of groups to exclude.
+- `include` (Set of String) Set of groups to include.
 
 
 <a id="nestedatt--filter--types"></a>
@@ -60,5 +60,5 @@ Read-Only:
 
 Read-Only:
 
-- `exclude` (List of String) List of entity types to exclude.
-- `include` (List of String) List of entity types to include.
+- `exclude` (Set of String) Set of entity types to exclude.
+- `include` (Set of String) Set of entity types to include.

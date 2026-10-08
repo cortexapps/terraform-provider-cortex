@@ -68,8 +68,8 @@ func TestCatalogResourceModel_FromApiModel_WithFilter(t *testing.T) {
 	assert.False(t, model.Filter.Types.Include.IsNull())
 	includeElems := model.Filter.Types.Include.Elements()
 	assert.Len(t, includeElems, 2)
-	assert.Equal(t, types.StringValue("service"), includeElems[0])
-	assert.Equal(t, types.StringValue("domain"), includeElems[1])
+	assert.Contains(t, includeElems, types.StringValue("service"))
+	assert.Contains(t, includeElems, types.StringValue("domain"))
 	// Exclude not set — should be null
 	assert.True(t, model.Filter.Types.Exclude.IsNull())
 
@@ -78,7 +78,7 @@ func TestCatalogResourceModel_FromApiModel_WithFilter(t *testing.T) {
 	assert.False(t, model.Filter.Groups.Exclude.IsNull())
 	excludeElems := model.Filter.Groups.Exclude.Elements()
 	assert.Len(t, excludeElems, 1)
-	assert.Equal(t, types.StringValue("my-group"), excludeElems[0])
+	assert.Contains(t, excludeElems, types.StringValue("my-group"))
 	assert.True(t, model.Filter.Groups.Include.IsNull())
 }
 

@@ -7,14 +7,14 @@ resource "cortex_catalog" "example" {
   description = "All microservices in production"
   type        = "FILTER"
 
-  filter {
+  filter = {
     query = "tag != null"
 
-    types {
+    types = {
       include = ["service"]
     }
 
-    groups {
+    groups = {
       include = ["platform", "backend"]
     }
   }

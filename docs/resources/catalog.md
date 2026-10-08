@@ -22,14 +22,14 @@ resource "cortex_catalog" "example" {
   description = "All microservices in production"
   type        = "FILTER"
 
-  filter {
+  filter = {
     query = "tag != null"
 
-    types {
+    types = {
       include = ["service"]
     }
 
-    groups {
+    groups = {
       include = ["platform", "backend"]
     }
   }
@@ -72,8 +72,8 @@ Optional:
 
 Optional:
 
-- `exclude` (List of String) List of groups to exclude.
-- `include` (List of String) List of groups to include.
+- `exclude` (Set of String) Set of groups to exclude. Mutually exclusive with include.
+- `include` (Set of String) Set of groups to include. Mutually exclusive with exclude.
 
 
 <a id="nestedatt--filter--types"></a>
@@ -81,5 +81,5 @@ Optional:
 
 Optional:
 
-- `exclude` (List of String) List of entity types to exclude.
-- `include` (List of String) List of entity types to include.
+- `exclude` (Set of String) Set of entity types to exclude. Mutually exclusive with include.
+- `include` (Set of String) Set of entity types to include. Mutually exclusive with exclude.

@@ -14,13 +14,13 @@ import (
  **********************************************************************************************************************/
 
 type CatalogTypeFilterModel struct {
-	Include types.List `tfsdk:"include"`
-	Exclude types.List `tfsdk:"exclude"`
+	Include types.Set `tfsdk:"include"`
+	Exclude types.Set `tfsdk:"exclude"`
 }
 
 type CatalogGroupFilterModel struct {
-	Include types.List `tfsdk:"include"`
-	Exclude types.List `tfsdk:"exclude"`
+	Include types.Set `tfsdk:"include"`
+	Exclude types.Set `tfsdk:"exclude"`
 }
 
 type CatalogFilterModel struct {
@@ -192,14 +192,14 @@ func catalogFilterFromApiModel(f *cortex.CatalogFilter) *CatalogFilterModel {
 	if f.Types != nil {
 		tf := &CatalogTypeFilterModel{}
 		if len(f.Types.Include) > 0 {
-			tf.Include = types.ListValueMust(types.StringType, stringsToAttrValues(f.Types.Include))
+			tf.Include = types.SetValueMust(types.StringType, stringsToAttrValues(f.Types.Include))
 		} else {
-			tf.Include = types.ListNull(types.StringType)
+			tf.Include = types.SetNull(types.StringType)
 		}
 		if len(f.Types.Exclude) > 0 {
-			tf.Exclude = types.ListValueMust(types.StringType, stringsToAttrValues(f.Types.Exclude))
+			tf.Exclude = types.SetValueMust(types.StringType, stringsToAttrValues(f.Types.Exclude))
 		} else {
-			tf.Exclude = types.ListNull(types.StringType)
+			tf.Exclude = types.SetNull(types.StringType)
 		}
 		model.Types = tf
 	} else {
@@ -209,14 +209,14 @@ func catalogFilterFromApiModel(f *cortex.CatalogFilter) *CatalogFilterModel {
 	if f.Groups != nil {
 		gf := &CatalogGroupFilterModel{}
 		if len(f.Groups.Include) > 0 {
-			gf.Include = types.ListValueMust(types.StringType, stringsToAttrValues(f.Groups.Include))
+			gf.Include = types.SetValueMust(types.StringType, stringsToAttrValues(f.Groups.Include))
 		} else {
-			gf.Include = types.ListNull(types.StringType)
+			gf.Include = types.SetNull(types.StringType)
 		}
 		if len(f.Groups.Exclude) > 0 {
-			gf.Exclude = types.ListValueMust(types.StringType, stringsToAttrValues(f.Groups.Exclude))
+			gf.Exclude = types.SetValueMust(types.StringType, stringsToAttrValues(f.Groups.Exclude))
 		} else {
-			gf.Exclude = types.ListNull(types.StringType)
+			gf.Exclude = types.SetNull(types.StringType)
 		}
 		model.Groups = gf
 	} else {

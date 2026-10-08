@@ -77,13 +77,13 @@ func (d *CatalogDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 						MarkdownDescription: "Entity type filter.",
 						Computed:            true,
 						Attributes: map[string]schema.Attribute{
-							"include": schema.ListAttribute{
-								MarkdownDescription: "List of entity types to include.",
+							"include": schema.SetAttribute{
+								MarkdownDescription: "Set of entity types to include.",
 								Computed:            true,
 								ElementType:         types.StringType,
 							},
-							"exclude": schema.ListAttribute{
-								MarkdownDescription: "List of entity types to exclude.",
+							"exclude": schema.SetAttribute{
+								MarkdownDescription: "Set of entity types to exclude.",
 								Computed:            true,
 								ElementType:         types.StringType,
 							},
@@ -93,13 +93,13 @@ func (d *CatalogDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 						MarkdownDescription: "Group filter.",
 						Computed:            true,
 						Attributes: map[string]schema.Attribute{
-							"include": schema.ListAttribute{
-								MarkdownDescription: "List of groups to include.",
+							"include": schema.SetAttribute{
+								MarkdownDescription: "Set of groups to include.",
 								Computed:            true,
 								ElementType:         types.StringType,
 							},
-							"exclude": schema.ListAttribute{
-								MarkdownDescription: "List of groups to exclude.",
+							"exclude": schema.SetAttribute{
+								MarkdownDescription: "Set of groups to exclude.",
 								Computed:            true,
 								ElementType:         types.StringType,
 							},

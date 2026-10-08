@@ -6,10 +6,12 @@ import (
 	"fmt"
 
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -79,6 +81,9 @@ func (r *CatalogResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Validators: []validator.String{
 					stringvalidator.OneOf("FILTER", "RELATIONSHIP_TYPE", "DOMAIN"),
 				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"relationship_type_tag": schema.StringAttribute{
 				MarkdownDescription: "Tag of the relationship type associated with this catalog.",
@@ -96,15 +101,21 @@ func (r *CatalogResource) Schema(ctx context.Context, req resource.SchemaRequest
 						MarkdownDescription: "Entity type filter.",
 						Optional:            true,
 						Attributes: map[string]schema.Attribute{
-							"include": schema.ListAttribute{
-								MarkdownDescription: "List of entity types to include.",
+							"include": schema.SetAttribute{
+								MarkdownDescription: "Set of entity types to include. Mutually exclusive with exclude.",
 								Optional:            true,
 								ElementType:         types.StringType,
+								Validators: []validator.Set{
+									setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("exclude")),
+								},
 							},
-							"exclude": schema.ListAttribute{
-								MarkdownDescription: "List of entity types to exclude.",
+							"exclude": schema.SetAttribute{
+								MarkdownDescription: "Set of entity types to exclude. Mutually exclusive with include.",
 								Optional:            true,
 								ElementType:         types.StringType,
+								Validators: []validator.Set{
+									setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("include")),
+								},
 							},
 						},
 					},
@@ -112,15 +123,21 @@ func (r *CatalogResource) Schema(ctx context.Context, req resource.SchemaRequest
 						MarkdownDescription: "Group filter.",
 						Optional:            true,
 						Attributes: map[string]schema.Attribute{
-							"include": schema.ListAttribute{
-								MarkdownDescription: "List of groups to include.",
+							"include": schema.SetAttribute{
+								MarkdownDescription: "Set of groups to include. Mutually exclusive with exclude.",
 								Optional:            true,
 								ElementType:         types.StringType,
+								Validators: []validator.Set{
+									setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("exclude")),
+								},
 							},
-							"exclude": schema.ListAttribute{
-								MarkdownDescription: "List of groups to exclude.",
+							"exclude": schema.SetAttribute{
+								MarkdownDescription: "Set of groups to exclude. Mutually exclusive with include.",
 								Optional:            true,
 								ElementType:         types.StringType,
+								Validators: []validator.Set{
+									setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("include")),
+								},
 							},
 						},
 					},
@@ -137,6 +154,9 @@ func (r *CatalogResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"is_cortex_managed": schema.BoolAttribute{
 				MarkdownDescription: "Whether this catalog is managed by Cortex.",
 				Computed:            true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}
@@ -288,5 +308,18 @@ func (r *CatalogResource) Delete(ctx context.Context, req resource.DeleteRequest
 }
 
 func (r *CatalogResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	entity, err := r.client.Catalogs().Get(ctx, req.ID)
+	if err != nil {
+		resp.Diagnostics.AddError("Import Error", fmt.Sprintf("Unable to read catalog %q: %s", req.ID, err))
+		return
+	}
+	if entity.IsCortexManaged {
+		resp.Diagnostics.AddError(
+			"Cannot Import Cortex-Managed Catalog",
+			fmt.Sprintf("Catalog %q is managed by Cortex and cannot be imported into Terraform state. "+
+				"Cortex-managed catalogs cannot be updated or deleted via the API.", req.ID),
+		)
+		return
+	}
 	resource.ImportStatePassthroughID(ctx, path.Root("slug"), req, resp)
 }
