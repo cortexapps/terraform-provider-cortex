@@ -53,6 +53,7 @@ provider "cortex" {
 
 This provider comes with the following resource types:
 
+* [`cortex_catalog`](docs/resources/catalog.md)
 * [`cortex_catalog_entity`](docs/resources/catalog_entity.md)
 * [`cortex_catalog_entity_custom_data`](docs/resources/catalog_entity_custom_data.md)
 * [`cortex_integration_configuration`](docs/resources/integration_configuration.md)
@@ -62,6 +63,7 @@ This provider comes with the following resource types:
 
 And the following data sources:
 
+* [`cortex_catalog`](docs/data-sources/catalog.md)
 * [`cortex_catalog_entity`](docs/data-sources/catalog_entity.md)
 * [`cortex_catalog_entity_custom_data`](docs/data-sources/catalog_entity_custom_data.md)
 * [`cortex_department`](docs/data-sources/department.md)
