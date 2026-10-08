@@ -43,9 +43,11 @@ type RelationshipTypeResourceModel struct {
 }
 
 // stringsToSet converts a string slice to a types.Set of strings.
+// Returns null for empty slices so that optional attributes remain null
+// when not set, avoiding spurious plan diffs.
 func stringsToSet(ss []string) types.Set {
 	if len(ss) == 0 {
-		return types.SetValueMust(types.StringType, []attr.Value{})
+		return types.SetNull(types.StringType)
 	}
 	vals := make([]attr.Value, len(ss))
 	for i, s := range ss {

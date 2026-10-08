@@ -33,7 +33,7 @@ func (r *ResourceDefinitionResourceModel) FromApiModel(ctx context.Context, diag
 	} else {
 		r.Description = types.StringNull()
 	}
-	if entity.IconTag != "" {
+	if entity.IconTag != "" && entity.IconTag != "__ICON_TAG_UNSET__" {
 		r.IconTag = types.StringValue(entity.IconTag)
 	} else {
 		r.IconTag = types.StringNull()
