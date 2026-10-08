@@ -29,6 +29,7 @@ type RelationshipTypeDataSourceModel struct {
 	DestinationLabelPlural   types.String                       `tfsdk:"destination_label_plural"`
 	Inheritances             []RelationshipTypeInheritanceModel `tfsdk:"inheritances"`
 	IsCortexManaged          types.Bool                         `tfsdk:"is_cortex_managed"`
+	CreateCatalog            types.Bool                         `tfsdk:"create_catalog"`
 }
 
 func (r *RelationshipTypeDataSourceModel) FromApiModel(_ context.Context, _ *diag.Diagnostics, entity cortex.EntityRelationshipType) {
@@ -44,6 +45,7 @@ func (r *RelationshipTypeDataSourceModel) FromApiModel(_ context.Context, _ *dia
 	r.IsSingleDestination = types.BoolValue(entity.IsSingleDestination)
 	r.DefinitionLocation = types.StringValue(entity.DefinitionLocation)
 	r.IsCortexManaged = types.BoolValue(entity.IsCortexManaged)
+	r.CreateCatalog = types.BoolValue(entity.CreateCatalog)
 
 	sf := filterFromApi(entity.SourcesFilter)
 	r.SourcesFilter = &sf

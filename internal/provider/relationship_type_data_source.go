@@ -108,6 +108,9 @@ func (d *RelationshipTypeDataSource) Schema(_ context.Context, _ datasource.Sche
 					},
 				},
 			},
+			"create_catalog": schema.BoolAttribute{
+				Computed: true,
+			},
 			"is_cortex_managed": schema.BoolAttribute{
 				Computed: true,
 			},

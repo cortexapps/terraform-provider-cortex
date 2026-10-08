@@ -40,6 +40,7 @@ type RelationshipTypeResourceModel struct {
 	DestinationLabelPlural   types.String                       `tfsdk:"destination_label_plural"`
 	Inheritances             []RelationshipTypeInheritanceModel `tfsdk:"inheritances"`
 	IsCortexManaged          types.Bool                         `tfsdk:"is_cortex_managed"`
+	CreateCatalog            types.Bool                         `tfsdk:"create_catalog"`
 }
 
 // stringsToSet converts a string slice to a types.Set of strings.
@@ -101,6 +102,7 @@ func (r *RelationshipTypeResourceModel) FromApiModel(_ context.Context, _ *diag.
 	r.IsSingleDestination = types.BoolValue(entity.IsSingleDestination)
 	r.DefinitionLocation = types.StringValue(entity.DefinitionLocation)
 	r.IsCortexManaged = types.BoolValue(entity.IsCortexManaged)
+	r.CreateCatalog = types.BoolValue(entity.CreateCatalog)
 
 	sf := filterFromApi(entity.SourcesFilter)
 	r.SourcesFilter = &sf
@@ -157,6 +159,7 @@ func (r *RelationshipTypeResourceModel) ToCreateRequest() cortex.CreateRelations
 		SourceLabelPlural:        r.SourceLabelPlural.ValueString(),
 		DestinationLabelSingular: r.DestinationLabelSingular.ValueString(),
 		DestinationLabelPlural:   r.DestinationLabelPlural.ValueString(),
+		CreateCatalog:            r.CreateCatalog.ValueBool(),
 	}
 	for _, inh := range r.Inheritances {
 		req.Inheritances = append(req.Inheritances, cortex.RelationshipInheritance{
@@ -172,6 +175,7 @@ func (r *RelationshipTypeResourceModel) ToCreateRequest() cortex.CreateRelations
 
 func (r *RelationshipTypeResourceModel) ToUpdateRequest() cortex.UpdateRelationshipTypeRequest {
 	req := cortex.UpdateRelationshipTypeRequest{
+		Tag:                      r.Tag.ValueString(),
 		Name:                     r.Name.ValueString(),
 		Description:              r.Description.ValueString(),
 		AllowCycles:              r.AllowCycles.ValueBool(),
@@ -184,6 +188,7 @@ func (r *RelationshipTypeResourceModel) ToUpdateRequest() cortex.UpdateRelations
 		SourceLabelPlural:        r.SourceLabelPlural.ValueString(),
 		DestinationLabelSingular: r.DestinationLabelSingular.ValueString(),
 		DestinationLabelPlural:   r.DestinationLabelPlural.ValueString(),
+		CreateCatalog:            r.CreateCatalog.ValueBool(),
 	}
 	for _, inh := range r.Inheritances {
 		req.Inheritances = append(req.Inheritances, cortex.RelationshipInheritance{

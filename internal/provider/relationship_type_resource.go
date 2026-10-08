@@ -142,6 +142,15 @@ func (r *RelationshipTypeResource) Schema(_ context.Context, _ resource.SchemaRe
 				},
 			},
 
+			"create_catalog": schema.BoolAttribute{
+				MarkdownDescription: "Whether to generate a catalog page for this relationship type.",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
+			},
+
 			// Computed attributes
 			"is_cortex_managed": schema.BoolAttribute{
 				MarkdownDescription: "Whether this relationship type is managed by Cortex.",

@@ -59,6 +59,7 @@ type EntityRelationshipType struct {
 	DestinationLabelSingular string                    `json:"destinationLabelSingular,omitempty"`
 	DestinationLabelPlural   string                    `json:"destinationLabelPlural,omitempty"`
 	Inheritances             []RelationshipInheritance `json:"inheritances"`
+	CreateCatalog            bool                      `json:"createCatalog"`
 }
 
 // CreateRelationshipTypeRequest is the POST body for creating a relationship type.
@@ -77,10 +78,12 @@ type CreateRelationshipTypeRequest struct {
 	DestinationLabelSingular string                    `json:"destinationLabelSingular,omitempty"`
 	DestinationLabelPlural   string                    `json:"destinationLabelPlural,omitempty"`
 	Inheritances             []RelationshipInheritance `json:"inheritances"`
+	CreateCatalog            bool                      `json:"createCatalog"`
 }
 
-// UpdateRelationshipTypeRequest is the PUT body (tag is a path param, not in body).
+// UpdateRelationshipTypeRequest is the PUT body. Tag is required in both path and body.
 type UpdateRelationshipTypeRequest struct {
+	Tag                      string                    `json:"tag"`
 	Name                     string                    `json:"name"`
 	Description              string                    `json:"description,omitempty"`
 	AllowCycles              bool                      `json:"allowCycles"`
@@ -94,6 +97,7 @@ type UpdateRelationshipTypeRequest struct {
 	DestinationLabelSingular string                    `json:"destinationLabelSingular,omitempty"`
 	DestinationLabelPlural   string                    `json:"destinationLabelPlural,omitempty"`
 	Inheritances             []RelationshipInheritance `json:"inheritances"`
+	CreateCatalog            bool                      `json:"createCatalog"`
 }
 
 // RelationshipTypesResponse is the list response.
