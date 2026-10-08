@@ -183,3 +183,7 @@ func (c *HttpClient) ResourceDefinitions() ResourceDefinitionsClientInterface {
 func (c *HttpClient) RelationshipTypes() RelationshipTypesClientInterface {
 	return &RelationshipTypesClient{client: c}
 }
+
+func (c *HttpClient) EntityRelationships() EntityRelationshipsClientInterface {
+	return &EntityRelationshipsClient{client: c}
+}
