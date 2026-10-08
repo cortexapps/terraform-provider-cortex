@@ -19,6 +19,7 @@ type ResourceDefinitionDataSourceModel struct {
 	Description types.String `tfsdk:"description"`
 	Source      types.String `tfsdk:"source"`
 	Schema      types.String `tfsdk:"schema"`
+	IconTag     types.String `tfsdk:"icon_tag"`
 }
 
 func (r *ResourceDefinitionDataSourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity *cortex.ResourceDefinition) {
@@ -27,6 +28,11 @@ func (r *ResourceDefinitionDataSourceModel) FromApiModel(ctx context.Context, di
 	r.Name = types.StringValue(entity.Name)
 	r.Description = types.StringValue(entity.Description)
 	r.Source = types.StringValue(entity.Source)
+	if entity.IconTag != "" {
+		r.IconTag = types.StringValue(entity.IconTag)
+	} else {
+		r.IconTag = types.StringNull()
+	}
 
 	schema, err := entity.SchemaAsString()
 	if err != nil {

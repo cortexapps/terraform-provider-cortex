@@ -77,6 +77,10 @@ func (r *ResourceDefinitionResource) Schema(ctx context.Context, req resource.Sc
 				MarkdownDescription: "Description of the team.",
 				Optional:            true,
 			},
+			"icon_tag": schema.StringAttribute{
+				MarkdownDescription: "Icon tag for the resource definition.",
+				Optional:            true,
+			},
 
 			// Computed attributes
 			"id": schema.StringAttribute{

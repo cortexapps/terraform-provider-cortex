@@ -35,6 +35,7 @@ type ResourceDefinition struct {
 	Description string                 `json:"description,omitempty" yaml:"description,omitempty"`
 	Schema      map[string]interface{} `json:"schema,omitempty" yaml:"schema,omitempty"`
 	Source      string                 `json:"source,omitempty" yaml:"source,omitempty"`
+	IconTag     string                 `json:"iconTag,omitempty" yaml:"iconTag,omitempty"`
 }
 
 func (r *ResourceDefinition) SchemaAsString() (string, error) {
@@ -111,6 +112,7 @@ type CreateResourceDefinitionRequest struct {
 	Description string                 `json:"description,omitempty"`
 	Schema      map[string]interface{} `json:"schema,omitempty"`
 	Source      string                 `json:"source,omitempty"`
+	IconTag     string                 `json:"iconTag,omitempty"`
 }
 
 func (r *ResourceDefinition) ToCreateRequest() CreateResourceDefinitionRequest {
@@ -119,6 +121,7 @@ func (r *ResourceDefinition) ToCreateRequest() CreateResourceDefinitionRequest {
 		Name:        r.Name,
 		Description: r.Description,
 		Schema:      r.Schema,
+		IconTag:     r.IconTag,
 	}
 }
 
@@ -151,6 +154,7 @@ type UpdateResourceDefinitionRequest struct {
 	Name        string                 `json:"name,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	Schema      map[string]interface{} `json:"schema,omitempty"`
+	IconTag     string                 `json:"iconTag,omitempty"`
 }
 
 func (r *ResourceDefinition) ToUpdateRequest() UpdateResourceDefinitionRequest {
@@ -158,6 +162,7 @@ func (r *ResourceDefinition) ToUpdateRequest() UpdateResourceDefinitionRequest {
 		Name:        r.Name,
 		Description: r.Description,
 		Schema:      r.Schema,
+		IconTag:     r.IconTag,
 	}
 }
 

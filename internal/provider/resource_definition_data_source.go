@@ -52,6 +52,9 @@ func (d *ResourceDefinitionDataSource) Schema(ctx context.Context, req datasourc
 			"schema": schema.StringAttribute{
 				Computed: true,
 			},
+			"icon_tag": schema.StringAttribute{
+				Computed: true,
+			},
 		},
 	}
 }

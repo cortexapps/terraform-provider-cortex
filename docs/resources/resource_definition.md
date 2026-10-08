@@ -24,6 +24,7 @@ ResourceDefinition Entity
 ### Optional
 
 - `description` (String) Description of the team.
+- `icon_tag` (String) Icon tag for the resource definition.
 
 ### Read-Only
 

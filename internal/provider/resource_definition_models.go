@@ -20,6 +20,7 @@ type ResourceDefinitionResourceModel struct {
 	Description types.String `tfsdk:"description"`
 	Source      types.String `tfsdk:"source"`
 	Schema      types.String `tfsdk:"schema"`
+	IconTag     types.String `tfsdk:"icon_tag"`
 }
 
 func (r *ResourceDefinitionResourceModel) FromApiModel(ctx context.Context, diagnostics *diag.Diagnostics, entity cortex.ResourceDefinition) {
@@ -31,6 +32,11 @@ func (r *ResourceDefinitionResourceModel) FromApiModel(ctx context.Context, diag
 		r.Description = types.StringValue(entity.Description)
 	} else {
 		r.Description = types.StringNull()
+	}
+	if entity.IconTag != "" {
+		r.IconTag = types.StringValue(entity.IconTag)
+	} else {
+		r.IconTag = types.StringNull()
 	}
 
 	schema := make(map[string]interface{})
@@ -51,6 +57,7 @@ func (r *ResourceDefinitionResourceModel) ToApiModel(diagnostics *diag.Diagnosti
 		Name:        r.Name.ValueString(),
 		Description: r.Description.ValueString(),
 		Source:      r.Source.ValueString(),
+		IconTag:     r.IconTag.ValueString(),
 	}
 
 	schema := make(map[string]interface{})

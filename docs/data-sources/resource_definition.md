@@ -22,6 +22,7 @@ ResourceDefinition data source
 ### Read-Only
 
 - `description` (String)
+- `icon_tag` (String)
 - `id` (String) The ID of this resource.
 - `name` (String)
 - `schema` (String)
