@@ -93,11 +93,12 @@ func filterToApi(f *RelationshipTypeFilterModel) cortex.EntityTypeFilter {
 }
 
 // inheritancesToSet converts API inheritances to a types.Set.
-// Returns null when the API returns no inheritances so that omitting the attribute
-// from config does not produce a phantom diff.
+// Returns an empty set (not null) so that the value is consistent whether the user
+// omits the attribute or sets it to []. The attribute is Optional+Computed, so
+// Terraform uses prior state when the user omits it, preventing phantom diffs.
 func inheritancesToSet(inheritances []cortex.RelationshipInheritance) types.Set {
 	if len(inheritances) == 0 {
-		return types.SetNull(inheritanceObjectType)
+		return types.SetValueMust(inheritanceObjectType, []attr.Value{})
 	}
 	vals := make([]attr.Value, len(inheritances))
 	for i, inh := range inheritances {

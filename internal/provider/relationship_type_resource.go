@@ -129,6 +129,7 @@ func (r *RelationshipTypeResource) Schema(_ context.Context, _ resource.SchemaRe
 			"inheritances": schema.SetNestedAttribute{
 				MarkdownDescription: "Parameter inheritance configurations for this relationship type.",
 				Optional:            true,
+				Computed:            true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"parameter_tag": schema.StringAttribute{
