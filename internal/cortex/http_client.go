@@ -26,6 +26,7 @@ var BaseUris = map[string]string{
 	"open_api":             "/api/v1/open-api",
 	"resource_definitions": "/api/v1/catalog/definitions/",
 	"relationship_types":   "/api/v1/relationship-types/",
+	"catalog_pages":        "/api/v1/catalog-pages/",
 }
 
 func Route(domain string, path string) string {
@@ -186,4 +187,6 @@ func (c *HttpClient) RelationshipTypes() RelationshipTypesClientInterface {
 
 func (c *HttpClient) EntityRelationships() EntityRelationshipsClientInterface {
 	return &EntityRelationshipsClient{client: c}
+func (c *HttpClient) Catalogs() CatalogsClientInterface {
+	return &CatalogsClient{client: c}
 }
