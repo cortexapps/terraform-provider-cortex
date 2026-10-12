@@ -28,7 +28,7 @@ func (r *ResourceDefinitionDataSourceModel) FromApiModel(ctx context.Context, di
 	r.Name = types.StringValue(entity.Name)
 	r.Description = types.StringValue(entity.Description)
 	r.Source = types.StringValue(entity.Source)
-	if entity.IconTag != "" {
+	if entity.IconTag != "" && entity.IconTag != "__ICON_TAG_UNSET__" {
 		r.IconTag = types.StringValue(entity.IconTag)
 	} else {
 		r.IconTag = types.StringNull()

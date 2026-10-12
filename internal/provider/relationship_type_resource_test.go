@@ -93,9 +93,14 @@ func TestAccRelationshipTypeResourceFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "source_label_plural", "Services"),
 					resource.TestCheckResourceAttr(resourceName, "destination_label_singular", "Database"),
 					resource.TestCheckResourceAttr(resourceName, "destination_label_plural", "Databases"),
-					resource.TestCheckResourceAttr(resourceName, "inheritances.0.parameter_tag", "x-cortex-owners"),
-					resource.TestCheckResourceAttr(resourceName, "inheritances.0.inheritance_type", "FALLBACK"),
+					resource.TestCheckResourceAttr(resourceName, "inheritances.#", "1"),
 				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      resourceType + "." + tag,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			// Verify plan is clean after apply (no diff from unordered set fields)
 			{

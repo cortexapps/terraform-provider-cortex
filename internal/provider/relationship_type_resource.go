@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
@@ -125,7 +126,7 @@ func (r *RelationshipTypeResource) Schema(_ context.Context, _ resource.SchemaRe
 				MarkdownDescription: "Plural label for the destination entity.",
 				Optional:            true,
 			},
-			"inheritances": schema.ListNestedAttribute{
+			"inheritances": schema.SetNestedAttribute{
 				MarkdownDescription: "Parameter inheritance configurations for this relationship type.",
 				Optional:            true,
 				NestedObject: schema.NestedAttributeObject{
@@ -194,6 +195,10 @@ func (r *RelationshipTypeResource) Read(ctx context.Context, req resource.ReadRe
 
 	entity, err := r.client.RelationshipTypes().Get(ctx, data.Tag.ValueString())
 	if err != nil {
+		if errors.Is(err, cortex.ApiErrorNotFound) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read relationship type, got error: %s", err))
 		return
 	}

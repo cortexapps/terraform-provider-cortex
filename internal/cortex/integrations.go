@@ -8,10 +8,13 @@ package cortex
 // match the structure of the CatalogEntity struct in other responses.
 // See: https://github.com/cortexapps/solutions/blob/master/examples/yaml/catalog/resource.yaml
 type CatalogEntityData struct {
-	Title          string                    `json:"title" yaml:"title"`
-	Description    string                    `json:"description,omitempty" yaml:"description,omitempty"`
-	Tag            string                    `json:"x-cortex-tag" yaml:"x-cortex-tag"`
-	Type           string                    `json:"x-cortex-type,omitempty" yaml:"x-cortex-type,omitempty"`
+	Title       string `json:"title" yaml:"title"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Tag         string `json:"x-cortex-tag" yaml:"x-cortex-tag"`
+	Type        string `json:"x-cortex-type,omitempty" yaml:"x-cortex-type,omitempty"`
+	// Definition must always be serialized even when empty, because the Cortex API
+	// requires x-cortex-definition to be present for custom entity types.
+	// Do not add omitempty here.
 	Definition     map[string]interface{}    `json:"x-cortex-definition,omitempty" yaml:"x-cortex-definition"`
 	Owners         []CatalogEntityOwner      `json:"x-cortex-owners,omitempty" yaml:"x-cortex-owners,omitempty"`
 	Children       []CatalogEntityChild      `json:"x-cortex-children,omitempty" yaml:"x-cortex-children,omitempty"`

@@ -60,10 +60,11 @@ resource "cortex_relationship_type" "example" {
 
 ### Optional
 
+- `create_catalog` (Boolean) Whether to generate a catalog page for this relationship type.
 - `description` (String) Description of the relationship type.
 - `destination_label_plural` (String) Plural label for the destination entity.
 - `destination_label_singular` (String) Singular label for the destination entity.
-- `inheritances` (Attributes List) Parameter inheritance configurations for this relationship type. (see [below for nested schema](#nestedatt--inheritances))
+- `inheritances` (Attributes Set) Parameter inheritance configurations for this relationship type. (see [below for nested schema](#nestedatt--inheritances))
 - `source_label_plural` (String) Plural label for the source entity.
 - `source_label_singular` (String) Singular label for the source entity.
 

@@ -154,7 +154,7 @@ type UpdateResourceDefinitionRequest struct {
 	Name        string                 `json:"name,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	Schema      map[string]interface{} `json:"schema,omitempty"`
-	IconTag     string                 `json:"iconTag,omitempty"`
+	IconTag     string                 `json:"iconTag"` // no omitempty — empty string clears the icon
 }
 
 func (r *ResourceDefinition) ToUpdateRequest() UpdateResourceDefinitionRequest {

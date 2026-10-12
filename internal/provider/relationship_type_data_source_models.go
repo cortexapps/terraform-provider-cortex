@@ -14,22 +14,22 @@ func NewRelationshipTypeDataSourceModel() RelationshipTypeDataSourceModel {
 
 // RelationshipTypeDataSourceModel describes the data source data model.
 type RelationshipTypeDataSourceModel struct {
-	Tag                      types.String                       `tfsdk:"tag"`
-	Name                     types.String                       `tfsdk:"name"`
-	Description              types.String                       `tfsdk:"description"`
-	AllowCycles              types.Bool                         `tfsdk:"allow_cycles"`
-	IsSingleSource           types.Bool                         `tfsdk:"is_single_source"`
-	IsSingleDestination      types.Bool                         `tfsdk:"is_single_destination"`
-	DefinitionLocation       types.String                       `tfsdk:"definition_location"`
-	SourcesFilter            *RelationshipTypeFilterModel       `tfsdk:"sources_filter"`
-	DestinationsFilter       *RelationshipTypeFilterModel       `tfsdk:"destinations_filter"`
-	SourceLabelSingular      types.String                       `tfsdk:"source_label_singular"`
-	SourceLabelPlural        types.String                       `tfsdk:"source_label_plural"`
-	DestinationLabelSingular types.String                       `tfsdk:"destination_label_singular"`
-	DestinationLabelPlural   types.String                       `tfsdk:"destination_label_plural"`
-	Inheritances             []RelationshipTypeInheritanceModel `tfsdk:"inheritances"`
-	IsCortexManaged          types.Bool                         `tfsdk:"is_cortex_managed"`
-	CreateCatalog            types.Bool                         `tfsdk:"create_catalog"`
+	Tag                      types.String                 `tfsdk:"tag"`
+	Name                     types.String                 `tfsdk:"name"`
+	Description              types.String                 `tfsdk:"description"`
+	AllowCycles              types.Bool                   `tfsdk:"allow_cycles"`
+	IsSingleSource           types.Bool                   `tfsdk:"is_single_source"`
+	IsSingleDestination      types.Bool                   `tfsdk:"is_single_destination"`
+	DefinitionLocation       types.String                 `tfsdk:"definition_location"`
+	SourcesFilter            *RelationshipTypeFilterModel `tfsdk:"sources_filter"`
+	DestinationsFilter       *RelationshipTypeFilterModel `tfsdk:"destinations_filter"`
+	SourceLabelSingular      types.String                 `tfsdk:"source_label_singular"`
+	SourceLabelPlural        types.String                 `tfsdk:"source_label_plural"`
+	DestinationLabelSingular types.String                 `tfsdk:"destination_label_singular"`
+	DestinationLabelPlural   types.String                 `tfsdk:"destination_label_plural"`
+	Inheritances             types.Set                    `tfsdk:"inheritances"`
+	IsCortexManaged          types.Bool                   `tfsdk:"is_cortex_managed"`
+	CreateCatalog            types.Bool                   `tfsdk:"create_catalog"`
 }
 
 func (r *RelationshipTypeDataSourceModel) FromApiModel(_ context.Context, _ *diag.Diagnostics, entity cortex.EntityRelationshipType) {
@@ -73,16 +73,5 @@ func (r *RelationshipTypeDataSourceModel) FromApiModel(_ context.Context, _ *dia
 		r.DestinationLabelPlural = types.StringNull()
 	}
 
-	if len(entity.Inheritances) > 0 {
-		inheritances := make([]RelationshipTypeInheritanceModel, len(entity.Inheritances))
-		for i, inh := range entity.Inheritances {
-			inheritances[i] = RelationshipTypeInheritanceModel{
-				ParameterTag:    types.StringValue(inh.ParameterTag),
-				InheritanceType: types.StringValue(inh.InheritanceType),
-			}
-		}
-		r.Inheritances = inheritances
-	} else {
-		r.Inheritances = []RelationshipTypeInheritanceModel{}
-	}
+	r.Inheritances = inheritancesToSet(entity.Inheritances)
 }

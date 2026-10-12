@@ -28,12 +28,13 @@ data "cortex_relationship_type" "example" {
 ### Read-Only
 
 - `allow_cycles` (Boolean)
+- `create_catalog` (Boolean) Whether to generate a catalog page for this relationship type.
 - `definition_location` (String)
 - `description` (String)
 - `destination_label_plural` (String)
 - `destination_label_singular` (String)
 - `destinations_filter` (Attributes) Filter for which entity types can be destinations. (see [below for nested schema](#nestedatt--destinations_filter))
-- `inheritances` (Attributes List) (see [below for nested schema](#nestedatt--inheritances))
+- `inheritances` (Attributes Set) (see [below for nested schema](#nestedatt--inheritances))
 - `is_cortex_managed` (Boolean)
 - `is_single_destination` (Boolean)
 - `is_single_source` (Boolean)

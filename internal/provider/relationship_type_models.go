@@ -13,34 +13,37 @@ import (
  * Models
  **********************************************************************************************************************/
 
+// inheritanceObjectType is the types.ObjectType for a single inheritance entry.
+var inheritanceObjectType = types.ObjectType{
+	AttrTypes: map[string]attr.Type{
+		"parameter_tag":    types.StringType,
+		"inheritance_type": types.StringType,
+	},
+}
+
 type RelationshipTypeFilterModel struct {
 	Include   types.Bool `tfsdk:"include"`
 	Types     types.Set  `tfsdk:"types"`
 	Providers types.Set  `tfsdk:"providers"`
 }
 
-type RelationshipTypeInheritanceModel struct {
-	ParameterTag    types.String `tfsdk:"parameter_tag"`
-	InheritanceType types.String `tfsdk:"inheritance_type"`
-}
-
 type RelationshipTypeResourceModel struct {
-	Tag                      types.String                       `tfsdk:"tag"`
-	Name                     types.String                       `tfsdk:"name"`
-	Description              types.String                       `tfsdk:"description"`
-	AllowCycles              types.Bool                         `tfsdk:"allow_cycles"`
-	IsSingleSource           types.Bool                         `tfsdk:"is_single_source"`
-	IsSingleDestination      types.Bool                         `tfsdk:"is_single_destination"`
-	DefinitionLocation       types.String                       `tfsdk:"definition_location"`
-	SourcesFilter            *RelationshipTypeFilterModel       `tfsdk:"sources_filter"`
-	DestinationsFilter       *RelationshipTypeFilterModel       `tfsdk:"destinations_filter"`
-	SourceLabelSingular      types.String                       `tfsdk:"source_label_singular"`
-	SourceLabelPlural        types.String                       `tfsdk:"source_label_plural"`
-	DestinationLabelSingular types.String                       `tfsdk:"destination_label_singular"`
-	DestinationLabelPlural   types.String                       `tfsdk:"destination_label_plural"`
-	Inheritances             []RelationshipTypeInheritanceModel `tfsdk:"inheritances"`
-	IsCortexManaged          types.Bool                         `tfsdk:"is_cortex_managed"`
-	CreateCatalog            types.Bool                         `tfsdk:"create_catalog"`
+	Tag                      types.String                 `tfsdk:"tag"`
+	Name                     types.String                 `tfsdk:"name"`
+	Description              types.String                 `tfsdk:"description"`
+	AllowCycles              types.Bool                   `tfsdk:"allow_cycles"`
+	IsSingleSource           types.Bool                   `tfsdk:"is_single_source"`
+	IsSingleDestination      types.Bool                   `tfsdk:"is_single_destination"`
+	DefinitionLocation       types.String                 `tfsdk:"definition_location"`
+	SourcesFilter            *RelationshipTypeFilterModel `tfsdk:"sources_filter"`
+	DestinationsFilter       *RelationshipTypeFilterModel `tfsdk:"destinations_filter"`
+	SourceLabelSingular      types.String                 `tfsdk:"source_label_singular"`
+	SourceLabelPlural        types.String                 `tfsdk:"source_label_plural"`
+	DestinationLabelSingular types.String                 `tfsdk:"destination_label_singular"`
+	DestinationLabelPlural   types.String                 `tfsdk:"destination_label_plural"`
+	Inheritances             types.Set                    `tfsdk:"inheritances"`
+	IsCortexManaged          types.Bool                   `tfsdk:"is_cortex_managed"`
+	CreateCatalog            types.Bool                   `tfsdk:"create_catalog"`
 }
 
 // stringsToSet converts a string slice to a types.Set of strings.
@@ -89,6 +92,41 @@ func filterToApi(f *RelationshipTypeFilterModel) cortex.EntityTypeFilter {
 	}
 }
 
+// inheritancesToSet converts API inheritances to a types.Set.
+// Returns null when the API returns no inheritances so that omitting the attribute
+// from config does not produce a phantom diff.
+func inheritancesToSet(inheritances []cortex.RelationshipInheritance) types.Set {
+	if len(inheritances) == 0 {
+		return types.SetNull(inheritanceObjectType)
+	}
+	vals := make([]attr.Value, len(inheritances))
+	for i, inh := range inheritances {
+		obj, _ := types.ObjectValue(inheritanceObjectType.AttrTypes, map[string]attr.Value{
+			"parameter_tag":    types.StringValue(inh.ParameterTag),
+			"inheritance_type": types.StringValue(inh.InheritanceType),
+		})
+		vals[i] = obj
+	}
+	return types.SetValueMust(inheritanceObjectType, vals)
+}
+
+// inheritancesFromSet converts a types.Set back to API inheritance slice.
+func inheritancesFromSet(s types.Set) []cortex.RelationshipInheritance {
+	if s.IsNull() || s.IsUnknown() {
+		return []cortex.RelationshipInheritance{}
+	}
+	result := make([]cortex.RelationshipInheritance, 0, len(s.Elements()))
+	for _, elem := range s.Elements() {
+		obj := elem.(types.Object)
+		attrs := obj.Attributes()
+		result = append(result, cortex.RelationshipInheritance{
+			ParameterTag:    attrs["parameter_tag"].(types.String).ValueString(),
+			InheritanceType: attrs["inheritance_type"].(types.String).ValueString(),
+		})
+	}
+	return result
+}
+
 func (r *RelationshipTypeResourceModel) FromApiModel(_ context.Context, _ *diag.Diagnostics, entity cortex.EntityRelationshipType) {
 	r.Tag = types.StringValue(entity.Tag)
 	r.Name = types.StringValue(entity.Name)
@@ -130,18 +168,7 @@ func (r *RelationshipTypeResourceModel) FromApiModel(_ context.Context, _ *diag.
 		r.DestinationLabelPlural = types.StringNull()
 	}
 
-	if len(entity.Inheritances) > 0 {
-		inheritances := make([]RelationshipTypeInheritanceModel, len(entity.Inheritances))
-		for i, inh := range entity.Inheritances {
-			inheritances[i] = RelationshipTypeInheritanceModel{
-				ParameterTag:    types.StringValue(inh.ParameterTag),
-				InheritanceType: types.StringValue(inh.InheritanceType),
-			}
-		}
-		r.Inheritances = inheritances
-	} else {
-		r.Inheritances = []RelationshipTypeInheritanceModel{}
-	}
+	r.Inheritances = inheritancesToSet(entity.Inheritances)
 }
 
 func (r *RelationshipTypeResourceModel) ToCreateRequest() cortex.CreateRelationshipTypeRequest {
@@ -160,12 +187,7 @@ func (r *RelationshipTypeResourceModel) ToCreateRequest() cortex.CreateRelations
 		DestinationLabelSingular: r.DestinationLabelSingular.ValueString(),
 		DestinationLabelPlural:   r.DestinationLabelPlural.ValueString(),
 		CreateCatalog:            r.CreateCatalog.ValueBool(),
-	}
-	for _, inh := range r.Inheritances {
-		req.Inheritances = append(req.Inheritances, cortex.RelationshipInheritance{
-			ParameterTag:    inh.ParameterTag.ValueString(),
-			InheritanceType: inh.InheritanceType.ValueString(),
-		})
+		Inheritances:             inheritancesFromSet(r.Inheritances),
 	}
 	if req.Inheritances == nil {
 		req.Inheritances = []cortex.RelationshipInheritance{}
@@ -189,12 +211,7 @@ func (r *RelationshipTypeResourceModel) ToUpdateRequest() cortex.UpdateRelations
 		DestinationLabelSingular: r.DestinationLabelSingular.ValueString(),
 		DestinationLabelPlural:   r.DestinationLabelPlural.ValueString(),
 		CreateCatalog:            r.CreateCatalog.ValueBool(),
-	}
-	for _, inh := range r.Inheritances {
-		req.Inheritances = append(req.Inheritances, cortex.RelationshipInheritance{
-			ParameterTag:    inh.ParameterTag.ValueString(),
-			InheritanceType: inh.InheritanceType.ValueString(),
-		})
+		Inheritances:             inheritancesFromSet(r.Inheritances),
 	}
 	if req.Inheritances == nil {
 		req.Inheritances = []cortex.RelationshipInheritance{}

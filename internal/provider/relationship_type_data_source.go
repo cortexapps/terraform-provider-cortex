@@ -95,7 +95,7 @@ func (d *RelationshipTypeDataSource) Schema(_ context.Context, _ datasource.Sche
 			"destination_label_plural": schema.StringAttribute{
 				Computed: true,
 			},
-			"inheritances": schema.ListNestedAttribute{
+			"inheritances": schema.SetNestedAttribute{
 				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{

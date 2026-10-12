@@ -32,6 +32,11 @@ func TestAccEntityRelationshipResource(t *testing.T) {
 					resource.TestCheckResourceAttrSet(resourceName, "id"),
 				),
 			},
+			// Idempotency check after create
+			{
+				Config:   testAccEntityRelationshipConfig(sourceTag, destTag1, destTag2, destTag3, relTypeTag, []string{destTag1, destTag2}),
+				PlanOnly: true,
+			},
 			// Update to 3 destinations
 			{
 				Config: testAccEntityRelationshipConfig(sourceTag, destTag1, destTag2, destTag3, relTypeTag, []string{destTag1, destTag2, destTag3}),
