@@ -58,13 +58,11 @@ resource "cortex_relationship_type" %[1]q {
   definition_location   = "SOURCE"
 
   sources_filter = {
-    include = true
-    types   = []
+    include = false
   }
 
   destinations_filter = {
-    include = true
-    types   = []
+    include = false
   }
 }
 `, tag, name)
@@ -89,10 +87,10 @@ func TestAccRelationshipTypeResourceFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "allow_cycles", "false"),
 					resource.TestCheckResourceAttr(resourceName, "is_single_source", "false"),
 					resource.TestCheckResourceAttr(resourceName, "is_single_destination", "false"),
-					resource.TestCheckResourceAttr(resourceName, "source_label_singular", "Service"),
-					resource.TestCheckResourceAttr(resourceName, "source_label_plural", "Services"),
-					resource.TestCheckResourceAttr(resourceName, "destination_label_singular", "Database"),
-					resource.TestCheckResourceAttr(resourceName, "destination_label_plural", "Databases"),
+					resource.TestCheckResourceAttr(resourceName, "source_label_singular", "service"),
+					resource.TestCheckResourceAttr(resourceName, "source_label_plural", "services"),
+					resource.TestCheckResourceAttr(resourceName, "destination_label_singular", "database"),
+					resource.TestCheckResourceAttr(resourceName, "destination_label_plural", "databases"),
 					resource.TestCheckResourceAttr(resourceName, "inheritances.#", "1"),
 				),
 			},
@@ -133,10 +131,10 @@ resource "cortex_relationship_type" %[1]q {
     types   = ["resource"]
   }
 
-  source_label_singular      = "Service"
-  source_label_plural        = "Services"
-  destination_label_singular = "Database"
-  destination_label_plural   = "Databases"
+  source_label_singular      = "service"
+  source_label_plural        = "services"
+  destination_label_singular = "database"
+  destination_label_plural   = "databases"
 
   inheritances = [
     {

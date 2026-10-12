@@ -66,6 +66,9 @@ func (r *RelationshipTypeResource) Schema(_ context.Context, _ resource.SchemaRe
 		MarkdownDescription: "Relationship Type resource",
 
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
 			// Required attributes
 			"tag": schema.StringAttribute{
 				MarkdownDescription: "Unique identifier (tag) for the relationship type.",

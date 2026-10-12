@@ -70,6 +70,7 @@ resource "cortex_relationship_type" "example" {
 
 ### Read-Only
 
+- `id` (String) The ID of this resource.
 - `is_cortex_managed` (Boolean) Whether this relationship type is managed by Cortex.
 
 <a id="nestedatt--destinations_filter"></a>

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -137,7 +138,13 @@ func (r *EntityRelationshipResource) Read(ctx context.Context, req resource.Read
 	sourceTag := data.SourceEntityTag.ValueString()
 	relTypeTag := data.RelationshipTypeTag.ValueString()
 
-	destinationTags, err := r.client.EntityRelationships().GetDestinations(ctx, sourceTag, relTypeTag)
+	// Use the state's destination count as a hint for the consistency poll.
+	// After a write, the GET endpoint may briefly return stale (fewer) destinations
+	// for freshly-created or recently-updated entities. We poll until the API
+	// returns at least as many destinations as the state already holds.
+	stateCount := len(data.ToDestinationTags())
+
+	destinationTags, err := r.getDestinationsConsistent(ctx, sourceTag, relTypeTag, stateCount)
 	if err != nil {
 		if errors.Is(err, cortex.ApiErrorNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -219,4 +226,45 @@ func (r *EntityRelationshipResource) ImportState(ctx context.Context, req resour
 
 	// Also set the id attribute explicitly so ImportStatePassthroughID is satisfied.
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), data.ID)...)
+}
+
+// getDestinationsConsistent polls GetDestinations to handle the Cortex API's
+// brief eventual-consistency window after a write:
+//   - When expectedCount > 0: the GET may briefly return fewer destinations
+//     than were just SET (freshly-created or newly-added entities lag in the
+//     read index). Poll until the result has at least expectedCount entries.
+//   - When expectedCount == 0: the GET may briefly return the old (non-empty)
+//     destination list after a clear. Poll until the result is empty.
+//
+// Polling terminates as soon as the API reaches the expected state; it is a
+// context-aware, bounded poll — not a fixed sleep.
+func (r *EntityRelationshipResource) getDestinationsConsistent(ctx context.Context, sourceTag, relTypeTag string, expectedCount int) ([]string, error) {
+	const pollInterval = 250 * time.Millisecond
+	const maxWait = 3 * time.Second
+
+	consistent := func(tags []string) bool {
+		if expectedCount == 0 {
+			return len(tags) == 0
+		}
+		return len(tags) >= expectedCount
+	}
+
+	tags, err := r.client.EntityRelationships().GetDestinations(ctx, sourceTag, relTypeTag)
+	if err != nil || consistent(tags) {
+		return tags, err
+	}
+
+	deadline := time.Now().Add(maxWait)
+	for time.Now().Before(deadline) {
+		select {
+		case <-ctx.Done():
+			return tags, ctx.Err()
+		case <-time.After(pollInterval):
+		}
+		tags, err = r.client.EntityRelationships().GetDestinations(ctx, sourceTag, relTypeTag)
+		if err != nil || consistent(tags) {
+			return tags, err
+		}
+	}
+	return tags, err
 }

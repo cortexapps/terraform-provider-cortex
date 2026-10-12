@@ -28,6 +28,7 @@ type RelationshipTypeFilterModel struct {
 }
 
 type RelationshipTypeResourceModel struct {
+	ID                       types.String                 `tfsdk:"id"`
 	Tag                      types.String                 `tfsdk:"tag"`
 	Name                     types.String                 `tfsdk:"name"`
 	Description              types.String                 `tfsdk:"description"`
@@ -129,6 +130,7 @@ func inheritancesFromSet(s types.Set) []cortex.RelationshipInheritance {
 }
 
 func (r *RelationshipTypeResourceModel) FromApiModel(_ context.Context, _ *diag.Diagnostics, entity cortex.EntityRelationshipType) {
+	r.ID = types.StringValue(entity.Tag)
 	r.Tag = types.StringValue(entity.Tag)
 	r.Name = types.StringValue(entity.Name)
 	if entity.Description != "" {

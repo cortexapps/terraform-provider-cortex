@@ -22,6 +22,13 @@ func TestAccEntityRelationshipResource(t *testing.T) {
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
+			// Pre-create entities and relationship type so they are fully indexed
+			// before the entity relationship is created. The Cortex API has a brief
+			// eventual-consistency window for newly-created entities; separating this
+			// step avoids spurious "refresh plan not empty" failures.
+			{
+				Config: testAccEntityRelationshipDepsConfig(),
+			},
 			// Create with 2 destinations
 			{
 				Config: testAccEntityRelationshipConfig([]string{erDestTag1, erDestTag2}),
@@ -71,6 +78,54 @@ func TestAccEntityRelationshipResource(t *testing.T) {
 	})
 }
 
+// testAccEntityRelationshipDepsConfig creates the entity and relationship-type
+// prerequisites without the cortex_entity_relationship itself. Running this as
+// a separate test step lets the Cortex API finish indexing the freshly-created
+// entities before the relationship is set, avoiding a brief eventual-consistency
+// window that would otherwise cause a "refresh plan not empty" failure.
+func testAccEntityRelationshipDepsConfig() string {
+	return fmt.Sprintf(`
+resource "cortex_catalog_entity" "source" {
+  tag  = %[1]q
+  name = "Entity Relationship Test Source"
+}
+
+resource "cortex_catalog_entity" "dest1" {
+  tag  = %[2]q
+  name = "Entity Relationship Test Dest 1"
+}
+
+resource "cortex_catalog_entity" "dest2" {
+  tag  = %[3]q
+  name = "Entity Relationship Test Dest 2"
+}
+
+resource "cortex_catalog_entity" "dest3" {
+  tag  = %[4]q
+  name = "Entity Relationship Test Dest 3"
+}
+
+resource "cortex_relationship_type" "reltype" {
+  tag                   = %[5]q
+  name                  = "Test Entity Relationship Type"
+  allow_cycles          = false
+  is_single_source      = false
+  is_single_destination = false
+  definition_location   = "SOURCE"
+
+  sources_filter = {
+    include = true
+    types   = ["service"]
+  }
+
+  destinations_filter = {
+    include = true
+    types   = ["service"]
+  }
+}
+`, erSourceTag, erDestTag1, erDestTag2, erDestTag3, erRelTypeTag)
+}
+
 // testAccEntityRelationshipConfig builds a Terraform config that:
 //  1. Creates the source entity, destination entities, and relationship type as dependencies.
 //  2. Creates the cortex_entity_relationship with the given destination tags.
@@ -84,25 +139,21 @@ func testAccEntityRelationshipConfig(activeDests []string) string {
 resource "cortex_catalog_entity" "source" {
   tag  = %[1]q
   name = "Entity Relationship Test Source"
-  type = "service"
 }
 
 resource "cortex_catalog_entity" "dest1" {
   tag  = %[2]q
   name = "Entity Relationship Test Dest 1"
-  type = "service"
 }
 
 resource "cortex_catalog_entity" "dest2" {
   tag  = %[3]q
   name = "Entity Relationship Test Dest 2"
-  type = "service"
 }
 
 resource "cortex_catalog_entity" "dest3" {
   tag  = %[4]q
   name = "Entity Relationship Test Dest 3"
-  type = "service"
 }
 
 resource "cortex_relationship_type" "reltype" {
@@ -115,12 +166,12 @@ resource "cortex_relationship_type" "reltype" {
 
   sources_filter = {
     include = true
-    types   = []
+    types   = ["service"]
   }
 
   destinations_filter = {
     include = true
-    types   = []
+    types   = ["service"]
   }
 }
 
