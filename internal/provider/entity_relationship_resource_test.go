@@ -8,7 +8,6 @@ import (
 )
 
 func TestAccEntityRelationshipResource(t *testing.T) {
-	sourceTag := "test-er-source"
 	destTag1 := "test-er-dest-1"
 	destTag2 := "test-er-dest-2"
 	destTag3 := "test-er-dest-3"
@@ -22,9 +21,9 @@ func TestAccEntityRelationshipResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create with 2 destinations
 			{
-				Config: testAccEntityRelationshipConfig(sourceTag, destTag1, destTag2, destTag3, relTypeTag, []string{destTag1, destTag2}),
+				Config: testAccEntityRelationshipConfig(destTag1, destTag2, destTag3, relTypeTag, []string{destTag1, destTag2}),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceName, "source_entity_tag", sourceTag),
+					resource.TestCheckResourceAttr(resourceName, "source_entity_tag", "test-er-source"),
 					resource.TestCheckResourceAttr(resourceName, "relationship_type_tag", relTypeTag),
 					resource.TestCheckResourceAttr(resourceName, "destination_entity_tags.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceName, "destination_entity_tags.*", destTag1),
@@ -34,14 +33,14 @@ func TestAccEntityRelationshipResource(t *testing.T) {
 			},
 			// Idempotency check after create
 			{
-				Config:   testAccEntityRelationshipConfig(sourceTag, destTag1, destTag2, destTag3, relTypeTag, []string{destTag1, destTag2}),
+				Config:   testAccEntityRelationshipConfig(destTag1, destTag2, destTag3, relTypeTag, []string{destTag1, destTag2}),
 				PlanOnly: true,
 			},
 			// Update to 3 destinations
 			{
-				Config: testAccEntityRelationshipConfig(sourceTag, destTag1, destTag2, destTag3, relTypeTag, []string{destTag1, destTag2, destTag3}),
+				Config: testAccEntityRelationshipConfig(destTag1, destTag2, destTag3, relTypeTag, []string{destTag1, destTag2, destTag3}),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceName, "source_entity_tag", sourceTag),
+					resource.TestCheckResourceAttr(resourceName, "source_entity_tag", "test-er-source"),
 					resource.TestCheckResourceAttr(resourceName, "relationship_type_tag", relTypeTag),
 					resource.TestCheckResourceAttr(resourceName, "destination_entity_tags.#", "3"),
 					resource.TestCheckTypeSetElemAttr(resourceName, "destination_entity_tags.*", destTag1),
@@ -57,9 +56,9 @@ func TestAccEntityRelationshipResource(t *testing.T) {
 			},
 			// Update to empty (clear all destinations)
 			{
-				Config: testAccEntityRelationshipConfig(sourceTag, destTag1, destTag2, destTag3, relTypeTag, []string{}),
+				Config: testAccEntityRelationshipConfig(destTag1, destTag2, destTag3, relTypeTag, []string{}),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceName, "source_entity_tag", sourceTag),
+					resource.TestCheckResourceAttr(resourceName, "source_entity_tag", "test-er-source"),
 					resource.TestCheckResourceAttr(resourceName, "relationship_type_tag", relTypeTag),
 					resource.TestCheckResourceAttr(resourceName, "destination_entity_tags.#", "0"),
 				),
@@ -72,7 +71,8 @@ func TestAccEntityRelationshipResource(t *testing.T) {
 // testAccEntityRelationshipConfig builds a Terraform config that:
 //  1. Creates the source entity, destination entities, and relationship type as dependencies.
 //  2. Creates the cortex_entity_relationship with the given destination tags.
-func testAccEntityRelationshipConfig(sourceTag, destTag1, destTag2, destTag3, relTypeTag string, activeDests []string) string {
+func testAccEntityRelationshipConfig(destTag1, destTag2, destTag3, relTypeTag string, activeDests []string) string {
+	sourceTag := "test-er-source"
 	// Build the HCL set literal for destination_entity_tags
 	destList := ""
 	for _, d := range activeDests {
