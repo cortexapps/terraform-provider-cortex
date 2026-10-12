@@ -187,6 +187,8 @@ func (c *HttpClient) RelationshipTypes() RelationshipTypesClientInterface {
 
 func (c *HttpClient) EntityRelationships() EntityRelationshipsClientInterface {
 	return &EntityRelationshipsClient{client: c}
+}
+
 func (c *HttpClient) Catalogs() CatalogsClientInterface {
 	return &CatalogsClient{client: c}
 }

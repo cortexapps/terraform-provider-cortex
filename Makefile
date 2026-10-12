@@ -9,7 +9,7 @@ GOARCH?=$(shell go env | grep GOARCH | cut -d '=' -f2 | tr -d "'")
 OS_ARCH?=$(GOOS)_$(GOARCH)
 
 TF_LOG ?= WARN
-include .env
+-include $(shell git rev-parse --show-toplevel)/.env
 export
 
 default: test
