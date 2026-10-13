@@ -94,9 +94,12 @@ func filterToApi(f *RelationshipTypeFilterModel) cortex.EntityTypeFilter {
 }
 
 // inheritancesToSet converts API inheritances to a types.Set.
-// Returns an empty set (not null) so that the value is consistent whether the user
-// omits the attribute or sets it to []. The attribute is Optional+Computed, so
-// Terraform uses prior state when the user omits it, preventing phantom diffs.
+// Always returns an empty set rather than null when the API returns no inheritances.
+// This matters because inheritances is Optional+Computed with UseStateForUnknown:
+// Terraform substitutes the prior state value into the plan when config is null,
+// preventing a phantom (known after apply) diff — but only when the stored state
+// value is a known set, not null. Returning null here would break that guarantee
+// on the very first apply when the user omits the attribute.
 func inheritancesToSet(inheritances []cortex.RelationshipInheritance) types.Set {
 	if len(inheritances) == 0 {
 		return types.SetValueMust(inheritanceObjectType, []attr.Value{})
