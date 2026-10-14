@@ -64,7 +64,7 @@ resource "cortex_relationship_type" "example" {
 - `description` (String) Description of the relationship type.
 - `destination_label_plural` (String) Plural label for the destination entity.
 - `destination_label_singular` (String) Singular label for the destination entity.
-- `inheritances` (Attributes Set) Parameter inheritance configurations for this relationship type. (see [below for nested schema](#nestedatt--inheritances))
+- `inheritances` (Attributes Set) Parameter inheritance configurations for this relationship type. To clear all inheritances, remove this block from your config. Setting `inheritances = []` is not supported and will cause a plan diff. (see [below for nested schema](#nestedatt--inheritances))
 - `source_label_plural` (String) Plural label for the source entity.
 - `source_label_singular` (String) Singular label for the source entity.
 
