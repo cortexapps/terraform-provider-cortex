@@ -138,13 +138,12 @@ func (r *EntityRelationshipResource) Read(ctx context.Context, req resource.Read
 	sourceTag := data.SourceEntityTag.ValueString()
 	relTypeTag := data.RelationshipTypeTag.ValueString()
 
-	// Use the state's destination count as a hint for the consistency poll.
-	// After a write, the GET endpoint may briefly return stale (fewer) destinations
-	// for freshly-created or recently-updated entities. We poll until the API
-	// returns at least as many destinations as the state already holds.
-	stateCount := len(data.ToDestinationTags())
+	// Use the state's destination tags as a hint for the consistency poll.
+	// After a write, the GET endpoint may briefly return stale results.
+	// We poll until the API returns a result that contains every tag in state.
+	stateTags := data.ToDestinationTags()
 
-	destinationTags, err := r.getDestinationsConsistent(ctx, sourceTag, relTypeTag, stateCount)
+	destinationTags, err := r.getDestinationsConsistent(ctx, sourceTag, relTypeTag, stateTags)
 	if err != nil {
 		if errors.Is(err, cortex.ApiErrorNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -230,23 +229,33 @@ func (r *EntityRelationshipResource) ImportState(ctx context.Context, req resour
 
 // getDestinationsConsistent polls GetDestinations to handle the Cortex API's
 // brief eventual-consistency window after a write:
-//   - When expectedCount > 0: the GET may briefly return fewer destinations
-//     than were just SET (freshly-created or newly-added entities lag in the
-//     read index). Poll until the result has at least expectedCount entries.
-//   - When expectedCount == 0: the GET may briefly return the old (non-empty)
+//   - When expectedTags is non-empty: poll until every expected tag appears in
+//     the result. A count-only check would accept a stale result with different
+//     tags but the same count (e.g. after a shrink from {a,b,c} to {a,b}, a
+//     stale GET returning {a,b,c} would pass a count check but fail a value check).
+//   - When expectedTags is empty: the GET may briefly return the old (non-empty)
 //     destination list after a clear. Poll until the result is empty.
 //
 // Polling terminates as soon as the API reaches the expected state; it is a
 // context-aware, bounded poll — not a fixed sleep.
-func (r *EntityRelationshipResource) getDestinationsConsistent(ctx context.Context, sourceTag, relTypeTag string, expectedCount int) ([]string, error) {
+func (r *EntityRelationshipResource) getDestinationsConsistent(ctx context.Context, sourceTag, relTypeTag string, expectedTags []string) ([]string, error) {
 	const pollInterval = 250 * time.Millisecond
 	const maxWait = 3 * time.Second
 
 	consistent := func(tags []string) bool {
-		if expectedCount == 0 {
+		if len(expectedTags) == 0 {
 			return len(tags) == 0
 		}
-		return len(tags) >= expectedCount
+		tagSet := make(map[string]bool, len(tags))
+		for _, t := range tags {
+			tagSet[t] = true
+		}
+		for _, e := range expectedTags {
+			if !tagSet[e] {
+				return false
+			}
+		}
+		return true
 	}
 
 	tags, err := r.client.EntityRelationships().GetDestinations(ctx, sourceTag, relTypeTag)

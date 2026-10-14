@@ -11,9 +11,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -113,30 +114,43 @@ func (r *RelationshipTypeResource) Schema(_ context.Context, _ resource.SchemaRe
 			"description": schema.StringAttribute{
 				MarkdownDescription: "Description of the relationship type.",
 				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
 			},
 			"source_label_singular": schema.StringAttribute{
 				MarkdownDescription: "Singular label for the source entity.",
 				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
 			},
 			"source_label_plural": schema.StringAttribute{
 				MarkdownDescription: "Plural label for the source entity.",
 				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
 			},
 			"destination_label_singular": schema.StringAttribute{
 				MarkdownDescription: "Singular label for the destination entity.",
 				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
 			},
 			"destination_label_plural": schema.StringAttribute{
 				MarkdownDescription: "Plural label for the destination entity.",
 				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
 			},
 			"inheritances": schema.SetNestedAttribute{
-				MarkdownDescription: "Parameter inheritance configurations for this relationship type.",
-				Optional:            true,
-				Computed:            true,
-				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
-				},
+				MarkdownDescription: "Parameter inheritance configurations for this relationship type. " +
+					"To clear all inheritances, remove this block from your config. " +
+					"Setting `inheritances = []` is not supported and will cause a plan diff.",
+				Optional: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"parameter_tag": schema.StringAttribute{
@@ -155,9 +169,6 @@ func (r *RelationshipTypeResource) Schema(_ context.Context, _ resource.SchemaRe
 				MarkdownDescription: "Whether to generate a catalog page for this relationship type.",
 				Optional:            true,
 				Computed:            true,
-				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
-				},
 			},
 
 			// Computed attributes

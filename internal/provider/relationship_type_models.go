@@ -48,11 +48,12 @@ type RelationshipTypeResourceModel struct {
 }
 
 // stringsToSet converts a string slice to a types.Set of strings.
-// Returns null for empty slices so that optional attributes remain null
-// when not set, avoiding spurious plan diffs.
+// Returns a known empty set for empty slices — never null — so that
+// a config value of [] roundtrips to [] in state rather than null,
+// which would cause "Provider produced inconsistent result after apply".
 func stringsToSet(ss []string) types.Set {
 	if len(ss) == 0 {
-		return types.SetNull(types.StringType)
+		return types.SetValueMust(types.StringType, []attr.Value{})
 	}
 	vals := make([]attr.Value, len(ss))
 	for i, s := range ss {
@@ -94,15 +95,11 @@ func filterToApi(f *RelationshipTypeFilterModel) cortex.EntityTypeFilter {
 }
 
 // inheritancesToSet converts API inheritances to a types.Set.
-// Always returns an empty set rather than null when the API returns no inheritances.
-// This matters because inheritances is Optional+Computed with UseStateForUnknown:
-// Terraform substitutes the prior state value into the plan when config is null,
-// preventing a phantom (known after apply) diff — but only when the stored state
-// value is a known set, not null. Returning null here would break that guarantee
-// on the very first apply when the user omits the attribute.
+// Returns null for empty slices because inheritances is Optional (not Computed):
+// when the user omits the block, state must be null to match the null plan value.
 func inheritancesToSet(inheritances []cortex.RelationshipInheritance) types.Set {
 	if len(inheritances) == 0 {
-		return types.SetValueMust(inheritanceObjectType, []attr.Value{})
+		return types.SetNull(inheritanceObjectType)
 	}
 	vals := make([]attr.Value, len(inheritances))
 	for i, inh := range inheritances {

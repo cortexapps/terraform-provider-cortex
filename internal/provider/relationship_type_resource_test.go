@@ -105,9 +105,48 @@ func TestAccRelationshipTypeResourceFull(t *testing.T) {
 				Config:   testAccRelationshipTypeResourceFullConfig(tag),
 				PlanOnly: true,
 			},
+			// Remove the inheritances block — verify it is cleared on the API,
+			// not silently kept (the Optional-only schema means removing the block
+			// sends [] to the API rather than preserving the prior state value).
+			{
+				Config: testAccRelationshipTypeResourceNoInheritancesConfig(tag),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "tag", tag),
+					resource.TestCheckNoResourceAttr(resourceName, "inheritances.#"),
+				),
+			},
 			// Delete testing automatically occurs in TestCase
 		},
 	})
+}
+
+func testAccRelationshipTypeResourceNoInheritancesConfig(tag string) string {
+	return fmt.Sprintf(`
+resource "cortex_relationship_type" %[1]q {
+  tag                   = %[1]q
+  name                  = "Full Relationship Type"
+  description           = "A full relationship type with all optional fields."
+  allow_cycles          = false
+  is_single_source      = false
+  is_single_destination = false
+  definition_location   = "SOURCE"
+
+  sources_filter = {
+    include = true
+    types   = ["service"]
+  }
+
+  destinations_filter = {
+    include = true
+    types   = ["resource"]
+  }
+
+  source_label_singular      = "service"
+  source_label_plural        = "services"
+  destination_label_singular = "database"
+  destination_label_plural   = "databases"
+}
+`, tag)
 }
 
 func testAccRelationshipTypeResourceFullConfig(tag string) string {

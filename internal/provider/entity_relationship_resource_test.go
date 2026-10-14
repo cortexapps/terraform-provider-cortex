@@ -64,6 +64,17 @@ func TestAccEntityRelationshipResource(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
+			// Shrink from 3 to 2 destinations — exercises the value-based polling
+			// check for the partial-shrink case (count-only would accept a stale
+			// {dest1,dest2,dest3} result since 3 >= 2).
+			{
+				Config: testAccEntityRelationshipConfig([]string{erDestTag1, erDestTag2}),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "destination_entity_tags.#", "2"),
+					resource.TestCheckTypeSetElemAttr(resourceName, "destination_entity_tags.*", erDestTag1),
+					resource.TestCheckTypeSetElemAttr(resourceName, "destination_entity_tags.*", erDestTag2),
+				),
+			},
 			// Update to empty (clear all destinations)
 			{
 				Config: testAccEntityRelationshipConfig([]string{}),
@@ -189,4 +200,33 @@ resource "cortex_entity_relationship" "example" {
   ]
 }
 `, erSourceTag, erDestTag1, erDestTag2, erDestTag3, erRelTypeTag, destList)
+}
+
+// TestAccEntityRelationshipResourceSingleApply verifies that the polling in Read
+// handles the real user flow where entities, relationship type, and the relationship
+// are all created in a single apply — without a separate pre-create step.
+func TestAccEntityRelationshipResourceSingleApply(t *testing.T) {
+	resourceName := "cortex_entity_relationship.example"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccEntityRelationshipConfig([]string{erDestTag1, erDestTag2}),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "source_entity_tag", erSourceTag),
+					resource.TestCheckResourceAttr(resourceName, "relationship_type_tag", erRelTypeTag),
+					resource.TestCheckResourceAttr(resourceName, "destination_entity_tags.#", "2"),
+					resource.TestCheckTypeSetElemAttr(resourceName, "destination_entity_tags.*", erDestTag1),
+					resource.TestCheckTypeSetElemAttr(resourceName, "destination_entity_tags.*", erDestTag2),
+				),
+			},
+			// Idempotency — no diff after the single-apply create
+			{
+				Config:   testAccEntityRelationshipConfig([]string{erDestTag1, erDestTag2}),
+				PlanOnly: true,
+			},
+		},
+	})
 }
