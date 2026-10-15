@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -53,14 +54,20 @@ func (r *RelationshipTypeResource) Schema(_ context.Context, _ resource.SchemaRe
 			Required:            true,
 		},
 		"types": schema.SetAttribute{
-			MarkdownDescription: "Entity types to filter on.",
+			MarkdownDescription: "Entity types to filter on. Must contain at least one value if set; omit the attribute entirely to apply no type filter.",
 			ElementType:         types.StringType,
 			Optional:            true,
+			Validators: []validator.Set{
+				setvalidator.SizeAtLeast(1),
+			},
 		},
 		"providers": schema.SetAttribute{
-			MarkdownDescription: "Entity providers to filter on.",
+			MarkdownDescription: "Entity providers to filter on. Must contain at least one value if set; omit the attribute entirely to apply no provider filter.",
 			ElementType:         types.StringType,
 			Optional:            true,
+			Validators: []validator.Set{
+				setvalidator.SizeAtLeast(1),
+			},
 		},
 	}
 

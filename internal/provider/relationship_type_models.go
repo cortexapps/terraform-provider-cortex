@@ -48,12 +48,14 @@ type RelationshipTypeResourceModel struct {
 }
 
 // stringsToSet converts a string slice to a types.Set of strings.
-// Returns a known empty set for empty slices — never null — so that
-// a config value of [] roundtrips to [] in state rather than null,
-// which would cause "Provider produced inconsistent result after apply".
+// Returns null for empty slices so that Optional attributes remain null
+// when the user omits them, avoiding plan/state inconsistency.
+// Callers should pair this with a SizeAtLeast(1) validator so that
+// an explicit empty set (types = []) is rejected at plan time rather
+// than silently converting to null in state.
 func stringsToSet(ss []string) types.Set {
 	if len(ss) == 0 {
-		return types.SetValueMust(types.StringType, []attr.Value{})
+		return types.SetNull(types.StringType)
 	}
 	vals := make([]attr.Value, len(ss))
 	for i, s := range ss {

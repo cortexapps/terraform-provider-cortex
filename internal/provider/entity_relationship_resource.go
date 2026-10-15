@@ -116,9 +116,18 @@ func (r *EntityRelationshipResource) Create(ctx context.Context, req resource.Cr
 	relTypeTag := data.RelationshipTypeTag.ValueString()
 	destinationTags := data.ToDestinationTags()
 
-	resultTags, err := r.client.EntityRelationships().SetDestinations(ctx, sourceTag, relTypeTag, destinationTags)
+	_, err := r.client.EntityRelationships().SetDestinations(ctx, sourceTag, relTypeTag, destinationTags)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create entity relationship, got error: %s", err))
+		return
+	}
+
+	// Poll until the GET endpoint reflects the write. The PUT response body may
+	// lag (empty destinations) even on a 200, so we use the intended tags as the
+	// consistency target rather than the PUT response.
+	resultTags, err := r.getDestinationsConsistent(ctx, sourceTag, relTypeTag, destinationTags)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read entity relationship after create, got error: %s", err))
 		return
 	}
 
@@ -170,9 +179,15 @@ func (r *EntityRelationshipResource) Update(ctx context.Context, req resource.Up
 	relTypeTag := data.RelationshipTypeTag.ValueString()
 	destinationTags := data.ToDestinationTags()
 
-	resultTags, err := r.client.EntityRelationships().SetDestinations(ctx, sourceTag, relTypeTag, destinationTags)
+	_, err := r.client.EntityRelationships().SetDestinations(ctx, sourceTag, relTypeTag, destinationTags)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update entity relationship, got error: %s", err))
+		return
+	}
+
+	resultTags, err := r.getDestinationsConsistent(ctx, sourceTag, relTypeTag, destinationTags)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read entity relationship after update, got error: %s", err))
 		return
 	}
 
@@ -229,10 +244,11 @@ func (r *EntityRelationshipResource) ImportState(ctx context.Context, req resour
 
 // getDestinationsConsistent polls GetDestinations to handle the Cortex API's
 // brief eventual-consistency window after a write:
-//   - When expectedTags is non-empty: poll until every expected tag appears in
-//     the result. A count-only check would accept a stale result with different
-//     tags but the same count (e.g. after a shrink from {a,b,c} to {a,b}, a
-//     stale GET returning {a,b,c} would pass a count check but fail a value check).
+//   - When expectedTags is non-empty: poll until the result contains exactly the
+//     expected tags (same count, every tag present). Checking both count and
+//     membership handles both expansion (stale GET returns too few tags) and
+//     shrink (stale GET returns too many — a subset check alone would accept
+//     {a,b,c} when the expected set is {a,b}).
 //   - When expectedTags is empty: the GET may briefly return the old (non-empty)
 //     destination list after a clear. Poll until the result is empty.
 //
@@ -245,6 +261,9 @@ func (r *EntityRelationshipResource) getDestinationsConsistent(ctx context.Conte
 	consistent := func(tags []string) bool {
 		if len(expectedTags) == 0 {
 			return len(tags) == 0
+		}
+		if len(tags) != len(expectedTags) {
+			return false
 		}
 		tagSet := make(map[string]bool, len(tags))
 		for _, t := range tags {

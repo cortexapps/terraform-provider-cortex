@@ -93,7 +93,9 @@ resource "cortex_resource_definition" %[1]q {
 					resource.TestCheckResourceAttr(resourceName, "icon_tag", "cloud"),
 				),
 			},
-			// Remove icon_tag — should produce no error and no phantom diff
+			// Idempotency — removing icon_tag from config does not change it (API
+			// preserves the current value when the field is omitted; clearing requires
+			// the Cortex UI directly).
 			{
 				Config: fmt.Sprintf(`
 resource "cortex_resource_definition" %[1]q {
@@ -111,7 +113,7 @@ resource "cortex_resource_definition" %[1]q {
 `, tag),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "type", tag),
-					resource.TestCheckNoResourceAttr(resourceName, "icon_tag"),
+					resource.TestCheckResourceAttr(resourceName, "icon_tag", "cloud"),
 				),
 			},
 		},

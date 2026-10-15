@@ -78,8 +78,18 @@ func (r *ResourceDefinitionResource) Schema(ctx context.Context, req resource.Sc
 				Optional:            true,
 			},
 			"icon_tag": schema.StringAttribute{
-				MarkdownDescription: "Icon tag for the resource definition.",
-				Optional:            true,
+				MarkdownDescription: "Icon tag for the resource definition. " +
+					"Once set, removing this attribute from config will not clear the icon " +
+					"(the API preserves the current value when the field is omitted). " +
+					"To clear the icon, use the Cortex UI directly.",
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
 			},
 
 			// Computed attributes
