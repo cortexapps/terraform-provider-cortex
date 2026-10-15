@@ -42,7 +42,7 @@ type CatalogEntity struct {
 	Tag           string                      `json:"tag" yaml:"x-cortex-tag"`
 	Name          string                      `json:"name" yaml:"title"`
 	Description   string                      `json:"description" yaml:"description"`
-	Type          string                      `json:"type" yaml:"x-cortex-type"`
+	Type          string                      `json:"type" yaml:"x-cortex-type,omitempty"`
 	Id            string                      `json:"id"`
 	IsArchived    bool                        `json:"isArchived"`
 	LastUpdated   string                      `json:"lastUpdated"`

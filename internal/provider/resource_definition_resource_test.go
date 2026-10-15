@@ -62,6 +62,64 @@ resource "cortex_resource_definition" %1[1]q {
 `, resourceTag, stub.Type, stub.Name, stub.Description)
 }
 
+func TestAccResourceDefinitionResourceWithIconTag(t *testing.T) {
+	tag := "test-resourcedef-icontag"
+	resourceType := "cortex_resource_definition"
+	resourceName := resourceType + "." + tag
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create with icon_tag set
+			{
+				Config: fmt.Sprintf(`
+resource "cortex_resource_definition" %[1]q {
+  type     = %[1]q
+  name     = %[1]q
+  icon_tag = "cloud"
+  schema   = jsonencode({
+    "properties": {
+      "region": {
+        "type": "string"
+      }
+    }
+    "type": "object"
+  })
+}
+`, tag),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "type", tag),
+					resource.TestCheckResourceAttr(resourceName, "icon_tag", "cloud"),
+				),
+			},
+			// Idempotency — removing icon_tag from config does not change it (API
+			// preserves the current value when the field is omitted; clearing requires
+			// the Cortex UI directly).
+			{
+				Config: fmt.Sprintf(`
+resource "cortex_resource_definition" %[1]q {
+  type   = %[1]q
+  name   = %[1]q
+  schema = jsonencode({
+    "properties": {
+      "region": {
+        "type": "string"
+      }
+    }
+    "type": "object"
+  })
+}
+`, tag),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "type", tag),
+					resource.TestCheckResourceAttr(resourceName, "icon_tag", "cloud"),
+				),
+			},
+		},
+	})
+}
+
 type TestResourceDefinitionResource struct {
 	Type        string
 	Name        string
