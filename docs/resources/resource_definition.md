@@ -24,7 +24,7 @@ ResourceDefinition Entity
 ### Optional
 
 - `description` (String) Description of the team.
-- `icon_tag` (String) Icon tag for the resource definition.
+- `icon_tag` (String) Icon tag for the resource definition. Once set, removing this attribute from config will not clear the icon (the API preserves the current value when the field is omitted). To clear the icon, use the Cortex UI directly.
 
 ### Read-Only
 

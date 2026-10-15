@@ -82,8 +82,8 @@ Required:
 
 Optional:
 
-- `providers` (Set of String) Entity providers to filter on.
-- `types` (Set of String) Entity types to filter on.
+- `providers` (Set of String) Entity providers to filter on. Must contain at least one value if set; omit the attribute entirely to apply no provider filter.
+- `types` (Set of String) Entity types to filter on. Must contain at least one value if set; omit the attribute entirely to apply no type filter.
 
 
 <a id="nestedatt--sources_filter"></a>
@@ -95,8 +95,8 @@ Required:
 
 Optional:
 
-- `providers` (Set of String) Entity providers to filter on.
-- `types` (Set of String) Entity types to filter on.
+- `providers` (Set of String) Entity providers to filter on. Must contain at least one value if set; omit the attribute entirely to apply no provider filter.
+- `types` (Set of String) Entity types to filter on. Must contain at least one value if set; omit the attribute entirely to apply no type filter.
 
 
 <a id="nestedatt--inheritances"></a>
