@@ -32,6 +32,7 @@ var fakeSpecs = map[string]fakeIntegrationSpec{
 		nullRemovesOnUpdate: []string{"customSubdomain"}},
 	"pagerduty":  {multi: false, masks: map[string]string{"token": "lastFour"}},
 	"gitlab":     {multi: true, masks: map[string]string{"personalAccessToken": "lastFour"}},
+	"harness":    {multi: true, masks: map[string]string{"apiKey": "lastFourApiKey"}},
 	"incidentio": {multi: true, masks: map[string]string{"apiKey": "lastFour"}},
 	"rootly":     {multi: true, masks: map[string]string{"apiKey": "lastFour"}, redactMasks: true},
 	"jira": {multi: true, masks: map[string]string{"apiToken": "lastFour", "password": "lastFour"},
