@@ -94,6 +94,7 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 			"|---|---|---|\n" +
 			"| `datadog` | `key_pair` | `key` = API key, `secret` = application key |\n" +
 			"| `gitlab` | `token` | `value` = personal access token |\n" +
+			"| `harness` | `token` | `value` = API key |\n" +
 			"| `incident_io` | `token` | `value` = API key |\n" +
 			"| `jira` | `basic` | `username` = email (cloud) or username (on-prem), `password` = API token (cloud) or password (on-prem) |\n" +
 			"| `pagerduty` | `token` | `value` = API token |\n\n" +

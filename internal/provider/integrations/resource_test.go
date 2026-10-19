@@ -99,6 +99,22 @@ resource "cortex_integration_configuration" "test" {
 		plancheck.ExpectResourceAction(accResourceName, plancheck.ResourceActionUpdate))
 }
 
+// The update changes the account and the host in place.
+func TestAccIntegrationConfigurationHarness(t *testing.T) {
+	body := func(account, host string) string {
+		return fmt.Sprintf(`
+resource "cortex_integration_configuration" "test" {
+  alias       = "tf-acc-test-harness"
+  credentials = { token = { value = "tf-acc-fake-key-a1b2" } }
+  harness     = { account_id = %q, host = %q }
+}`, account, host)
+	}
+	accIntegrationTest(t, "harness/tf-acc-test-harness",
+		body("tf-acc-account-1", "https://harness.invalid"),
+		body("tf-acc-account-2", "https://harness2.invalid"),
+		plancheck.ExpectResourceAction(accResourceName, plancheck.ResourceActionUpdate))
+}
+
 func TestAccIntegrationConfigurationIncidentIo(t *testing.T) {
 	body := func(key string) string {
 		return fmt.Sprintf(`
