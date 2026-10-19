@@ -1295,3 +1295,209 @@ resource "cortex_integration_configuration" "test" {
 		},
 	})
 }
+
+func harnessUnit(url, alias, key, settings string) string {
+	return unitConfig(url, fmt.Sprintf(`
+resource "cortex_integration_configuration" "test" {
+  alias       = %q
+  credentials = { token = { value = %q } }
+  harness     = %s
+}`, alias, key, settings))
+}
+
+func TestUnitIntegrationConfiguration_HarnessLifecycle(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+	withHost := `{ account_id = "acct-1", host = "https://harness.invalid" }`
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: harnessUnit(url, "h", "fake-key-a1b2", withHost),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "id", "harness/h"),
+					resource.TestCheckResourceAttr(unitResourceName, "integration", "harness"),
+					resource.TestCheckResourceAttr(unitResourceName, "is_default", "true"),
+					resource.TestCheckResourceAttr(unitResourceName, "credentials_last_four.value", "a1b2"),
+					resource.TestCheckResourceAttr(unitResourceName, "harness.account_id", "acct-1"),
+					resource.TestCheckResourceAttr(unitResourceName, "harness.host", "https://harness.invalid"),
+					checkFake(fake, "harness", "h", "apiKey", "fake-key-a1b2"),
+					checkFake(fake, "harness", "h", "accountId", "acct-1"),
+				),
+			},
+			// Import: the API never returns the key.
+			{
+				ResourceName:            unitResourceName,
+				ImportState:             true,
+				ImportStateId:           "harness/h",
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"credentials"},
+			},
+			// Rename in place.
+			{
+				Config: harnessUnit(url, "h-renamed", "fake-key-a1b2", withHost),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "id", "harness/h-renamed"),
+					checkCreates(fake, "harness", 1),
+				),
+			},
+			// A new key, account, and host update in place.
+			{
+				Config: harnessUnit(url, "h-renamed", "fake-key-c3d4", `{ account_id = "acct-2", host = "https://harness2.invalid" }`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectResourceAction(unitResourceName, plancheck.ResourceActionUpdate)},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "credentials_last_four.value", "c3d4"),
+					checkFake(fake, "harness", "h-renamed", "apiKey", "fake-key-c3d4"),
+					checkFake(fake, "harness", "h-renamed", "accountId", "acct-2"),
+					checkFake(fake, "harness", "h-renamed", "host", "https://harness2.invalid"),
+					checkCreates(fake, "harness", 1),
+				),
+			},
+			// A key rotated outside Terraform shows as a change, and the update restores the configured key.
+			{
+				PreConfig: func() { fake.setField("harness", "h-renamed", "apiKey", "rotated-outside-9999") },
+				Config:    harnessUnit(url, "h-renamed", "fake-key-c3d4", `{ account_id = "acct-2", host = "https://harness2.invalid" }`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectResourceAction(unitResourceName, plancheck.ResourceActionUpdate)},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "harness", "h-renamed", "apiKey", "fake-key-c3d4"),
+					checkCreates(fake, "harness", 1),
+				),
+			},
+			// The API keeps the current host when an update omits it, so removing host replaces the configuration.
+			{
+				Config: harnessUnit(url, "h-renamed", "fake-key-c3d4", `{ account_id = "acct-2" }`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectResourceAction(unitResourceName, plancheck.ResourceActionReplace)},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr(unitResourceName, "harness.host"),
+					checkFake(fake, "harness", "h-renamed", "host", nil),
+					checkCreates(fake, "harness", 2),
+				),
+			},
+		},
+	})
+}
+
+// The API keeps the current host on a blank update, which would make the apply inconsistent, so validation rejects
+// a blank host. A blank account cannot work against Harness.
+func TestUnitIntegrationConfiguration_HarnessValidation(t *testing.T) {
+	_, url := newFakeCortexApi(t)
+	for name, tc := range map[string]struct {
+		credentials string
+		settings    string
+		want        string
+	}{
+		"missing account":       {settings: `{}`, want: `account_id`},
+		"blank account":         {settings: `{ account_id = " " }`, want: `must not be blank`},
+		"empty host":            {settings: `{ account_id = "acct-1", host = "" }`, want: `must not be blank`},
+		"blank host":            {settings: `{ account_id = "acct-1", host = " " }`, want: `must not be blank`},
+		"wrong credential kind": {credentials: `{ basic = { username = "bot", password = "p" } }`, settings: `{ account_id = "acct-1" }`, want: `harness accepts: token`},
+	} {
+		t.Run(name, func(t *testing.T) {
+			credentials := tc.credentials
+			if credentials == "" {
+				credentials = `{ token = { value = "fake-key-a1b2" } }`
+			}
+			config := unitConfig(url, fmt.Sprintf(`
+resource "cortex_integration_configuration" "test" {
+  alias       = "h"
+  credentials = %s
+  harness     = %s
+}`, credentials, tc.settings))
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps:                    []resource.TestStep{{Config: config, ExpectError: regexp.MustCompile(tc.want)}},
+			})
+		})
+	}
+}
+
+// A host that is unknown until apply can resolve to null, which needs a new configuration when a host is set. Without
+// a host in state, the unknown host updates the configuration in place.
+func TestUnitIntegrationConfiguration_HarnessUnknownHost(t *testing.T) {
+	for name, tc := range map[string]struct {
+		before  string
+		creates int
+	}{
+		"was set":     {before: `host = "https://harness.invalid",`, creates: 2},
+		"was not set": {before: ``, creates: 1},
+	} {
+		t.Run(name, func(t *testing.T) {
+			fake, url := newFakeCortexApi(t)
+			// A new input makes the output of terraform_data unknown until apply.
+			withSettings := func(input, settings string) string {
+				return unitConfig(url, fmt.Sprintf(`
+resource "terraform_data" "host" {
+  input = %q
+}
+
+resource "cortex_integration_configuration" "test" {
+  alias       = "h"
+  credentials = { token = { value = "fake-key-a1b2" } }
+  harness     = { %s account_id = "acct-1" }
+}`, input, settings))
+			}
+
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{Config: withSettings("https://harness1.invalid", tc.before)},
+					{
+						Config: withSettings("https://harness2.invalid", "host = terraform_data.host.output,"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							checkFake(fake, "harness", "h", "host", "https://harness2.invalid"),
+							checkCreates(fake, "harness", tc.creates),
+						),
+					},
+				},
+			})
+		})
+	}
+}
+
+// Settings that are unknown until apply can hold a null host, which needs a new configuration when a host is set.
+// Without a host, the unknown settings update the configuration in place.
+func TestUnitIntegrationConfiguration_HarnessUnknownSettings(t *testing.T) {
+	for name, tc := range map[string]struct {
+		settings string
+		creates  int
+	}{
+		"host set":     {settings: `{ host = "https://harness.invalid", account_id = %q }`, creates: 2},
+		"host not set": {settings: `{ account_id = %q }`, creates: 1},
+	} {
+		t.Run(name, func(t *testing.T) {
+			fake, url := newFakeCortexApi(t)
+			withAccount := func(account string) string {
+				return unitConfig(url, fmt.Sprintf(`
+resource "terraform_data" "settings" {
+  input = %s
+}
+
+resource "cortex_integration_configuration" "test" {
+  alias       = "h"
+  credentials = { token = { value = "fake-key-a1b2" } }
+  harness     = terraform_data.settings.output
+}`, fmt.Sprintf(tc.settings, account)))
+			}
+
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{Config: withAccount("acct-1")},
+					{
+						Config: withAccount("acct-2"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr(unitResourceName, "harness.account_id", "acct-2"),
+							checkCreates(fake, "harness", tc.creates),
+						),
+					},
+				},
+			})
+		})
+	}
+}
