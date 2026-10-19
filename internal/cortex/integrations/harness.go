@@ -10,7 +10,7 @@ type CreateHarnessConfigurationRequest struct {
 	Host      string `json:"host,omitempty"`
 }
 
-// UpdateHarnessConfigurationRequest omits unset fields: the API keeps the current value of each field an update omits.
+// UpdateHarnessConfigurationRequest omits an unset key or host: the API keeps the current value of a field an update omits.
 type UpdateHarnessConfigurationRequest struct {
 	Alias     string `json:"alias"`
 	IsDefault bool   `json:"isDefault"`

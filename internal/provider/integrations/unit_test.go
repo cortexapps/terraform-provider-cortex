@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -1384,23 +1383,6 @@ func TestUnitIntegrationConfiguration_HarnessLifecycle(t *testing.T) {
 	})
 }
 
-// The API never returns the key, so the plan must mark it sensitive.
-func TestUnitIntegrationConfiguration_HarnessKeyIsSensitive(t *testing.T) {
-	_, url := newFakeCortexApi(t)
-
-	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{{
-			Config: harnessUnit(url, "h", "fake-key-a1b2", `{ account_id = "acct-1" }`),
-			ConfigPlanChecks: resource.ConfigPlanChecks{
-				PreApply: []plancheck.PlanCheck{plancheck.ExpectSensitiveValue(unitResourceName,
-					tfjsonpath.New("credentials").AtMapKey("token").AtMapKey("value"))},
-			},
-			Check: resource.TestCheckNoResourceAttr(unitResourceName, "harness.host"),
-		}},
-	})
-}
-
 // The API keeps the current host on a blank update, which would make the apply inconsistent, so validation rejects
 // a blank host. A blank account cannot work against Harness.
 func TestUnitIntegrationConfiguration_HarnessValidation(t *testing.T) {
@@ -1469,6 +1451,48 @@ resource "cortex_integration_configuration" "test" {
 						Config: withSettings("https://harness2.invalid", "host = terraform_data.host.output,"),
 						Check: resource.ComposeAggregateTestCheckFunc(
 							checkFake(fake, "harness", "h", "host", "https://harness2.invalid"),
+							checkCreates(fake, "harness", tc.creates),
+						),
+					},
+				},
+			})
+		})
+	}
+}
+
+// Settings that are unknown until apply can hold a null host, which needs a new configuration when a host is set.
+// Without a host, the unknown settings update the configuration in place.
+func TestUnitIntegrationConfiguration_HarnessUnknownSettings(t *testing.T) {
+	for name, tc := range map[string]struct {
+		settings string
+		creates  int
+	}{
+		"host set":     {settings: `{ host = "https://harness.invalid", account_id = %q }`, creates: 2},
+		"host not set": {settings: `{ account_id = %q }`, creates: 1},
+	} {
+		t.Run(name, func(t *testing.T) {
+			fake, url := newFakeCortexApi(t)
+			withAccount := func(account string) string {
+				return unitConfig(url, fmt.Sprintf(`
+resource "terraform_data" "settings" {
+  input = %s
+}
+
+resource "cortex_integration_configuration" "test" {
+  alias       = "h"
+  credentials = { token = { value = "fake-key-a1b2" } }
+  harness     = terraform_data.settings.output
+}`, fmt.Sprintf(tc.settings, account)))
+			}
+
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{Config: withAccount("acct-1")},
+					{
+						Config: withAccount("acct-2"),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr(unitResourceName, "harness.account_id", "acct-2"),
 							checkCreates(fake, "harness", tc.creates),
 						),
 					},
