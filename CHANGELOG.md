@@ -1,6 +1,7 @@
 Changelog for the Cortex terraform provider.
 
 ## Unreleased
+* The provider is built with Go 1.26.10. Its TLS checks now reject certificate chains through the eight compromised eMudhra intermediate CAs, also when the system trust store still has their roots.
 * Add `cortex_integration_configuration` resource to manage integration configurations for Datadog, GitLab, incident.io, Jira, and PagerDuty.
 * `cortex_integration_configuration`: removing the Datadog `custom_subdomain` now updates the configuration in place instead of replacing it.
 * `cortex_integration_configuration`: a change of the GitLab `host` now updates the configuration in place instead of replacing it. Removing `host` still replaces the configuration. This needs a Cortex version that applies the GitLab host on update; with an older version, the apply of a host change fails with an inconsistent result.
