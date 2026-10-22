@@ -85,6 +85,7 @@ var integrationDefinitions = []integrationDefinition{
 	incidentIoDefinition{},
 	jiraDefinition{},
 	pagerDutyDefinition{},
+	rootlyDefinition{},
 }
 
 func definitionByName(name string) integrationDefinition {

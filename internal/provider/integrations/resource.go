@@ -96,7 +96,8 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 			"| `gitlab` | `token` | `value` = personal access token |\n" +
 			"| `incident_io` | `token` | `value` = API key |\n" +
 			"| `jira` | `basic` | `username` = email (cloud) or username (on-prem), `password` = API token (cloud) or password (on-prem) |\n" +
-			"| `pagerduty` | `token` | `value` = API token |\n\n" +
+			"| `pagerduty` | `token` | `value` = API token |\n" +
+			"| `rootly` | `token` | `value` = API key |\n\n" +
 			"The Cortex API never returns secrets. Terraform detects a secret changed outside Terraform through " +
 			"`credentials_last_four`. Cortex does not check credentials when it saves a configuration, so invalid " +
 			"credentials do not fail the apply. Cortex does not allow deleting the default configuration of an " +

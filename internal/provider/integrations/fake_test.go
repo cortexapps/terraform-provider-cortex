@@ -32,6 +32,7 @@ var fakeSpecs = map[string]fakeIntegrationSpec{
 	"pagerduty":  {multi: false, masks: map[string]string{"token": "lastFour"}},
 	"gitlab":     {multi: true, masks: map[string]string{"personalAccessToken": "lastFour"}},
 	"incidentio": {multi: true, masks: map[string]string{"apiKey": "lastFour"}},
+	"rootly":     {multi: true, masks: map[string]string{"apiKey": "lastFour"}},
 	"jira": {multi: true, masks: map[string]string{"apiToken": "lastFour", "password": "lastFour"},
 		ignoreOnUpdate:        []string{"host", "frontendHost", "cloudId"},
 		ignoreOnUpdateForType: map[string][]string{"CLOUD_SCOPED": {"email"}},

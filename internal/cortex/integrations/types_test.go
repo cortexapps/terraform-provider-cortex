@@ -50,6 +50,17 @@ func TestIncidentIoRequestWireFormat(t *testing.T) {
 	assert.JSONEq(t, `{"alias":"inc","isDefault":false,"apiKey":"k"}`, string(create))
 }
 
+func TestRootlyRequestWireFormat(t *testing.T) {
+	create, err := json.Marshal(integrations.CreateRootlyConfigurationRequest{Alias: "rootly", IsDefault: true, ApiKey: "k"})
+	assert.Nil(t, err)
+	assert.JSONEq(t, `{"alias":"rootly","isDefault":true,"apiKey":"k"}`, string(create))
+
+	// An update without a key keeps the stored key.
+	update, err := json.Marshal(integrations.UpdateRootlyConfigurationRequest{Alias: "rootly"})
+	assert.Nil(t, err)
+	assert.JSONEq(t, `{"alias":"rootly","isDefault":false}`, string(update))
+}
+
 func TestJiraClientRoutes(t *testing.T) {
 	c, teardown, err := setupClient(
 		"/api/v1/jira/configurations",
@@ -76,6 +87,21 @@ func TestIncidentIoClientRoute(t *testing.T) {
 	res, err := integrations.IncidentIo(c).List(context.Background())
 	assert.Nil(t, err)
 	assert.Equal(t, "a1b2", res[0].LastFour)
+}
+
+func TestRootlyClientRoute(t *testing.T) {
+	c, teardown, err := setupClient(
+		"/api/v1/rootly/configurations",
+		map[string]any{"configurations": []integrations.RootlyConfiguration{{Alias: "rootly", IsDefault: true, LastFour: "a1b2"}}},
+		AssertRequestMethod(t, "GET"),
+	)
+	assert.Nil(t, err)
+	defer teardown()
+
+	res, err := integrations.Rootly(c).List(context.Background())
+	assert.Nil(t, err)
+	assert.Equal(t, "a1b2", res[0].LastFour)
+	assert.True(t, res[0].IsDefault)
 }
 
 func TestGitlabClientRoute(t *testing.T) {
