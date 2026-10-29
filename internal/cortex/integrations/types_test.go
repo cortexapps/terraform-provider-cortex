@@ -145,3 +145,39 @@ func TestRequestsSendEmptyListsForNil(t *testing.T) {
 		})
 	}
 }
+
+func TestHarnessRequestWireFormat(t *testing.T) {
+	create, err := json.Marshal(integrations.CreateHarnessConfigurationRequest{Alias: "h", ApiKey: "k", AccountId: "acct"})
+	assert.Nil(t, err)
+	assert.JSONEq(t, `{"alias":"h","isDefault":false,"apiKey":"k","accountId":"acct"}`, string(create))
+
+	withHost, err := json.Marshal(integrations.CreateHarnessConfigurationRequest{Alias: "h", ApiKey: "k", AccountId: "acct", Host: "https://harness.invalid"})
+	assert.Nil(t, err)
+	assert.JSONEq(t, `{"alias":"h","isDefault":false,"apiKey":"k","accountId":"acct","host":"https://harness.invalid"}`, string(withHost))
+
+	// The API keeps the current value of each field that an update omits.
+	update, err := json.Marshal(integrations.UpdateHarnessConfigurationRequest{Alias: "h", IsDefault: true})
+	assert.Nil(t, err)
+	assert.JSONEq(t, `{"alias":"h","isDefault":true}`, string(update))
+}
+
+func TestHarnessResponseParsing(t *testing.T) {
+	var cfg integrations.HarnessConfiguration
+	err := json.Unmarshal([]byte(`{"alias":"h","accountId":"acct","host":null,"isDefault":true,"lastFourApiKey":"a1b2"}`), &cfg)
+	assert.Nil(t, err)
+	assert.Equal(t, integrations.HarnessConfiguration{Alias: "h", IsDefault: true, AccountId: "acct", LastFourApiKey: "a1b2"}, cfg)
+}
+
+func TestHarnessClientRoute(t *testing.T) {
+	c, teardown, err := setupClient(
+		"/api/v1/harness/configuration/h",
+		map[string]any{"configurations": []integrations.HarnessConfiguration{{Alias: "h", LastFourApiKey: "a1b2"}}},
+		AssertRequestMethod(t, "PUT"),
+	)
+	assert.Nil(t, err)
+	defer teardown()
+
+	res, err := integrations.Harness(c).Update(context.Background(), "h", "h", integrations.UpdateHarnessConfigurationRequest{Alias: "h"})
+	assert.Nil(t, err)
+	assert.Equal(t, "a1b2", res.LastFourApiKey)
+}

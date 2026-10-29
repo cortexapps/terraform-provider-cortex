@@ -3,11 +3,12 @@
 page_title: "cortex_integration_configuration Resource - terraform-provider-cortex"
 subcategory: ""
 description: |-
-  Integration configuration. Set exactly one settings block to pick the integration (datadog, gitlab, incident_io, jira, pagerduty, rootly), and one credential kind in credentials.
+  Integration configuration. Set exactly one settings block to pick the integration (datadog, gitlab, harness, incident_io, jira, pagerduty, rootly), and one credential kind in credentials.
   | Integration | Credential kind | Mapping to the Cortex API |
   |---|---|---|
   | `datadog` | `key_pair` | `key` = API key, `secret` = application key |
   | `gitlab` | `token` | `value` = personal access token |
+  | `harness` | `token` | `value` = API key |
   | `incident_io` | `token` | `value` = API key |
   | `jira` | `basic` | `username` = email (cloud) or username (on-prem), `password` = API token (cloud) or password (on-prem) |
   | `pagerduty` | `token` | `value` = API token |
@@ -17,12 +18,13 @@ description: |-
 
 # cortex_integration_configuration (Resource)
 
-Integration configuration. Set exactly one settings block to pick the integration (`datadog`, `gitlab`, `incident_io`, `jira`, `pagerduty`, `rootly`), and one credential kind in `credentials`.
+Integration configuration. Set exactly one settings block to pick the integration (`datadog`, `gitlab`, `harness`, `incident_io`, `jira`, `pagerduty`, `rootly`), and one credential kind in `credentials`.
 
 | Integration | Credential kind | Mapping to the Cortex API |
 |---|---|---|
 | `datadog` | `key_pair` | `key` = API key, `secret` = application key |
 | `gitlab` | `token` | `value` = personal access token |
+| `harness` | `token` | `value` = API key |
 | `incident_io` | `token` | `value` = API key |
 | `jira` | `basic` | `username` = email (cloud) or username (on-prem), `password` = API token (cloud) or password (on-prem) |
 | `pagerduty` | `token` | `value` = API token |
@@ -51,6 +53,14 @@ resource "cortex_integration_configuration" "gitlab" {
   gitlab = {
     host        = "https://gitlab.acme.internal"
     group_names = ["platform"]
+  }
+}
+
+resource "cortex_integration_configuration" "harness" {
+  alias       = "harness"
+  credentials = { token = { value = var.harness_api_key } }
+  harness = {
+    account_id = "abc123XYZ"
   }
 }
 
@@ -95,6 +105,7 @@ resource "cortex_integration_configuration" "rootly" {
 - `alias` (String) Unique alias of the configuration. Required for integrations that support several configurations. Not allowed for integrations with one configuration per tenant, such as PagerDuty. A change renames the configuration in place.
 - `datadog` (Attributes) Datadog settings. Use `credentials.key_pair`: `key` is the Datadog API key and `secret` is the application key. A change of the keys, `region`, or `custom_subdomain`, including removing `custom_subdomain`, updates the configuration in place. (see [below for nested schema](#nestedatt--datadog))
 - `gitlab` (Attributes) GitLab settings. Use `credentials.token`: `value` is the GitLab personal access token. A change of `host` updates the configuration in place. The Cortex API cannot remove a host, so removing `host` replaces the configuration. A `host` that is unknown until apply can resolve to null, so it also replaces a configuration that has a host. (see [below for nested schema](#nestedatt--gitlab))
+- `harness` (Attributes) Harness settings. Use `credentials.token`: `value` is the Harness API key. A change of `account_id` or `host` updates the configuration in place. The Cortex API cannot remove a host, so removing `host` replaces the configuration. A `host` that is unknown until apply can resolve to null, so it also replaces a configuration that has a host. (see [below for nested schema](#nestedatt--harness))
 - `incident_io` (Attributes) incident.io settings. incident.io has no settings, so set `incident_io = {}`. Use `credentials.token`: `value` is the incident.io API key. (see [below for nested schema](#nestedatt--incident_io))
 - `is_default` (Boolean) Whether this is the default configuration of its integration. Not allowed for integrations with one configuration per tenant. When not set, Terraform keeps the value from Cortex. Cortex makes the first configuration the default, and does not allow setting the current default to `false`: set `is_default = true` on another configuration and remove `is_default` from this one, apply, and then set it to `false` if necessary. Set `is_default = true` on one configuration per integration only.
 - `jira` (Attributes) Jira settings. Set exactly one variant. Use `credentials.basic`: for the cloud variants, `username` is the email and `password` is the API token; for `on_prem`, they are the username and password. The Cortex API cannot change the variant, `host`, `frontend_host`, `cloud_id`, or the `cloud_scoped` email (`credentials.basic.username`) in place, so a change to one of them replaces the configuration. When the tenant has a Jira OAuth configuration, the Cortex API cannot list Jira configurations, so this resource cannot manage Jira in that tenant. (see [below for nested schema](#nestedatt--jira))
@@ -164,6 +175,18 @@ Optional:
 - `group_names` (List of String) GitLab groups to include. Defaults to an empty list. Names must not be blank.
 - `hide_personal_projects` (Boolean) Whether to hide personal projects. Defaults to `false`.
 - `host` (String) URL of a self-managed GitLab instance. Not set means gitlab.com. Must not be blank.
+
+
+<a id="nestedatt--harness"></a>
+### Nested Schema for `harness`
+
+Required:
+
+- `account_id` (String) Harness account identifier. Must not be blank.
+
+Optional:
+
+- `host` (String) URL of the Harness instance, for a self-managed or dedicated Harness. Not set means `https://app.harness.io`. Must not be blank.
 
 
 <a id="nestedatt--incident_io"></a>

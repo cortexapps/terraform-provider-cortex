@@ -327,6 +327,7 @@ type integrationConfigurationModel struct {
 	CredentialsLastFour types.Map    `tfsdk:"credentials_last_four"`
 	Datadog             types.Object `tfsdk:"datadog"`
 	Gitlab              types.Object `tfsdk:"gitlab"`
+	Harness             types.Object `tfsdk:"harness"`
 	IncidentIo          types.Object `tfsdk:"incident_io"`
 	Jira                types.Object `tfsdk:"jira"`
 	PagerDuty           types.Object `tfsdk:"pagerduty"`
@@ -340,6 +341,8 @@ func (m *integrationConfigurationModel) settings(name string) *types.Object {
 		return &m.Datadog
 	case "gitlab":
 		return &m.Gitlab
+	case "harness":
+		return &m.Harness
 	case "incident_io":
 		return &m.IncidentIo
 	case "jira":
