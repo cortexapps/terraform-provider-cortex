@@ -14,7 +14,8 @@ type UpdateRootlyConfigurationRequest struct {
 	ApiKey    string `json:"apiKey,omitempty"`
 }
 
-// RootlyConfiguration is a Rootly configuration. The API returns only the last four characters of the key.
+// RootlyConfiguration is a Rootly configuration. LastFour is the key with every character but the last four
+// replaced by "•".
 type RootlyConfiguration struct {
 	Alias     string `json:"alias"`
 	IsDefault bool   `json:"isDefault"`

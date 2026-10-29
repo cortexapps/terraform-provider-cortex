@@ -2,6 +2,7 @@ package integrations
 
 import (
 	"context"
+	"strings"
 
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
 	api "github.com/cortexapps/terraform-provider-cortex/internal/cortex/integrations"
@@ -76,6 +77,7 @@ func (rootlyDefinition) state(cfg api.RootlyConfiguration) configurationState {
 		Alias:     cfg.Alias,
 		IsDefault: cfg.IsDefault,
 		Settings:  types.ObjectValueMust(map[string]attr.Type{}, map[string]attr.Value{}),
-		LastFour:  map[string]string{"value": cfg.LastFour},
+		// The Rootly API pads the last four characters with "•" to the length of the key.
+		LastFour: map[string]string{"value": strings.TrimLeft(cfg.LastFour, "•")},
 	}
 }
