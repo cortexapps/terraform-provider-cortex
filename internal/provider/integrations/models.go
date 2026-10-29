@@ -330,6 +330,7 @@ type integrationConfigurationModel struct {
 	IncidentIo          types.Object `tfsdk:"incident_io"`
 	Jira                types.Object `tfsdk:"jira"`
 	PagerDuty           types.Object `tfsdk:"pagerduty"`
+	Rootly              types.Object `tfsdk:"rootly"`
 }
 
 // settings returns the settings block of the named integration. Every registered definition needs a case here.
@@ -345,6 +346,8 @@ func (m *integrationConfigurationModel) settings(name string) *types.Object {
 		return &m.Jira
 	case "pagerduty":
 		return &m.PagerDuty
+	case "rootly":
+		return &m.Rootly
 	}
 	return nil
 }

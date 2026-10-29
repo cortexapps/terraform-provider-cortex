@@ -630,6 +630,59 @@ func TestUnitIntegrationConfiguration_IncidentIoLifecycle(t *testing.T) {
 	})
 }
 
+func rootlyUnit(url, alias, key string, isDefault bool) string {
+	return unitConfig(url, fmt.Sprintf(`
+resource "cortex_integration_configuration" "test" {
+  alias       = %q
+  is_default  = %t
+  credentials = { token = { value = %q } }
+  rootly      = {}
+}`, alias, isDefault, key))
+}
+
+func TestUnitIntegrationConfiguration_RootlyLifecycle(t *testing.T) {
+	fake, url := newFakeCortexApi(t)
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: rootlyUnit(url, "rootly", "fake-key-a1b2", true),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "id", "rootly/rootly"),
+					resource.TestCheckResourceAttr(unitResourceName, "integration", "rootly"),
+					resource.TestCheckResourceAttr(unitResourceName, "is_default", "true"),
+					resource.TestCheckResourceAttr(unitResourceName, "credentials_last_four.value", "a1b2"),
+				),
+			},
+			{
+				ResourceName:            unitResourceName,
+				ImportState:             true,
+				ImportStateId:           "rootly/rootly",
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"credentials"},
+			},
+			// A new key updates in place.
+			{
+				Config: rootlyUnit(url, "rootly", "fake-key-c3d4", true),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkFake(fake, "rootly", "rootly", "apiKey", "fake-key-c3d4"),
+					checkCreates(fake, "rootly", 1),
+				),
+			},
+			// A new alias renames in place, through the update keyed on the old alias.
+			{
+				Config: rootlyUnit(url, "rootly-prod", "fake-key-c3d4", true),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(unitResourceName, "id", "rootly/rootly-prod"),
+					checkFake(fake, "rootly", "rootly-prod", "apiKey", "fake-key-c3d4"),
+					checkCreates(fake, "rootly", 1),
+				),
+			},
+		},
+	})
+}
+
 // Changing the settings block to another integration replaces the configuration.
 func TestUnitIntegrationConfiguration_ChangeOfIntegrationReplaces(t *testing.T) {
 	fake, url := newFakeCortexApi(t)

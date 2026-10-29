@@ -17,6 +17,7 @@ type fakeIntegrationSpec struct {
 	multi          bool              // several configurations per tenant, identified by alias
 	masks          map[string]string // secret request field -> response field with its last four characters
 	ignoreOnUpdate []string          // request fields the API ignores on update
+	redactMasks    bool              // pads each last-four response field with "•" to the length of the secret
 	// ignoreOnUpdateForType lists more fields the API ignores on update, by the stored "type".
 	ignoreOnUpdateForType map[string][]string
 	// defaults fills a missing request field from another field on create, as the API does.
@@ -32,6 +33,7 @@ var fakeSpecs = map[string]fakeIntegrationSpec{
 	"pagerduty":  {multi: false, masks: map[string]string{"token": "lastFour"}},
 	"gitlab":     {multi: true, masks: map[string]string{"personalAccessToken": "lastFour"}},
 	"incidentio": {multi: true, masks: map[string]string{"apiKey": "lastFour"}},
+	"rootly":     {multi: true, masks: map[string]string{"apiKey": "lastFour"}, redactMasks: true},
 	"jira": {multi: true, masks: map[string]string{"apiToken": "lastFour", "password": "lastFour"},
 		ignoreOnUpdate:        []string{"host", "frontendHost", "cloudId"},
 		ignoreOnUpdateForType: map[string][]string{"CLOUD_SCOPED": {"email"}},
@@ -198,7 +200,11 @@ func (f *fakeCortexApi) render(seg string, cfg map[string]any) map[string]any {
 	}
 	for field, mask := range spec.masks {
 		if v, ok := cfg[field].(string); ok && v != "" {
-			out[mask] = takeLastFour(v)
+			if spec.redactMasks {
+				out[mask] = redact(v)
+			} else {
+				out[mask] = takeLastFour(v)
+			}
 		}
 	}
 	return out
@@ -328,6 +334,16 @@ func takeLastFour(key string) string {
 		return key
 	}
 	return key[len(key)-4:]
+}
+
+// redact matches the backend's Redactable.toRedactedString: "•" for every character but the last four, or for
+// every character of a key of four characters or fewer.
+func redact(key string) string {
+	runes := []rune(key)
+	if len(runes) <= 4 {
+		return strings.Repeat("•", len(runes))
+	}
+	return strings.Repeat("•", len(runes)-4) + string(runes[len(runes)-4:])
 }
 
 // unitConfig adds a provider block that points at the fake API.
