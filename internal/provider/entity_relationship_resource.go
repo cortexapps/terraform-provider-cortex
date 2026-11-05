@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cortexapps/terraform-provider-cortex/internal/cortex"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -122,16 +123,20 @@ func (r *EntityRelationshipResource) Create(ctx context.Context, req resource.Cr
 		return
 	}
 
-	// Poll until the GET endpoint reflects the write. The PUT response body may
-	// lag (empty destinations) even on a 200, so we use the intended tags as the
-	// consistency target rather than the PUT response.
-	resultTags, err := r.getDestinationsConsistent(ctx, sourceTag, relTypeTag, destinationTags)
+	// The PUT response body may lag (empty destinations) even on a 200, so wait
+	// for the GET endpoint instead.
+	_, consistent, err := r.getDestinationsConsistent(ctx, sourceTag, relTypeTag, destinationTags)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read entity relationship after create, got error: %s", err))
 		return
 	}
+	if !consistent {
+		addStaleDestinationsWarning(&resp.Diagnostics, sourceTag, relTypeTag)
+	}
 
-	data.FromApiModel(sourceTag, relTypeTag, resultTags)
+	// The write succeeded, so state holds the applied tags. A read that still
+	// lags would make the result disagree with the plan and fail the apply.
+	data.FromApiModel(sourceTag, relTypeTag, destinationTags)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -152,7 +157,7 @@ func (r *EntityRelationshipResource) Read(ctx context.Context, req resource.Read
 	// We poll until the API returns a result that contains every tag in state.
 	stateTags := data.ToDestinationTags()
 
-	destinationTags, err := r.getDestinationsConsistent(ctx, sourceTag, relTypeTag, stateTags)
+	destinationTags, _, err := r.getDestinationsConsistent(ctx, sourceTag, relTypeTag, stateTags)
 	if err != nil {
 		if errors.Is(err, cortex.ApiErrorNotFound) {
 			resp.State.RemoveResource(ctx)
@@ -185,13 +190,16 @@ func (r *EntityRelationshipResource) Update(ctx context.Context, req resource.Up
 		return
 	}
 
-	resultTags, err := r.getDestinationsConsistent(ctx, sourceTag, relTypeTag, destinationTags)
+	_, consistent, err := r.getDestinationsConsistent(ctx, sourceTag, relTypeTag, destinationTags)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read entity relationship after update, got error: %s", err))
 		return
 	}
+	if !consistent {
+		addStaleDestinationsWarning(&resp.Diagnostics, sourceTag, relTypeTag)
+	}
 
-	data.FromApiModel(sourceTag, relTypeTag, resultTags)
+	data.FromApiModel(sourceTag, relTypeTag, destinationTags)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -253,10 +261,11 @@ func (r *EntityRelationshipResource) ImportState(ctx context.Context, req resour
 //     destination list after a clear. Poll until the result is empty.
 //
 // Polling terminates as soon as the API reaches the expected state; it is a
-// context-aware, bounded poll — not a fixed sleep.
-func (r *EntityRelationshipResource) getDestinationsConsistent(ctx context.Context, sourceTag, relTypeTag string, expectedTags []string) ([]string, error) {
+// context-aware, bounded poll — not a fixed sleep. The returned bool reports
+// whether the API reached the expected state before the wait ran out.
+func (r *EntityRelationshipResource) getDestinationsConsistent(ctx context.Context, sourceTag, relTypeTag string, expectedTags []string) ([]string, bool, error) {
 	const pollInterval = 250 * time.Millisecond
-	const maxWait = 3 * time.Second
+	maxWait := entityRelationshipConsistencyWait
 
 	consistent := func(tags []string) bool {
 		if len(expectedTags) == 0 {
@@ -278,21 +287,40 @@ func (r *EntityRelationshipResource) getDestinationsConsistent(ctx context.Conte
 	}
 
 	tags, err := r.client.EntityRelationships().GetDestinations(ctx, sourceTag, relTypeTag)
-	if err != nil || consistent(tags) {
-		return tags, err
+	if err != nil {
+		return tags, false, err
+	}
+	if consistent(tags) {
+		return tags, true, nil
 	}
 
 	deadline := time.Now().Add(maxWait)
 	for time.Now().Before(deadline) {
 		select {
 		case <-ctx.Done():
-			return tags, ctx.Err()
+			return tags, false, ctx.Err()
 		case <-time.After(pollInterval):
 		}
 		tags, err = r.client.EntityRelationships().GetDestinations(ctx, sourceTag, relTypeTag)
-		if err != nil || consistent(tags) {
-			return tags, err
+		if err != nil {
+			return tags, false, err
+		}
+		if consistent(tags) {
+			return tags, true, nil
 		}
 	}
-	return tags, err
+	return tags, false, nil
+}
+
+// entityRelationshipConsistencyWait bounds how long a write waits for the GET
+// endpoint to show it.
+var entityRelationshipConsistencyWait = 15 * time.Second
+
+func addStaleDestinationsWarning(diags *diag.Diagnostics, sourceTag, relTypeTag string) {
+	diags.AddWarning(
+		"Entity relationship not yet visible",
+		fmt.Sprintf("Cortex accepted the destinations of %s:%s, but did not return them within %s. "+
+			"State holds the applied destinations; the next refresh shows what Cortex stores.",
+			sourceTag, relTypeTag, entityRelationshipConsistencyWait),
+	)
 }
