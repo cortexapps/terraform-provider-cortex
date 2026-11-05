@@ -3,7 +3,7 @@ Changelog for the Cortex terraform provider.
 ## Unreleased
 * `cortex_entity_relationship`: an apply no longer fails with "Provider produced inconsistent result after apply" when Cortex takes more than 3 seconds to show changed destinations. The provider now waits up to 15 seconds. If Cortex still shows the old destinations, the apply succeeds with a warning and keeps the applied destinations in state.
 * The provider is built with Go 1.26.10. Its TLS checks now reject certificate chains through the eight compromised eMudhra intermediate CAs, also when the system trust store still has their roots.
-* Add `cortex_integration_configuration` resource to manage integration configurations for Datadog, GitLab, incident.io, Jira, and PagerDuty.
+* Add `cortex_integration_configuration` resource to manage integration configurations for Datadog, GitLab, Harness, incident.io, Jira, PagerDuty, and Rootly.
 * `cortex_integration_configuration`: removing the Datadog `custom_subdomain` now updates the configuration in place instead of replacing it.
 * `cortex_integration_configuration`: a change of the GitLab `host` now updates the configuration in place instead of replacing it. Removing `host` still replaces the configuration. This needs a Cortex version that applies the GitLab host on update; with an older version, the apply of a host change fails with an inconsistent result.
 * `cortex_catalog_entity`: reading an entity no longer crashes the provider when its Datadog monitors are stored as objects (`- id: 123`). A monitor with an `alias` is now an error, because the provider cannot store the alias.

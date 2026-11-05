@@ -327,9 +327,11 @@ type integrationConfigurationModel struct {
 	CredentialsLastFour types.Map    `tfsdk:"credentials_last_four"`
 	Datadog             types.Object `tfsdk:"datadog"`
 	Gitlab              types.Object `tfsdk:"gitlab"`
+	Harness             types.Object `tfsdk:"harness"`
 	IncidentIo          types.Object `tfsdk:"incident_io"`
 	Jira                types.Object `tfsdk:"jira"`
 	PagerDuty           types.Object `tfsdk:"pagerduty"`
+	Rootly              types.Object `tfsdk:"rootly"`
 }
 
 // settings returns the settings block of the named integration. Every registered definition needs a case here.
@@ -339,12 +341,16 @@ func (m *integrationConfigurationModel) settings(name string) *types.Object {
 		return &m.Datadog
 	case "gitlab":
 		return &m.Gitlab
+	case "harness":
+		return &m.Harness
 	case "incident_io":
 		return &m.IncidentIo
 	case "jira":
 		return &m.Jira
 	case "pagerduty":
 		return &m.PagerDuty
+	case "rootly":
+		return &m.Rootly
 	}
 	return nil
 }

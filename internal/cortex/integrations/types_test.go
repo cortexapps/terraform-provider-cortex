@@ -50,6 +50,17 @@ func TestIncidentIoRequestWireFormat(t *testing.T) {
 	assert.JSONEq(t, `{"alias":"inc","isDefault":false,"apiKey":"k"}`, string(create))
 }
 
+func TestRootlyRequestWireFormat(t *testing.T) {
+	create, err := json.Marshal(integrations.CreateRootlyConfigurationRequest{Alias: "rootly", IsDefault: true, ApiKey: "k"})
+	assert.Nil(t, err)
+	assert.JSONEq(t, `{"alias":"rootly","isDefault":true,"apiKey":"k"}`, string(create))
+
+	// An update without a key keeps the stored key.
+	update, err := json.Marshal(integrations.UpdateRootlyConfigurationRequest{Alias: "rootly"})
+	assert.Nil(t, err)
+	assert.JSONEq(t, `{"alias":"rootly","isDefault":false}`, string(update))
+}
+
 func TestJiraClientRoutes(t *testing.T) {
 	c, teardown, err := setupClient(
 		"/api/v1/jira/configurations",
@@ -76,6 +87,21 @@ func TestIncidentIoClientRoute(t *testing.T) {
 	res, err := integrations.IncidentIo(c).List(context.Background())
 	assert.Nil(t, err)
 	assert.Equal(t, "a1b2", res[0].LastFour)
+}
+
+func TestRootlyClientRoute(t *testing.T) {
+	c, teardown, err := setupClient(
+		"/api/v1/rootly/configurations",
+		map[string]any{"configurations": []integrations.RootlyConfiguration{{Alias: "rootly", IsDefault: true, LastFour: "a1b2"}}},
+		AssertRequestMethod(t, "GET"),
+	)
+	assert.Nil(t, err)
+	defer teardown()
+
+	res, err := integrations.Rootly(c).List(context.Background())
+	assert.Nil(t, err)
+	assert.Equal(t, "a1b2", res[0].LastFour)
+	assert.True(t, res[0].IsDefault)
 }
 
 func TestGitlabClientRoute(t *testing.T) {
@@ -118,4 +144,40 @@ func TestRequestsSendEmptyListsForNil(t *testing.T) {
 			assert.NotContains(t, string(body), `"groupNames":null`)
 		})
 	}
+}
+
+func TestHarnessRequestWireFormat(t *testing.T) {
+	create, err := json.Marshal(integrations.CreateHarnessConfigurationRequest{Alias: "h", ApiKey: "k", AccountId: "acct"})
+	assert.Nil(t, err)
+	assert.JSONEq(t, `{"alias":"h","isDefault":false,"apiKey":"k","accountId":"acct"}`, string(create))
+
+	withHost, err := json.Marshal(integrations.CreateHarnessConfigurationRequest{Alias: "h", ApiKey: "k", AccountId: "acct", Host: "https://harness.invalid"})
+	assert.Nil(t, err)
+	assert.JSONEq(t, `{"alias":"h","isDefault":false,"apiKey":"k","accountId":"acct","host":"https://harness.invalid"}`, string(withHost))
+
+	// The API keeps the current value of each field that an update omits.
+	update, err := json.Marshal(integrations.UpdateHarnessConfigurationRequest{Alias: "h", IsDefault: true})
+	assert.Nil(t, err)
+	assert.JSONEq(t, `{"alias":"h","isDefault":true}`, string(update))
+}
+
+func TestHarnessResponseParsing(t *testing.T) {
+	var cfg integrations.HarnessConfiguration
+	err := json.Unmarshal([]byte(`{"alias":"h","accountId":"acct","host":null,"isDefault":true,"lastFourApiKey":"a1b2"}`), &cfg)
+	assert.Nil(t, err)
+	assert.Equal(t, integrations.HarnessConfiguration{Alias: "h", IsDefault: true, AccountId: "acct", LastFourApiKey: "a1b2"}, cfg)
+}
+
+func TestHarnessClientRoute(t *testing.T) {
+	c, teardown, err := setupClient(
+		"/api/v1/harness/configuration/h",
+		map[string]any{"configurations": []integrations.HarnessConfiguration{{Alias: "h", LastFourApiKey: "a1b2"}}},
+		AssertRequestMethod(t, "PUT"),
+	)
+	assert.Nil(t, err)
+	defer teardown()
+
+	res, err := integrations.Harness(c).Update(context.Background(), "h", "h", integrations.UpdateHarnessConfigurationRequest{Alias: "h"})
+	assert.Nil(t, err)
+	assert.Equal(t, "a1b2", res.LastFourApiKey)
 }

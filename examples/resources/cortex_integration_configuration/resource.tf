@@ -19,6 +19,14 @@ resource "cortex_integration_configuration" "gitlab" {
   }
 }
 
+resource "cortex_integration_configuration" "harness" {
+  alias       = "harness"
+  credentials = { token = { value = var.harness_api_key } }
+  harness = {
+    account_id = "abc123XYZ"
+  }
+}
+
 resource "cortex_integration_configuration" "incident_io" {
   alias       = "incident-io"
   credentials = { token = { value = var.incident_io_api_key } }
@@ -38,4 +46,11 @@ resource "cortex_integration_configuration" "jira" {
 resource "cortex_integration_configuration" "pagerduty" {
   credentials = { token = { value = var.pagerduty_token } }
   pagerduty   = { is_token_readonly = true }
+}
+
+resource "cortex_integration_configuration" "rootly" {
+  alias       = "rootly"
+  is_default  = true
+  credentials = { token = { value = var.rootly_api_key } }
+  rootly      = {}
 }

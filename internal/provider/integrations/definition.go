@@ -82,9 +82,11 @@ type singleInstanceDefinition interface {
 var integrationDefinitions = []integrationDefinition{
 	datadogDefinition{},
 	gitlabDefinition{},
+	harnessDefinition{},
 	incidentIoDefinition{},
 	jiraDefinition{},
 	pagerDutyDefinition{},
+	rootlyDefinition{},
 }
 
 func definitionByName(name string) integrationDefinition {
